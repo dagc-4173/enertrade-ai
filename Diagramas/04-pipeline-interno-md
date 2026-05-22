@@ -1,0 +1,130 @@
+# Pipeline interno del módulo de Machine Learning
+```mermaid
+    flowchart TD
+
+    %% Fuentes de datos
+    subgraph F[Fuentes de datos]
+        F1[(Datos históricos de generación)]
+        F2[(Datos históricos de consumo)]
+        F3[(Datos de ofertas y demandas)]
+        F4[(Datos de transacciones)]
+        F5[(Variables contextuales disponibles)]
+    end
+
+    %% Pipeline
+    subgraph P[Pipeline de datos]
+        P1[Ingesta de datos]
+        P2[Validación de estructura<br/>y calidad de datos]
+        P3[Limpieza de datos<br/>valores nulos, duplicados y atípicos]
+        P4[Transformación de datos<br/>normalización y codificación]
+        P5[Ingeniería de características<br/>variables temporales, demanda,<br/>oferta, precio y comportamiento]
+        P6[División de datos<br/>entrenamiento, validación y prueba]
+    end
+
+    %% Modelado
+    subgraph M[Modelado Machine Learning]
+        M1[Modelo de predicción<br/>de generación fotovoltaica]
+        M2[Modelo de predicción<br/>de consumo energético]
+        M3[Modelo de estimación<br/>de precio dinámico]
+        M4[Modelo de detección<br/>de anomalías]
+    end
+
+    %% Evaluación
+    subgraph E[Evaluación y validación]
+        E1[Evaluación de desempeño<br/>MAE, RMSE, R², precisión u otras métricas]
+        E2[Comparación de modelos]
+        E3{¿Modelo cumple<br/>criterios mínimos?}
+        E4[Ajuste de parámetros<br/>y reentrenamiento]
+    end
+
+    %% Registro
+    subgraph R[Registro y versionamiento]
+        R1[Registro del modelo]
+        R2[Versionamiento de datasets]
+        R3[Versionamiento de código]
+        R4[Documentación técnica<br/>de experimentos y resultados]
+    end
+
+    %% Servicio
+    subgraph S[Servicio ML]
+        S1[Empaquetado del modelo]
+        S2[API del módulo ML]
+        S3[Respuesta estructurada<br/>predicción, precio y alerta]
+    end
+
+    %% Consumo
+    subgraph C[Consumo por la plataforma]
+        C1[Backend / API Central]
+        C2[Proceso de negociación energética]
+        C3[Frontend<br/>visualización de resultados]
+    end
+
+    %% Monitoreo
+    subgraph O[Monitoreo y mejora continua]
+        O1[Logs de solicitudes]
+        O2[Métricas de rendimiento]
+        O3[Monitoreo de errores]
+        O4[Reentrenamiento futuro]
+    end
+
+    %% Relaciones fuentes
+    F1 --> P1
+    F2 --> P1
+    F3 --> P1
+    F4 --> P1
+    F5 --> P1
+
+    %% Relaciones pipeline
+    P1 --> P2
+    P2 --> P3
+    P3 --> P4
+    P4 --> P5
+    P5 --> P6
+
+    %% Relación con modelos
+    P6 --> M1
+    P6 --> M2
+    P6 --> M3
+    P6 --> M4
+
+    %% Evaluación
+    M1 --> E1
+    M2 --> E1
+    M3 --> E1
+    M4 --> E1
+    E1 --> E2
+    E2 --> E3
+    E3 -- No --> E4
+    E4 --> M1
+    E4 --> M2
+    E4 --> M3
+    E4 --> M4
+
+    E3 -- Sí --> R1
+    R1 --> R2
+    R1 --> R3
+    R1 --> R4
+
+    %% Servicio
+    R1 --> S1
+    S1 --> S2
+    S2 --> S3
+
+    %% Consumo
+    S3 --> C1
+    C1 --> C2
+    C2 --> C3
+
+    %% Monitoreo
+    S2 --> O1
+    S2 --> O2
+    S2 --> O3
+    O1 --> O4
+    O2 --> O4
+    O3 --> O4
+    O4 --> P1
+```
+<b><i><span style='font-size:12px;'> 
+    Diagrama 04
+    Pipeline interno del módulo de Machine Learning para soporte a la negociación energética.
+ </span></i></b>
