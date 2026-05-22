@@ -46,7 +46,7 @@
     end
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 09
+    Diagrama 09.<br>
     Diagrama de secuencia para la generación de recomendación inteligente en EnerTrade AI.
  </span></i></b>
 

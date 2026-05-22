@@ -126,6 +126,6 @@
     TransaccionEnergetica "1" --> "0..*" RegistroAuditoria : registra_eventos
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 07
+    Diagrama 07.<br>
     Diagrama de clases conceptual de la plataforma EnerTrade AI.
  </span></i></b>

@@ -103,6 +103,6 @@
         F4 --> U8
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 02
+    Diagrama 02.<br>
     Diagrama BPMN del proceso de negociación energética con soporte del módulo de Machine Learning.
  </span></i></b>

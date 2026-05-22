@@ -57,6 +57,6 @@
     C --> B
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 01
+    Diagrama 01.<br>
     Diagrama general de integración del módulo de Machine Learning en la plataforma EnerTrade AI.
  </span></i></b>

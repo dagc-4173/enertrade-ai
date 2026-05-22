@@ -68,6 +68,6 @@
     CU08 -. incluye .-> CU13
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 06
+    Diagrama 06.<br>
     Diagrama de casos de uso de la plataforma EnerTrade AI con soporte del módulo de Machine Learning.
  </span></i></b>

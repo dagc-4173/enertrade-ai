@@ -90,6 +90,6 @@
     API --> MET
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 05
+    Diagrama 05.<br>
     Arquitectura física de despliegue del prototipo EnerTrade AI.
  </span></i></b>

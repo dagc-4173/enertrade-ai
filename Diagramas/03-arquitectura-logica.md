@@ -108,6 +108,6 @@
         RESULT --> AUDIT
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 03
+    Diagrama 03.<br>
     Arquitectura lógica de la plataforma EnerTrade AI con integración del módulo de Machine Learning.
  </span></i></b>

@@ -137,6 +137,6 @@
     PREDICCIONES_ML ||--o{ AUDITORIA_EVENTOS : evidencia
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 08
+    Diagrama 08.<br>
     Modelo entidad-relación conceptual de la plataforma EnerTrade AI.
  </span></i></b>

@@ -125,6 +125,6 @@
     O4 --> P1
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 04
+    Diagrama 04.<br>
     Pipeline interno del módulo de Machine Learning para soporte a la negociación energética.
  </span></i></b>
