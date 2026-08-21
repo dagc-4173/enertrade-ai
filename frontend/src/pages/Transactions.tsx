@@ -23,10 +23,10 @@ const validationColumns: DataTableColumn<ValidationCase>[] = [
   { header: 'Actor', render: (row) => row.actor },
   { header: 'Tipo', render: (row) => row.type },
   {
-    header: 'Riesgo',
+    header: 'Prioridad',
     render: (row) => (
-      <StatusBadge tone={row.risk === 'Alto' ? 'danger' : row.risk === 'Medio' ? 'warning' : 'success'}>
-        {row.risk}
+      <StatusBadge tone={row.priority === 'Alta' ? 'success' : row.priority === 'Media' ? 'info' : 'neutral'}>
+        {row.priority}
       </StatusBadge>
     ),
   },
@@ -76,16 +76,16 @@ export function Transactions() {
           />
           <div className="stack-list">
             <article>
-              <StatusBadge tone="danger">Bloqueo temporal</StatusBadge>
-              <p>Detener publicaciones con desviacion extrema de precio.</p>
+              <StatusBadge tone="info">Pausa operativa</StatusBadge>
+              <p>Revisar publicaciones con variaciones amplias de precio.</p>
             </article>
             <article>
               <StatusBadge tone="success">Aprobacion automatica</StatusBadge>
-              <p>Aprobar ofertas con riesgo bajo y documentos completos.</p>
+              <p>Aprobar ofertas con prioridad baja y documentos completos.</p>
             </article>
             <article>
               <StatusBadge tone="warning">Escalamiento</StatusBadge>
-              <p>Enviar incidencias repetitivas al equipo tecnico e IA.</p>
+              <p>Enviar recurrencias operativas al equipo tecnico e IA.</p>
             </article>
           </div>
         </aside>

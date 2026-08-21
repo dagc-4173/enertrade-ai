@@ -30,7 +30,7 @@ export function Dashboard() {
           <h2>Vista general del mercado energetico</h2>
           <p>
             Plataforma centralizada para intercambio energetico con predicciones
-            de generacion, consumo, precios dinamicos y deteccion de anomalias.
+            de generacion, consumo, precios dinamicos y reconocimiento de patrones.
           </p>
           <div className="hero-actions">
             <button type="button" className="primary-button">
@@ -43,7 +43,7 @@ export function Dashboard() {
         </div>
         <div className="ai-panel">
           <p>Motor IA transaccional</p>
-          <strong>Recomendaciones y riesgo</strong>
+          <strong>Recomendaciones y patrones</strong>
           <div>
             {aiRecommendations.map((item) => (
               <article key={item.title}>

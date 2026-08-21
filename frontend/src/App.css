@@ -582,8 +582,8 @@ main {
 
 .timeline p,
 .stack-list p,
-.anomaly-card p,
-.risk-grid p,
+.pattern-card p,
+.analytics-grid p,
 .match-card span,
 .profile-hero p,
 .profile-card span {
@@ -616,14 +616,14 @@ main {
 }
 
 .match-grid,
-.risk-grid {
+.analytics-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
 .match-card,
-.risk-grid article,
+.analytics-grid article,
 .stack-list article {
   padding: 16px;
   border: 1px solid var(--color-border);
@@ -666,18 +666,18 @@ main {
   background: linear-gradient(180deg, #ffffff 0%, #f7fbf5 100%);
 }
 
-.risk-panel {
+.analytics-panel {
   background: linear-gradient(180deg, var(--color-forest-dark) 0%, var(--color-teal) 100%);
   color: #ffffff;
 }
 
-.risk-panel .eyebrow,
-.risk-panel .section-header h2,
-.risk-panel .section-description {
+.analytics-panel .eyebrow,
+.analytics-panel .section-header h2,
+.analytics-panel .section-description {
   color: #ffffff;
 }
 
-.risk-meter {
+.analytics-meter {
   display: grid;
   gap: 14px;
   padding: 18px;
@@ -686,24 +686,24 @@ main {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.risk-meter span {
+.analytics-meter span {
   display: block;
   width: 100%;
   height: 12px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-mint) 0%, var(--color-amber) 55%, var(--color-orange) 100%);
+  background: linear-gradient(90deg, var(--color-mint) 0%, var(--color-lime) 55%, var(--color-cyan) 100%);
 }
 
-.risk-meter p {
+.analytics-meter p {
   color: rgba(255, 255, 255, 0.8);
 }
 
-.anomaly-card {
+.pattern-card {
   display: grid;
   gap: 12px;
 }
 
-.anomaly-card small {
+.pattern-card small {
   color: var(--color-teal);
 }
 
@@ -764,7 +764,7 @@ main {
   .metric-grid--three,
   .timeline,
   .match-grid,
-  .risk-grid {
+  .analytics-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -786,7 +786,7 @@ main {
   .metric-grid--compact,
   .timeline,
   .match-grid,
-  .risk-grid {
+  .analytics-grid {
     grid-template-columns: 1fr;
   }
 

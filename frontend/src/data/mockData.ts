@@ -1,11 +1,12 @@
 import type {
   AiRecommendation,
-  AnomalyEvent,
+  AnalyticRecommendation,
   EnergyOffer,
-  ExecutiveRisk,
   ForecastPoint,
   MetricCardData,
   NavigationItem,
+  PatternCardData,
+  PatternResult,
   ServiceStatus,
   SmartMatch,
   TraceItem,
@@ -36,9 +37,10 @@ export const navigationItems: NavigationItem[] = [
     description: 'Operaciones, validaciones y cierres',
   },
   {
-    key: 'anomalies',
-    label: 'Anomalias',
-    description: 'Riesgo, alertas y acciones',
+    key: 'patterns',
+    label: 'Patrones',
+    title: 'Reconocimiento de patrones',
+    description: 'Tendencias, recurrencias y relaciones',
   },
   {
     key: 'profile',
@@ -70,11 +72,11 @@ export const marketMetrics: MetricCardData[] = [
     tone: 'success',
   },
   {
-    title: 'Alertas de anomalia',
+    title: 'Patrones identificados',
     value: '4',
-    delta: 'Critico',
-    helper: 'Eventos fuera de patron',
-    tone: 'danger',
+    delta: 'Actividad alta',
+    helper: 'Tendencias y relaciones en seguimiento',
+    tone: 'info',
   },
 ]
 
@@ -90,8 +92,8 @@ export const aiRecommendations: AiRecommendation[] = [
     tone: 'info',
   },
   {
-    title: 'Revision requerida',
-    text: 'Revisar transaccion TX-8821 por patron atipico frente al historico del usuario.',
+    title: 'Patron transaccional',
+    text: 'Usar recurrencias de consumo para mejorar el emparejamiento de TX-8821.',
     tone: 'warning',
   },
 ]
@@ -103,7 +105,7 @@ export const workflowSteps: WorkflowStep[] = [
   },
   {
     title: 'Panel principal',
-    description: 'Vista consolidada del mercado, indicadores y alertas del motor IA.',
+    description: 'Vista consolidada del mercado, indicadores y resultados del motor IA.',
   },
   {
     title: 'Publicar oferta o demanda',
@@ -111,11 +113,11 @@ export const workflowSteps: WorkflowStep[] = [
   },
   {
     title: 'Emparejamiento inteligente',
-    description: 'Sugerencias por afinidad entre oferta, demanda, precio, zona y riesgo.',
+    description: 'Sugerencias por afinidad entre oferta, demanda, precio, zona y patrones.',
   },
   {
     title: 'Monitoreo y cierre',
-    description: 'Seguimiento de transacciones, anomalias, decisiones y trazabilidad.',
+    description: 'Seguimiento de transacciones, patrones, decisiones y trazabilidad.',
   },
 ]
 
@@ -256,7 +258,7 @@ export const recentTransactions: Transaction[] = [
     amount: '120 kWh',
     total: '$52.560',
     status: 'En revision',
-    note: 'Analisis de anomalia en curso',
+    note: 'Analisis de patrones en curso',
     tone: 'warning',
   },
 ]
@@ -265,14 +267,14 @@ export const operatorStats: MetricCardData[] = [
   {
     title: 'Transacciones en revision',
     value: '12',
-    helper: '4 con prioridad alta',
+    helper: '4 con prioridad operativa alta',
     tone: 'warning',
   },
   {
-    title: 'Alertas activas',
+    title: 'Resultados analiticos',
     value: '7',
-    helper: '2 requieren intervencion inmediata',
-    tone: 'danger',
+    helper: '2 requieren validacion operativa',
+    tone: 'info',
   },
   {
     title: 'Ofertas pendientes',
@@ -287,49 +289,75 @@ export const validationQueue: ValidationCase[] = [
     id: 'VAL-301',
     actor: 'Usuario residencial 245',
     type: 'Oferta de venta',
-    risk: 'Bajo',
+    priority: 'Baja',
     action: 'Aprobar',
   },
   {
     id: 'VAL-302',
     actor: 'Empresa Solar Sur',
     type: 'Demanda de compra',
-    risk: 'Medio',
+    priority: 'Media',
     action: 'Revisar',
   },
   {
     id: 'VAL-303',
     actor: 'Nodo Local 17',
     type: 'Oferta de venta',
-    risk: 'Alto',
+    priority: 'Alta',
     action: 'Escalar',
   },
 ]
 
-export const anomalyEvents: AnomalyEvent[] = [
+export const patronesIdentificados: PatternResult[] = [
   {
-    id: 'AN-104',
-    title: 'Patron atipico de precio',
-    detail: 'Oferta fuera del rango historico del nodo 17.',
-    level: 'Alto',
-    source: 'Detector de precios',
-    score: '91%',
+    id: 'PAT-01',
+    pattern: 'Alta demanda en horario nocturno',
+    origin: 'Consumo energetico',
+    variable: 'Demanda',
+    confidence: '87%',
+    relevance: 'Alta',
+    description: 'Incremento sostenido de demanda en franjas horarias nocturnas.',
   },
   {
-    id: 'AN-107',
-    title: 'Desbalance regional',
-    detail: 'Demanda superior a la oferta en zona norte durante tres ventanas.',
-    level: 'Medio',
-    source: 'Monitor de mercado',
-    score: '76%',
+    id: 'PAT-02',
+    pattern: 'Incremento de oferta solar en horas pico',
+    origin: 'Generacion fotovoltaica',
+    variable: 'Oferta',
+    confidence: '82%',
+    relevance: 'Media',
+    description: 'Variacion recurrente de disponibilidad fotovoltaica en horas de mayor actividad.',
   },
   {
-    id: 'AN-111',
-    title: 'Demora en confirmacion',
-    detail: 'Tres transacciones sin cierre automatico despues del SLA esperado.',
-    level: 'Bajo',
-    source: 'Motor transaccional',
-    score: '58%',
+    id: 'PAT-03',
+    pattern: 'Relacion entre precio y demanda regional',
+    origin: 'Transacciones simuladas',
+    variable: 'Precio',
+    confidence: '78%',
+    relevance: 'Alta',
+    description: 'Relacion consistente entre variacion de precio y demanda regional.',
+  },
+]
+
+export const tarjetasPatrones: PatternCardData[] = [
+  {
+    title: 'Tendencia de precio por zona',
+    description: 'Variacion recurrente del precio de referencia en zonas con alta demanda.',
+    relevance: 'Alta',
+  },
+  {
+    title: 'Variacion regional de demanda',
+    description: 'Incremento sostenido de demanda en franjas horarias nocturnas.',
+    relevance: 'Media',
+  },
+  {
+    title: 'Recurrencia en horarios de consumo',
+    description: 'Patron repetitivo de consumo entre las 18:00 y 21:00.',
+    relevance: 'Alta',
+  },
+  {
+    title: 'Relacion oferta-demanda',
+    description: 'Coincidencia recurrente entre disponibilidad energetica y solicitudes de demanda.',
+    relevance: 'Media',
   },
 ]
 
@@ -358,7 +386,7 @@ export const techStats: MetricCardData[] = [
   {
     title: 'Modelos activos',
     value: '3',
-    helper: 'Prediccion, precio y anomalias',
+    helper: 'Prediccion, precio y patrones',
     tone: 'success',
   },
 ]
@@ -377,10 +405,10 @@ export const techServices: ServiceStatus[] = [
     tone: 'warning',
   },
   {
-    name: 'Detector de anomalias',
-    status: 'Alerta',
-    note: 'Picos de eventos en nodo 17',
-    tone: 'danger',
+    name: 'Reconocimiento de patrones',
+    status: 'Analizando',
+    note: 'Recurrencias de consumo en nodo 17',
+    tone: 'info',
   },
 ]
 
@@ -422,9 +450,9 @@ export const executiveStats: MetricCardData[] = [
     tone: 'success',
   },
   {
-    title: 'Riesgo operacional',
-    value: 'Controlado',
-    helper: 'Incidentes criticos en descenso',
+    title: 'Actividad analitica',
+    value: 'Alta',
+    helper: 'Relaciones relevantes en seguimiento',
     tone: 'neutral',
   },
 ]
@@ -450,21 +478,21 @@ export const executiveHighlights: MetricCardData[] = [
   },
 ]
 
-export const executiveRisks: ExecutiveRisk[] = [
+export const recomendacionesAnaliticas: AnalyticRecommendation[] = [
   {
-    risk: 'Desbalance regional temporal',
-    impact: 'Medio',
-    action: 'Ajustar incentivos en zona norte',
+    title: 'Ajustar recomendacion de precio',
+    priority: 'Alta',
+    description: 'Considerar la tendencia de demanda nocturna para mejorar el precio de referencia.',
   },
   {
-    risk: 'Desviacion del modelo de precios',
-    impact: 'Alto',
-    action: 'Seguimiento con gerencia de tecnologia',
+    title: 'Priorizar emparejamientos compatibles',
+    priority: 'Media',
+    description: 'Usar patrones de oferta y demanda para sugerir mejores coincidencias.',
   },
   {
-    risk: 'Retrasos de validacion operativa',
-    impact: 'Bajo',
-    action: 'Redistribuir carga del equipo operativo',
+    title: 'Revisar comportamiento regional',
+    priority: 'Media',
+    description: 'Analizar zonas con recurrencias de demanda para futuras simulaciones.',
   },
 ]
 

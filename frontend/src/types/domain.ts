@@ -3,19 +3,21 @@ export type PageKey =
   | 'marketplace'
   | 'predictions'
   | 'transactions'
-  | 'anomalies'
+  | 'patterns'
   | 'profile'
 
 export type StatusTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral'
 
 export type OperationType = 'Venta' | 'Compra'
 
-export type RiskLevel = 'Bajo' | 'Medio' | 'Alto'
+export type RelevanceLevel = 'Baja' | 'Media' | 'Alta'
+export type PriorityLevel = 'Baja' | 'Media' | 'Alta'
 
 export interface NavigationItem {
   key: PageKey
   label: string
   description: string
+  title?: string
 }
 
 export interface MetricCardData {
@@ -71,17 +73,18 @@ export interface ValidationCase {
   id: string
   actor: string
   type: string
-  risk: RiskLevel
+  priority: PriorityLevel
   action: string
 }
 
-export interface AnomalyEvent {
+export interface PatternResult {
   id: string
-  title: string
-  detail: string
-  level: RiskLevel
-  source: string
-  score: string
+  pattern: string
+  origin: string
+  variable: string
+  confidence: string
+  relevance: RelevanceLevel
+  description: string
 }
 
 export interface ForecastPoint {
@@ -104,8 +107,14 @@ export interface TraceItem {
   status: string
 }
 
-export interface ExecutiveRisk {
-  risk: string
-  impact: RiskLevel
-  action: string
+export interface PatternCardData {
+  title: string
+  description: string
+  relevance: RelevanceLevel
+}
+
+export interface AnalyticRecommendation {
+  title: string
+  priority: PriorityLevel
+  description: string
 }

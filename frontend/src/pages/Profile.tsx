@@ -23,7 +23,7 @@ export function Profile() {
         </div>
         <div className="profile-card">
           <strong>Gerente general</strong>
-          <span>Acceso ejecutivo, mercado, riesgos y decisiones</span>
+          <span>Acceso ejecutivo, mercado, patrones y decisiones</span>
           <StatusBadge tone="success">Sesion activa</StatusBadge>
         </div>
       </section>

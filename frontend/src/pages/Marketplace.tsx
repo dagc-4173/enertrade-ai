@@ -81,7 +81,7 @@ export function Marketplace() {
         <SectionHeader
           eyebrow="Emparejamiento inteligente"
           title="Coincidencias sugeridas"
-          description="Ranking por afinidad entre energia disponible, precio, zona y riesgo."
+          description="Ranking por afinidad entre energia disponible, precio, zona y patrones de consumo."
         />
         <div className="match-grid">
           {smartMatches.map((match) => (

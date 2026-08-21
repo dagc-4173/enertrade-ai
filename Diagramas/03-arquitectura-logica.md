@@ -1,113 +1,71 @@
-# Arquitectura lógica del sistema
+# Diagrama de Arquitectura Lógica - EnerTrade AI
+
 ```mermaid
     flowchart TB
 
-        %% Capa de presentación
-        subgraph C1[Capa de Presentación]
-            UI[Frontend Web<br/>Interfaz de usuario]
-            UI1[Gestión de ofertas]
-            UI2[Gestión de demandas]
-            UI3[Visualización de recomendaciones]
-            UI4[Alertas y estado de negociación]
+    %% Actores externos
+    Proveedor["Proveedor / Generador<br/>Registra oferta energética"]
+    Consumidor["Consumidor / Demandante<br/>Registra demanda energética"]
+    Admin["Administrador<br/>Consulta resultados y supervisa el sistema"]
+
+    %% Plataforma central
+    subgraph Plataforma["Plataforma EnerTrade AI<br/>Intercambio energético simulado"]
+        
+        UI["Interfaz de usuario<br/>Frontend web"]
+
+        Backend["Backend / API Gateway<br/>Gestión de usuarios, ofertas,<br/>demandas y simulaciones"]
+
+        Transaccional["Módulo transaccional<br/>Gestión de ofertas, demandas,<br/>emparejamientos y transacciones simuladas"]
+
+        BD["Base de datos<br/>Usuarios, ofertas, demandas,<br/>históricos, modelos y resultados"]
+
+        Mensajeria["RabbitMQ / Mensajería<br/>Comunicación entre servicios"]
+
+        subgraph MotorIA["Motor de Inteligencia Artificial Transaccional"]
+            Datos["Procesamiento de datos<br/>Limpieza, validación y transformación"]
+
+            Pronostico["Módulo de pronóstico<br/>Oferta y demanda energética"]
+
+            Precios["Módulo de recomendación<br/>de precios de referencia"]
+
+            Emparejamiento["Módulo de emparejamiento<br/>Oferta - demanda"]
+
+            Patrones["Módulo de reconocimiento<br/>de patrones energéticos<br/>y transaccionales"]
+
+            Resultados["Resultados inteligentes<br/>Pronósticos, precios,<br/>emparejamientos y patrones"]
         end
+    end
 
-        %% Capa de aplicación
-        subgraph C2[Capa de Aplicación / Backend]
-            API[API Central]
-            AUTH[Servicio de autenticación<br/>y gestión de usuarios]
-            OFFER[Servicio de ofertas<br/>energéticas]
-            DEMAND[Servicio de demandas<br/>energéticas]
-            MATCH[Servicio de emparejamiento<br/>oferta-demanda]
-            TRANS[Servicio de transacciones]
-            MLCLIENT[Cliente de integración<br/>con módulo ML]
-        end
+    %% Relaciones actores
+    Proveedor --> UI
+    Consumidor --> UI
+    Admin --> UI
 
-        %% Capa ML
-        subgraph C3[Capa de Inteligencia / Machine Learning]
-            MLAPI[API del Módulo ML]
-            PIPE[Pipeline de datos]
-            GEN[Modelo de predicción<br/>de generación fotovoltaica]
-            CONS[Modelo de predicción<br/>de consumo energético]
-            PRICE[Modelo / motor de<br/>precio dinámico]
-            ANOM[Modelo de detección<br/>de anomalías]
-            MODELREG[Repositorio de modelos<br/>y versionamiento]
-        end
+    %% Flujo plataforma
+    UI --> Backend
+    Backend --> Transaccional
+    Backend --> BD
+    Backend --> Mensajeria
+    Mensajeria --> MotorIA
+    MotorIA --> Mensajeria
+    MotorIA --> BD
+    Transaccional --> BD
 
-        %% Capa de datos
-        subgraph C4[Capa de Datos]
-            DB[(Base de datos transaccional)]
-            HIST[(Datos históricos<br/>energéticos y transaccionales)]
-            RESULT[(Resultados ML<br/>predicciones, precios y alertas)]
-        end
+    %% Flujo interno IA
+    Datos --> Pronostico
+    Datos --> Precios
+    Datos --> Emparejamiento
+    Datos --> Patrones
 
-        %% Capa de monitoreo
-        subgraph C5[Capa de Monitoreo y Trazabilidad]
-            LOGS[Logs del sistema]
-            METRICS[Métricas de desempeño]
-            AUDIT[Auditoría de predicciones<br/>y decisiones]
-        end
+    Pronostico --> Resultados
+    Precios --> Resultados
+    Emparejamiento --> Resultados
+    Patrones --> Resultados
 
-        %% Relaciones frontend
-        UI --> UI1
-        UI --> UI2
-        UI --> UI3
-        UI --> UI4
-        UI --> API
-
-        %% Relaciones backend
-        API --> AUTH
-        API --> OFFER
-        API --> DEMAND
-        API --> MATCH
-        API --> TRANS
-        API --> MLCLIENT
-
-        %% Backend a datos
-        AUTH --> DB
-        OFFER --> DB
-        DEMAND --> DB
-        MATCH --> DB
-        TRANS --> DB
-
-        %% Backend a ML
-        MLCLIENT --> MLAPI
-
-        %% ML interno
-        MLAPI --> PIPE
-        PIPE --> GEN
-        PIPE --> CONS
-        PIPE --> PRICE
-        PIPE --> ANOM
-        GEN --> MODELREG
-        CONS --> MODELREG
-        PRICE --> MODELREG
-        ANOM --> MODELREG
-
-        %% Datos para ML
-        DB --> HIST
-        HIST --> PIPE
-
-        %% Resultados ML
-        GEN --> RESULT
-        CONS --> RESULT
-        PRICE --> RESULT
-        ANOM --> RESULT
-        RESULT --> MLAPI
-        MLAPI --> MLCLIENT
-        MLCLIENT --> API
-        API --> UI
-
-        %% Monitoreo
-        API --> LOGS
-        MLAPI --> LOGS
-        PIPE --> METRICS
-        GEN --> METRICS
-        CONS --> METRICS
-        PRICE --> METRICS
-        ANOM --> METRICS
-        RESULT --> AUDIT
+    Resultados --> Backend
+    Resultados --> Transaccional
 ```
 <b><i><span style='font-size:12px;'> 
-    Diagrama 03.<br>
-    Arquitectura lógica de la plataforma EnerTrade AI con integración del módulo de Machine Learning.
+    Diagrama 01.<br>
+    Diagrama de arquitectura lógica del motor de inteligencia artificial transaccional EnerTrade AI.
  </span></i></b>

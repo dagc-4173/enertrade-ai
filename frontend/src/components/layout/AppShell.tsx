@@ -47,7 +47,7 @@ export function AppShell({ activePage, onNavigate, children }: AppShellProps) {
         <header className="topbar">
           <div>
             <p className="eyebrow">Operacion en tiempo real</p>
-            <h1>{activeItem?.label ?? 'Inicio'}</h1>
+            <h1>{activeItem?.title ?? activeItem?.label ?? 'Inicio'}</h1>
           </div>
           <div className="topbar-status">
             <span>Zona: Antioquia</span>

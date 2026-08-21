@@ -24,7 +24,7 @@ export function Predictions() {
           <SectionHeader
             eyebrow="Modelos IA"
             title="Generacion, consumo y precios dinamicos"
-            description="Pronostico operativo para anticipar desbalances y ajustar precios."
+            description="Pronostico operativo para anticipar tendencias y ajustar precios."
           />
           <ForecastChart points={forecastPoints} />
         </div>
@@ -49,7 +49,7 @@ export function Predictions() {
       <section className="content-grid">
         <div className="panel">
           <SectionHeader
-            eyebrow="Servicios criticos"
+            eyebrow="Servicios analiticos"
             title="Estado de componentes"
             description="Salud operativa de APIs y modelos conectados."
           />
