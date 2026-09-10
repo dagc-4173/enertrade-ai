@@ -38,4 +38,20 @@ model EnergyDataset {
   pendingOptionalFields Json
   validatedAt           DateTime?           @db.Timestamptz(3)
   validationReport      Json?
+  preparedDatasets      PreparedDataset[]
+}
+
+model PreparedDataset {
+  id                   Int           @id @default(autoincrement())
+  sourceDatasetId      Int
+  profileId            String
+  profileVersion       String
+  preparedAt           DateTime      @default(now()) @db.Timestamptz(3)
+  sourceRulesetId      String
+  sourceRulesetVersion String
+  content              Json
+  transformations      Json
+  sourceDataset        EnergyDataset @relation(fields: [sourceDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([sourceDatasetId, profileId, profileVersion])
 }
