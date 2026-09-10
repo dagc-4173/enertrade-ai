@@ -12,17 +12,25 @@ datasource db {
   provider = "postgresql"
 }
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  email String  @unique
-  name  String?
-  posts Post[]
-} 
-model Post { 
-  id        Int     @id @default(autoincrement()) 
-  title     String
-  content   String?
-  published Boolean @default(false) 
-  author    User    @relation(fields: [authorId], references: [id]) 
-  authorId  Int
-} 
+enum EnergyDatasetType {
+  generacion
+  consumo
+  oferta
+  demanda
+  precios
+  transacciones_simuladas
+}
+
+enum EnergyDatasetStatus {
+  recibido
+}
+
+model EnergyDataset {
+  id                    Int                 @id @default(autoincrement())
+  source                String
+  dataType              EnergyDatasetType
+  uploadedAt            DateTime            @default(now()) @db.Timestamptz(3)
+  status                EnergyDatasetStatus @default(recibido)
+  content               Json
+  pendingOptionalFields Json
+}
