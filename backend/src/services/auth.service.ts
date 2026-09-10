@@ -1,10 +1,18 @@
+import "dotenv/config";
 import { AuthServiceSdk } from "energy-community-auth-sdk";
 import type { Request, Response } from "express";
 import { prisma } from "@/lib/prisma"
 
+const authSdkAppId = process.env.AUTH_SDK_APP_ID?.trim();
+const authSdkApiKey = process.env.AUTH_SDK_API_KEY?.trim();
+
+if (!authSdkAppId || !authSdkApiKey) {
+    throw new Error("AUTH_SDK_APP_ID and AUTH_SDK_API_KEY must be configured");
+}
+
 const sdk = new AuthServiceSdk({
-    appId: "gestion-inteligente-de-energia",
-    apiKey: "f9e60c99b7597822968263fc3d2aded5e4465c6f812af64076e70733a1f4e880"
+    appId: authSdkAppId,
+    apiKey: authSdkApiKey
 })
 
 export async function registerUser(req: Request, res: Response) {

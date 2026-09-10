@@ -29,3 +29,12 @@ Thumbs.db
 
 # VS Code
 .vscode/
+
+# Documentación académica local / contexto para Codex
+docs/contexto/
+docs/gestion/
+
+docs/contexto/*.docx
+docs/contexto/*.pdf
+docs/gestion/*.docx
+docs/gestion/*.pdf
