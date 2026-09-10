@@ -2,9 +2,27 @@ import express, { type ErrorRequestHandler } from 'express'
 import {router as authRouter} from "@/controllers/auth.controller";
 import {router as datasetRouter} from "@/controllers/dataset.controller";
 import { validateDatasetRequest } from '@/controllers/dataset-validation.controller';
+import { prepareDatasetRequest } from '@/controllers/dataset-preparation.controller';
 const app = express()
+const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim()
+
+// CORS de desarrollo: únicamente el origen configurado, sin credenciales.
+app.use((req, res, next) => {
+    res.vary('Origin')
+    if (frontendOrigin && req.get('Origin') === frontendOrigin) {
+        res.set('Access-Control-Allow-Origin', frontendOrigin)
+        res.set('Access-Control-Allow-Methods', 'POST')
+        res.set('Access-Control-Allow-Headers', 'Content-Type, Accept')
+        if (req.method === 'OPTIONS') {
+            res.sendStatus(204)
+            return
+        }
+    }
+    next()
+})
 
 app.post('/datasets/:id/validate', validateDatasetRequest)
+app.post('/datasets/:id/prepare', prepareDatasetRequest)
 
 // Parser exclusivo de HU-01; no se establece todavía un límite de tamaño.
 app.use('/datasets', (req, res, next) => {

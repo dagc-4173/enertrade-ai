@@ -3,7 +3,9 @@ import { afterAll, beforeEach, describe, expect, mock, test } from 'bun:test';
 const create = mock(async (args: any): Promise<any> => ({}));
 const findUnique = mock(async (_args: any): Promise<any> => null);
 const updateMany = mock(async (_args: any): Promise<any> => ({ count: 1 }));
-mock.module('@/lib/prisma', () => ({ prisma: { energyDataset: { create, findUnique, updateMany } } }));
+const preparedFind = mock(async (_args: any): Promise<any> => null);
+const preparedCreate = mock(async (_args: any): Promise<any> => null);
+mock.module('@/lib/prisma', () => ({ prisma: { energyDataset: { create, findUnique, updateMany }, preparedDataset: {findUnique: preparedFind, create: preparedCreate} } }));
 const { app } = await import('@/app');
 
 // HTTP real sobre loopback; solo se sustituye la escritura Prisma.
@@ -310,5 +312,134 @@ describe('HU-02: HTTP y concurrencia con Prisma sustituido', () => {
     expect((await validateHttp()).status).toBe(404);
     findUnique.mockImplementation(async () => dataset);
     expect((await validateHttp()).status).toBe(500);
+  });
+});
+
+const { Prisma } = await import('@/generated/prisma/client');
+const { evaluateGeneration } = await import('@/services/dataset-validation.rules');
+const collision = (target: unknown = ['sourceDatasetId', 'profileId', 'profileVersion']) => new Prisma.PrismaClientKnownRequestError('private database detail', {code: 'P2002', clientVersion: '7.8.0', meta: {modelName: 'PreparedDataset', target}});
+async function prepareHttp(body?: string, id = '1') {
+  const response = await fetch(`${url}/datasets/${id}/prepare`, {method: 'POST', ...(body === undefined ? {} : {body, headers: {'Content-Type': 'application/json'}})});
+  return {status: response.status, body: await response.json() as any};
+}
+describe('HU-03: preparación HTTP con Prisma sustituido', () => {
+  let dataset: any;
+  let artifact: any;
+  function validateFixture() {
+    const result = evaluateGeneration(dataset.content.records);
+    dataset.status = result.status; dataset.validationReport = result.report;
+  }
+  beforeEach(() => {
+    dataset = {...reference(), source: 'simulado', uploadedAt: generatedAt, validatedAt: generatedAt};
+    validateFixture(); artifact = null;
+    findUnique.mockReset(); updateMany.mockReset(); preparedFind.mockReset(); preparedCreate.mockReset();
+    findUnique.mockImplementation(async () => dataset);
+    preparedFind.mockImplementation(async () => artifact);
+    preparedCreate.mockImplementation(async (args: any) => {
+      if (artifact) throw collision();
+      artifact = {id: 7, preparedAt: generatedAt, ...structuredClone(args.data)};
+      return artifact;
+    });
+  });
+  test('HU03-01: aprobado, contratos y defaults', async () => {
+    const r = await prepareHttp();
+    expect(r.status).toBe(200); expect(r.body).toMatchObject({datasetId: 1, preparedDatasetId: 7, reused: false, recordCount: 1});
+    expect(r.body.content.variables).toEqual({minimum: [{name:'fecha',type:'string',representation:'ISO 8601 UTC canonical milliseconds'},{name:'energia_kwh',type:'number',unit:'kWh'}],context:[{name:'zona',type:'string',optional:true}]});
+    expect(r.body.transformations).toEqual({temporalNormalization:{field:'fecha',target:'UTC canonical milliseconds',appliedToRecords:1},variableSelection:{minimum:['fecha','energia_kwh'],optionalContext:['zona'],unusedColumns:[]},excludedOptionalContext:[],generatedFeatures:[]});
+    expect(preparedCreate.mock.calls[0]![0].data).not.toHaveProperty('preparedAt');
+    expect(r.body).not.toHaveProperty('validationReport');
+  });
+  for (const [id,value,reason] of [['02',undefined,'missing'],['03',null,'null'],['04','','empty'],['05','  ','blank'],['06',false,'type_mismatch']] as const) {
+    test(`HU03-${id}: zona ${reason}`, async () => {
+      if(value===undefined) delete dataset.content.records[0].zona; else dataset.content.records[0].zona=value;
+      validateFixture(); const r=await prepareHttp();
+      expect(r.status).toBe(200); expect(r.body.content.records[0]).not.toHaveProperty('zona');
+      expect(r.body.recordCount).toBe(1);
+      expect(r.body.transformations.excludedOptionalContext).toEqual([{sourceRecordIndex:0,field:'zona',reason}]);
+    });
+  }
+  test('HU03-07: zona exacta',async()=>{dataset.content.records[0].zona='  contexto  '; expect((await prepareHttp()).body.content.records[0].zona).toBe('  contexto  ');});
+  for(const [id,input,output] of [['08','2026-09-09T07:00:00-05:00','2026-09-09T12:00:00.000Z'],['09','2026-09-09T12:00:00.1Z','2026-09-09T12:00:00.100Z'],['10','2026-09-09T12:00:00.12Z','2026-09-09T12:00:00.120Z']]) {
+    test(`HU03-${id}: fecha canónica`,async()=>{dataset.content.records[0].fecha=input; expect((await prepareHttp()).body.content.records[0].fecha).toBe(output);});
+  }
+  test('HU03-11: columnas adicionales',async()=>{
+    dataset.content.columns.push({name:'extraB',optional:true},{name:'extraA',optional:true}); Object.assign(dataset.content.records[0],{extraB:4,extraA:2});
+    const r=await prepareHttp(); expect(r.body.transformations.variableSelection.unusedColumns).toEqual(['extraB','extraA']);
+    expect(Object.keys(r.body.content.records[0])).toEqual(['sourceRecordIndex','fecha','energia_kwh','zona']); expect(dataset.content.records[0].extraB).toBe(4);
+  });
+  test('HU03-12: orden original e índices',async()=>{
+    dataset.content.records.push({...dataset.content.records[0],fecha:'2026-09-08T12:00:00Z'}); validateFixture();
+    const rows=(await prepareHttp()).body.content.records; expect(rows.map((r:any)=>r.sourceRecordIndex)).toEqual([0,1]); expect(rows.map((r:any)=>r.fecha)).toEqual(['2026-09-09T12:00:00.000Z','2026-09-08T12:00:00.000Z']);
+  });
+  test('HU03-13: energía cero y negativa intacta',async()=>{for(const value of [0,-12.5]) {artifact=null; dataset.content.records[0].energia_kwh=value; expect((await prepareHttp()).body.content.records[0].energia_kwh).toBe(value);}});
+  for(const [id,state,status,code] of [['14','recibido',409,'DATASET_NOT_VALIDATED'],['15','rechazado',422,'DATASET_REJECTED']] as const) {
+    test(`HU03-${id}: ${state} bloqueado`,async()=>{dataset.status=state; expect(await prepareHttp()).toMatchObject({status,body:{error:code}}); expect(preparedCreate).not.toHaveBeenCalled();});
+  }
+  test('HU03-16: inexistente',async()=>{dataset=null; expect(await prepareHttp()).toMatchObject({status:404,body:{error:'DATASET_NOT_FOUND'}});});
+  test('HU03-17: tipo o declaración no aplicable',async()=>{
+    dataset.dataType='consumo'; expect((await prepareHttp()).status).toBe(422); dataset.dataType='generacion'; dataset.content.columns[0].optional=true;
+    expect(await prepareHttp()).toMatchObject({status:422,body:{error:'PREPARATION_PROFILE_NOT_APPLICABLE'}}); expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('HU03-18: informe inconsistente',async()=>{
+    const original=structuredClone(dataset.validationReport);
+    for(const report of [null,{},[],{...original,rulesetVersion:'2'},{...original,issues:null},{...original,errorCount:1},{...original,warningCount:1},{...original,issues:[{}]}]) {
+      dataset.validationReport=report; expect(await prepareHttp()).toMatchObject({status:409,body:{error:'DATASET_VALIDATION_INCONSISTENT'}});
+    } expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('HU03-19: contenido inconsistente',async()=>{
+    const original=structuredClone(dataset.content);
+    for(const record of [{energia_kwh:12.5},{fecha:'invalid',energia_kwh:1},{fecha:'2026-09-09T12:00:00Z',energia_kwh:'12.5'},null]) {
+      dataset.content={...original,records:[record]}; expect(await prepareHttp()).toMatchObject({status:409,body:{error:'DATASET_CONTENT_INCONSISTENT'}});
+    } expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('HU03-20: IDs inválidos',async()=>{for(const id of ['0','-1','01','1.5','2147483648','abc']) expect(await prepareHttp(undefined,id)).toMatchObject({status:400,body:{error:'INVALID_PREPARATION_REQUEST'}});});
+  test('HU03-21: body rechazado sin parsear',async()=>{for(const body of ['{}','{','null',' ']) expect(await prepareHttp(body)).toMatchObject({status:400,body:{error:'INVALID_PREPARATION_REQUEST'}}); expect(findUnique).not.toHaveBeenCalled();});
+  test('HU03-22: sin Content-Type permitido',async()=>{expect((await prepareHttp()).status).toBe(200);});
+  test('HU03-23: reutilización sin transformar',async()=>{
+    const first=await prepareHttp();
+    // Si se intentara transformar otra vez, esta fecha provocaría error.
+    dataset.content.records[0].fecha='invalid';
+    const second=await prepareHttp(); expect(second.status).toBe(200); expect(second.body).toEqual({...first.body,reused:true}); expect(preparedCreate).toHaveBeenCalledTimes(1);
+    // Alteración solo del fixture: verifica recuperación del artefacto inmutable,
+    // no autoriza editar el original. Ambos casos harían fallar checkContent.
+    delete dataset.content.records[0].fecha;
+    for (const content of [dataset.content, {columns: dataset.content.columns, records: null}]) {
+      dataset.content = content;
+      const reused = await prepareHttp();
+      expect(reused.status).toBe(200);
+      expect(reused.body).toEqual({...first.body, reused: true});
+      expect(preparedCreate).toHaveBeenCalledTimes(1);
+    }
+  });
+  test('HU03-24: original inmutable',async()=>{const before=structuredClone(dataset); await prepareHttp(); expect(dataset).toEqual(before); expect(updateMany).not.toHaveBeenCalled(); expect(create).not.toHaveBeenCalled();});
+  test('HU03-25: sin features',async()=>{expect((await prepareHttp()).body.transformations.generatedFeatures).toEqual([]);});
+  test('HU03-26: metadatos no duplicados',async()=>{expect(Object.keys((await prepareHttp()).body.content).sort()).toEqual(['records','variables']);});
+  test('HU03-27: carrera simulada con unicidad',async()=>{
+    let reads=0; let release!:()=>void; const barrier=new Promise<void>(resolve=>{release=resolve;});
+    preparedFind.mockImplementation(async()=>{reads++; if(reads<=2){if(reads===2)release(); await barrier; return null;} return artifact;});
+    const results=await Promise.all([prepareHttp(),prepareHttp()]);
+    expect(results.map(r=>r.status)).toEqual([200,200]); expect(results.map(r=>r.body.preparedDatasetId)).toEqual([7,7]);
+    expect(results.map(r=>r.body.reused).sort()).toEqual([false,true]); expect(preparedCreate).toHaveBeenCalledTimes(2); expect(artifact.id).toBe(7);
+    expect(preparedFind.mock.calls[0]![0].where).toEqual({sourceDatasetId_profileId_profileVersion:{sourceDatasetId:1,profileId:'generacion_simulada_preparacion_base',profileVersion:'1.0.0'}});
+  });
+  test('HU03-28: unicidad ajena o sin identificar no se oculta',async()=>{
+    for(const error of [collision(['id']),collision(null),new Error('private secret')]) {preparedCreate.mockRejectedValueOnce(error); expect(await prepareHttp()).toEqual({status:500,body:{error:'DATASET_PREPARATION_FAILED',message:'No fue posible completar la preparación del dataset.'}});}
+    expect(artifact).toBeNull(); expect(preparedFind).toHaveBeenCalledTimes(3);
+  });
+  test('HU03-29: años UTC extendidos conservan instante',async()=>{
+    for(const [input,expected] of [['0000-01-01T00:00:00+01:00','-000001-12-31T23:00:00.000Z'],['9999-12-31T23:59:59.999-01:00','+010000-01-01T00:59:59.999Z']]) {
+      artifact=null; dataset.content.records[0].fecha=input; validateFixture(); expect(dataset.status).toBe('aprobado');
+      expect((await prepareHttp()).body.content.records[0].fecha).toBe(expected);
+    }
+  });
+  test('HU03-30: fallos de lectura y ganador ausente',async()=>{
+    findUnique.mockRejectedValueOnce(new Error('secret')); expect((await prepareHttp()).status).toBe(500);
+    preparedCreate.mockRejectedValueOnce(collision()); expect((await prepareHttp()).status).toBe(500); expect(artifact).toBeNull(); expect(dataset.status).toBe('aprobado');
+  });
+  test('HU03-31: unicidad identificada por driver adapter',async()=>{
+    const first=await prepareHttp();
+    preparedFind.mockResolvedValueOnce(null);
+    preparedCreate.mockRejectedValueOnce(new Prisma.PrismaClientKnownRequestError('private detail', {code:'P2002',clientVersion:'7.8.0',meta:{modelName:'PreparedDataset',driverAdapterError:{cause:{kind:'UniqueConstraintViolation',constraint:{fields:['sourceDatasetId','profileId','profileVersion']}}}}}));
+    expect((await prepareHttp()).body).toEqual({...first.body,reused:true});
   });
 });

@@ -1,0 +1,56 @@
+.dataset-registration form {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.dataset-registration textarea {
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font: 14px/1.5 ui-monospace, monospace;
+}
+
+.dataset-registration textarea:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 2px;
+}
+
+.dataset-registration button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.dataset-registration form > button {
+  justify-self: start;
+}
+
+.dataset-metadata {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 16px;
+}
+
+.dataset-metadata dt {
+  color: var(--color-muted);
+}
+
+.dataset-metadata dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.dataset-quality {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+.dataset-quality > button {
+  margin-bottom: 16px;
+}

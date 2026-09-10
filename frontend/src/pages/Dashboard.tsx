@@ -1,4 +1,5 @@
 import { MetricCard } from '../components/cards/MetricCard'
+import { DatasetRegistration } from '../components/datasets/DatasetRegistration'
 import { ForecastChart } from '../components/charts/ForecastChart'
 import { DataTable, type DataTableColumn } from '../components/tables/DataTable'
 import { SectionHeader } from '../components/ui/SectionHeader'
@@ -54,6 +55,8 @@ export function Dashboard() {
           </div>
         </div>
       </section>
+
+      <DatasetRegistration />
 
       <section className="metric-grid">
         {marketMetrics.map((metric) => (
