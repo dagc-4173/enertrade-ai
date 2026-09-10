@@ -23,6 +23,9 @@ enum EnergyDatasetType {
 
 enum EnergyDatasetStatus {
   recibido
+  aprobado
+  advertencia
+  rechazado
 }
 
 model EnergyDataset {
@@ -33,4 +36,6 @@ model EnergyDataset {
   status                EnergyDatasetStatus @default(recibido)
   content               Json
   pendingOptionalFields Json
+  validatedAt           DateTime?           @db.Timestamptz(3)
+  validationReport      Json?
 }

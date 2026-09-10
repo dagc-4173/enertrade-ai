@@ -1,7 +1,9 @@
 import { afterAll, beforeEach, describe, expect, mock, test } from 'bun:test';
 
 const create = mock(async (args: any): Promise<any> => ({}));
-mock.module('@/lib/prisma', () => ({ prisma: { energyDataset: { create } } }));
+const findUnique = mock(async (_args: any): Promise<any> => null);
+const updateMany = mock(async (_args: any): Promise<any> => ({ count: 1 }));
+mock.module('@/lib/prisma', () => ({ prisma: { energyDataset: { create, findUnique, updateMany } } }));
 const { app } = await import('@/app');
 
 // HTTP real sobre loopback; solo se sustituye la escritura Prisma.
@@ -127,5 +129,186 @@ describe('HU-01: registro HTTP con persistencia sustituida', () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'All fields are required' });
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+const reference = () => ({
+  id: 1, status: 'recibido', dataType: 'generacion',
+  content: {
+    columns: [{ name: 'fecha', optional: false }, { name: 'energia_kwh', optional: false }, { name: 'zona', optional: true }],
+    records: [{ fecha: '2026-09-09T12:00:00Z', energia_kwh: 12.5, zona: 'etiqueta-simulada' }],
+  }, pendingOptionalFields: [],
+});
+async function validateHttp(body?: string, id = '1') {
+  const response = await fetch(`${url}/datasets/${id}/validate`, {
+    method: 'POST', ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body }),
+  });
+  return { status: response.status, body: await response.json() as any };
+}
+describe('HU-02: HTTP y concurrencia con Prisma sustituido', () => {
+  let dataset: any;
+  beforeEach(() => {
+    dataset = reference();
+    findUnique.mockReset();
+    updateMany.mockReset();
+    findUnique.mockImplementation(async () => dataset);
+    updateMany.mockImplementation(async () => ({ count: 1 }));
+  });
+  test('HU02-01: aprobado', async () => {
+    const r = await validateHttp();
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ status: 'aprobado', canProceed: true, recordCount: 1, errorCount: 0, warningCount: 0, rulesetId: 'generacion_simulada_base', rulesetVersion: '1.0.0' });
+  });
+  test('HU02-02: zona faltante', async () => {
+    for (const value of [undefined, null, '', '  ']) {
+      dataset.content.records[0].zona = value;
+      if (value === undefined) delete dataset.content.records[0].zona;
+      const r = await validateHttp();
+      expect(r.body.status).toBe('advertencia');
+      expect(r.body.issues.map((i: any) => i.code)).toEqual(['OPTIONAL_VALUE_MISSING']);
+    }
+  });
+  test('HU02-03: zona tipo incorrecto', async () => {
+    for (const value of [0, false]) {
+      dataset.content.records[0].zona = value;
+      expect((await validateHttp()).body.issues[0].code).toBe('OPTIONAL_TYPE_MISMATCH');
+    }
+  });
+  test('HU02-04: críticos vacíos; ausencia estructural es 409', async () => {
+    for (const field of ['fecha', 'energia_kwh']) {
+      for (const value of [null, '', '  ']) {
+        dataset = reference(); dataset.content.records[0][field] = value;
+        const r = await validateHttp();
+        expect(r.body.status).toBe('rechazado');
+        expect(r.body.issues.map((i: any) => i.code)).toEqual(['CRITICAL_VALUE_MISSING']);
+      }
+      dataset = reference(); delete dataset.content.records[0][field];
+      expect((await validateHttp()).status).toBe(409);
+    }
+  });
+  test('HU02-05: tipos críticos', async () => {
+    for (const field of ['energia_kwh', 'fecha']) {
+      for (const value of (field === 'fecha' ? [1, false] : ['12.5', false])) {
+        dataset = reference(); dataset.content.records[0][field] = value;
+        expect((await validateHttp()).body.issues.map((i: any) => i.code)).toEqual(['CRITICAL_TYPE_MISMATCH']);
+      }
+    }
+  });
+  test('HU02-06: cero y negativos', async () => {
+    for (const value of [0, -12.5]) {
+      dataset.content.records[0].energia_kwh = value;
+      expect((await validateHttp()).body.status).toBe('aprobado');
+    }
+  });
+  test('HU02-07: fechas, offsets y fracciones admitidas', async () => {
+    for (const value of ['2026-09-09T12:00:00Z', '2026-09-09T12:00:00.1Z', '2026-09-09T12:00:00.12Z', '2026-09-09T12:00:00.123Z', '2026-09-09T07:00:00-05:00', '2026-09-09T14:00:00+02:00', '2024-02-29T00:00:00Z', '0099-01-01T00:00:00Z']) {
+      dataset.content.records[0].fecha = value;
+      expect((await validateHttp()).body.status).toBe('aprobado');
+    }
+  });
+  test('HU02-08: fechas inválidas sin corrección', async () => {
+    for (const value of ['2026-09-09T12:00:00', '2026-02-29T00:00:00Z', '2026-04-31T00:00:00Z', ' 2026-09-09T12:00:00Z', '2026-09-09T12:00:00Z ', '2026-09-09T12:00:00.1234Z', '2026-09-09', '2026-09-09T24:00:00Z', '2026-09-09T12:00:00+24:00']) {
+      dataset.content.records[0].fecha = value;
+      expect((await validateHttp()).body.issues.map((i: any) => i.code)).toEqual(['INVALID_TIMESTAMP']);
+    }
+  });
+  test('HU02-09: identidad por instante y primer índice', async () => {
+    dataset.content.records.push({ ...dataset.content.records[0], fecha: '2026-09-09T07:00:00-05:00' }, { ...dataset.content.records[0], fecha: '2026-09-09T12:00:00.000Z' });
+    const r = await validateHttp();
+    expect(r.body.issues.map((i: any) => [i.code, i.recordIndex, i.relatedRecordIndex])).toEqual([
+      ['DUPLICATE_TEMPORAL_IDENTITY', 1, 0], ['DUPLICATE_TEMPORAL_IDENTITY', 2, 0],
+    ]);
+  });
+  test('HU02-10: misma energía, instantes distintos y sin ordenar', async () => {
+    dataset.content.records.push({ ...dataset.content.records[0], fecha: '2026-09-08T12:00:00.001Z' });
+    expect((await validateHttp()).body.status).toBe('aprobado');
+  });
+  test('HU02-11: error y warning conservados', async () => {
+    dataset.content.records[0].energia_kwh = null; dataset.content.records[0].zona = null;
+    expect((await validateHttp()).body).toMatchObject({ status: 'rechazado', errorCount: 1, warningCount: 1, canProceed: false });
+  });
+  test('HU02-12: inexistente', async () => {
+    dataset = null;
+    expect(await validateHttp()).toMatchObject({ status: 404, body: { error: 'DATASET_NOT_FOUND' } });
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+  test('HU02-13: tipo no aplicable', async () => {
+    dataset.dataType = 'consumo';
+    expect(await validateHttp()).toMatchObject({ status: 422, body: { error: 'RULESET_NOT_APPLICABLE' } });
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+  test('HU02-14: declaración incompatible', async () => {
+    dataset.content.columns[0].optional = true;
+    expect((await validateHttp()).status).toBe(422);
+    dataset = reference(); dataset.content.columns.pop(); delete dataset.content.records[0].zona;
+    expect((await validateHttp()).status).toBe(422);
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+  test('HU02-15: corrupción estructural', async () => {
+    for (const content of [null, {}, { columns: [], records: [] }, { ...reference().content, records: [{ fecha: [] }] }]) {
+      dataset.content = content;
+      expect(await validateHttp()).toMatchObject({ status: 409, body: { error: 'DATASET_CONTENT_INCOMPATIBLE' } });
+    }
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+  test('HU02-16: resultado previo intacto', async () => {
+    for (const status of ['aprobado', 'advertencia', 'rechazado']) {
+      dataset.status = status;
+      expect((await validateHttp()).status).toBe(409);
+    }
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+  test('HU02-17: fallos técnicos controlados', async () => {
+    findUnique.mockRejectedValueOnce(new Error('SQL credencial stack'));
+    expect((await validateHttp()).body.error).toBe('DATASET_VALIDATION_FAILED');
+    expect(updateMany).not.toHaveBeenCalled();
+    updateMany.mockRejectedValueOnce(new Error('SQL credencial stack'));
+    const r = await validateHttp();
+    expect(r).toEqual({ status: 500, body: { error: 'DATASET_VALIDATION_FAILED', message: 'No fue posible completar la validación del dataset.' } });
+    expect(dataset.status).toBe('recibido');
+    // Simula excepción inesperada al inspeccionar/evaluar el contenido.
+    dataset.content = new Proxy({}, { get() { throw new Error('detalle interno'); } });
+    expect((await validateHttp()).status).toBe(500);
+  });
+  test('HU02-18: carrera, ganador y conflicto (simulados)', async () => {
+    let reads = 0;
+    let release!: () => void;
+    const barrier = new Promise<void>(resolve => { release = resolve; });
+    findUnique.mockImplementation(async () => {
+      const snapshot = structuredClone(dataset);
+      reads++;
+      if (reads <= 2) { if (reads === 2) release(); await barrier; return snapshot; }
+      return dataset;
+    });
+    updateMany.mockImplementation(async (args: any) => {
+      if (dataset.status !== args.where.status) return { count: 0 };
+      Object.assign(dataset, args.data); return { count: 1 };
+    });
+    const results = await Promise.all([validateHttp(), validateHttp()]);
+    expect(results.map(r => r.status).sort()).toEqual([200, 409]);
+    expect(updateMany).toHaveBeenCalledTimes(2);
+    expect(dataset.status).toBe('aprobado');
+  });
+  test('HU02-19: escritura atómica y contenido intacto', async () => {
+    const before = structuredClone(dataset);
+    const r = await validateHttp();
+    const args = updateMany.mock.calls[0]![0];
+    expect(args.where).toEqual({ id: 1, status: 'recibido' });
+    expect(Object.keys(args.data).sort()).toEqual(['status', 'validatedAt', 'validationReport']);
+    expect(args.data.validationReport.issues).toEqual(r.body.issues);
+    expect(args.data.validatedAt.toISOString()).toBe(r.body.validatedAt);
+    expect(dataset).toEqual(before);
+  });
+  test('HU02-20: sin body y solicitudes inválidas', async () => {
+    expect((await validateHttp()).status).toBe(200);
+    for (const body of ['{}', '{"rulesetId":"otro"}', '{', 'null']) expect((await validateHttp(body)).status).toBe(400);
+    for (const id of ['0', '-1', '1.5', '2147483648', 'abc']) expect((await validateHttp(undefined, id)).status).toBe(400);
+  });
+  test('HU02-21: count cero, desaparición o estado inesperado', async () => {
+    updateMany.mockResolvedValue({ count: 0 });
+    findUnique.mockResolvedValueOnce(dataset).mockResolvedValueOnce(null);
+    expect((await validateHttp()).status).toBe(404);
+    findUnique.mockImplementation(async () => dataset);
+    expect((await validateHttp()).status).toBe(500);
   });
 });

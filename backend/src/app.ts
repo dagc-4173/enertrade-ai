@@ -1,7 +1,10 @@
 import express, { type ErrorRequestHandler } from 'express'
 import {router as authRouter} from "@/controllers/auth.controller";
 import {router as datasetRouter} from "@/controllers/dataset.controller";
+import { validateDatasetRequest } from '@/controllers/dataset-validation.controller';
 const app = express()
+
+app.post('/datasets/:id/validate', validateDatasetRequest)
 
 // Parser exclusivo de HU-01; no se establece todavía un límite de tamaño.
 app.use('/datasets', (req, res, next) => {
