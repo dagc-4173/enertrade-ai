@@ -3,6 +3,7 @@ import {router as authRouter} from "@/controllers/auth.controller";
 import {router as datasetRouter} from "@/controllers/dataset.controller";
 import { validateDatasetRequest } from '@/controllers/dataset-validation.controller';
 import { prepareDatasetRequest } from '@/controllers/dataset-preparation.controller';
+import { router as externalDataRouter } from '@/controllers/external-data.controller';
 const app = express()
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim()
 
@@ -46,6 +47,7 @@ const datasetJsonError: ErrorRequestHandler = (error, _req, res, _next) => {
 };
 app.use('/datasets', datasetJsonError)
 
+app.use('/external-data', externalDataRouter)
 app.use(express.json())
 app.use('/auth', authRouter)
 
