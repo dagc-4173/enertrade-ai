@@ -7,13 +7,14 @@ sin calcular reglas, contadores o canProceed. Los distintivos APROBADO,
 ADVERTENCIA y RECHAZADO son presentación; status conserva el valor original.
 El estado recibido se identifica como Estado al registrar, no estado actual.
 
-## Estado y limitación
+## Estado final
 
-HU-01 y HU-02: implementadas y conectadas en el código React. Probadas mediante
-servicios frontend, HTTP real y PostgreSQL. Prueba de interfaz de extremo a
-extremo: **Pendiente**. La herramienta devolvió apps=[] y browsers=[]; se
-solicitó habilitar un navegador y se proporcionaron instrucciones oficiales.
-No se afirma que los tres escenarios se ejecutaran mediante clics en React.
+HU-01 y HU-02: implementadas, probadas e integradas al frontend. Tras conectar
+Chrome se ejecutaron los tres escenarios mediante el formulario React real,
+sin sustituir HTTP ni Prisma. Los informes mostrados se contrastaron con
+PostgreSQL y coincidieron. Inicialmente no había navegador disponible; esa
+limitación quedó resuelta. El cierre documental y la limpieza se completaron
+el 2026-09-11; las fechas de ejecución de interfaz constan abajo en UTC.
 No se modificó backend ni se integró HU-03.
 
 ## Pruebas HTTP ejecutadas
@@ -62,7 +63,40 @@ memoria `bun run -` en la sesión, que concluyó con código 0.
 - `npm.cmd run lint`: correcto.
 - `npm.cmd run build`: correcto; 37 módulos transformados.
 
-## Evidencia de interfaz pendiente
+## Prueba de interfaz ejecutada en Chrome
+
+Origen: http://localhost:5173; backend configurado en http://localhost:3000.
+Se editaron datos controlados en Dataset en JSON y se pulsaron Registrar dataset
+y Validar calidad. El ID de validación siempre fue el devuelto por HU-01.
+Se observaron Registrando y Validando con controles deshabilitados. No se
+invocaron los endpoints desde consola para estos tres casos.
+
+| Prueba | ID | uploadedAt UTC | validatedAt UTC | Resultado mostrado y confirmado en PostgreSQL |
+| --- | --- | --- | --- | --- |
+| HU02-UI-01 | 19 | 2026-09-10T21:02:16.531Z | 2026-09-10T21:02:28.670Z | aprobado, canProceed=true, 1 registro, 0 errores, 0 advertencias, issues=[] |
+| HU02-UI-02 | 20 | 2026-09-10T21:03:00.824Z | 2026-09-10T21:03:12.515Z | advertencia, canProceed=true, 0 errores, 1 advertencia OPTIONAL_VALUE_MISSING, zona, índice 0 |
+| HU02-UI-03 | 21 | 2026-09-10T21:03:39.738Z | 2026-09-10T21:03:51.840Z | rechazado, canProceed=false, 1 error CRITICAL_TYPE_MISMATCH, energia_kwh, índice 0, 0 advertencias |
+
+Estado de las tres pruebas: **Probado mediante interfaz y PostgreSQL real**.
+Sources exclusivos: TGII-HU02-CHROME-20260910-2102-aprobado,
+TGII-HU02-CHROME-20260910-2102-advertencia y
+TGII-HU02-CHROME-20260910-2102-rechazado.
+Entrada común: generacion; fecha 2026-09-10T12:00:00Z; energia_kwh 12.5;
+zona norte. En advertencia zona=null; en rechazo energia_kwh="12.5".
+Ruleset: generacion_simulada_base, versión 1.0.0.
+
+La consulta posterior comprobó ID/source, estado, validatedAt, todos los issues,
+contadores y ruleset contra la interfaz. El original conservó zona null o la
+energía string cuando correspondía. Tras las aserciones se eliminó cada fila
+usando simultáneamente ID y source: 1 por caso, 3 en total; cero coincidencias
+restantes. No se eliminaron filas ajenas. La salida quedó en la sesión.
+
+Se tomaron capturas de los tres resultados en Chrome y se mostraron en la
+conversación. No se guardaron archivos PNG ni un HAR en el repositorio.
+La prueba de navegador confirma el recorrido React → registro → PostgreSQL →
+validación → resultado React; no se conserva una captura del panel Network.
+
+## Guía para reproducir y conservar evidencia
 
 Abrir exactamente http://localhost:5173. En Inicio:
 1. Ejemplo válido; usar source exclusivo; Registrar dataset; guardar ID y respuesta
@@ -74,5 +108,6 @@ Abrir exactamente http://localhost:5173. En Inicio:
 
 Para cada caso guardar captura React, Network con ambas solicitudes y respuestas,
 ID coincidente, consulta PostgreSQL y registro de limpieza. Conservar también
-estado loading/botón deshabilitado, salida automatizada y commit. Estas capturas
-no se han generado todavía. Validación formal/académica: Pendiente.
+estado loading/botón deshabilitado, salida automatizada y commit. Guardar las
+capturas mostradas en la conversación; para un HAR o capturas de Network será
+necesaria otra ejecución con nuevos IDs. Validación formal/académica: Pendiente.
