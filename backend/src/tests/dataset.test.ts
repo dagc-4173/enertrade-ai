@@ -316,7 +316,19 @@ describe('HU-02: HTTP y concurrencia con Prisma sustituido', () => {
 });
 
 const { Prisma } = await import('@/generated/prisma/client');
+const { DriverAdapterError } = await import('@prisma/driver-adapter-utils');
 const { evaluateGeneration } = await import('@/services/dataset-validation.rules');
+// Estructura capturada en PostgreSQL real: sin meta.target, con Error del adapter.
+const capturedCollision = () => new Prisma.PrismaClientKnownRequestError('private detail', {
+  code: 'P2002', clientVersion: '7.8.0', meta: {
+    modelName: 'PreparedDataset',
+    driverAdapterError: new DriverAdapterError({
+      originalCode: '23505', originalMessage: 'private database detail',
+      kind: 'UniqueConstraintViolation',
+      constraint: { fields: ['"sourceDatasetId"', '"profileId"', '"profileVersion"'] },
+    }),
+  },
+});
 const collision = (target: unknown = ['sourceDatasetId', 'profileId', 'profileVersion']) => new Prisma.PrismaClientKnownRequestError('private database detail', {code: 'P2002', clientVersion: '7.8.0', meta: {modelName: 'PreparedDataset', target}});
 async function prepareHttp(body?: string, id = '1') {
   const response = await fetch(`${url}/datasets/${id}/prepare`, {method: 'POST', ...(body === undefined ? {} : {body, headers: {'Content-Type': 'application/json'}})});
@@ -441,5 +453,49 @@ describe('HU-03: preparación HTTP con Prisma sustituido', () => {
     preparedFind.mockResolvedValueOnce(null);
     preparedCreate.mockRejectedValueOnce(new Prisma.PrismaClientKnownRequestError('private detail', {code:'P2002',clientVersion:'7.8.0',meta:{modelName:'PreparedDataset',driverAdapterError:{cause:{kind:'UniqueConstraintViolation',constraint:{fields:['sourceDatasetId','profileId','profileVersion']}}}}}));
     expect((await prepareHttp()).body).toEqual({...first.body,reused:true});
+  });
+  test('HU03-32: P2002 capturado recupera el ganador sin modificarlo', async () => {
+    const first = await prepareHttp();
+    const before = structuredClone(artifact);
+    preparedFind.mockResolvedValueOnce(null);
+    preparedCreate.mockRejectedValueOnce(capturedCollision());
+    const result = await prepareHttp();
+    expect(result.status).toBe(200);
+    expect(result.body).toEqual({ ...first.body, reused: true });
+    expect(artifact).toEqual(before);
+    expect(preparedFind).toHaveBeenCalledTimes(3);
+  });
+  test('HU03-33: variantes no observadas o restricción ajena fallan cerradas', async () => {
+    const variants = [
+      (e: any) => { e.code = 'P2003'; },
+      (e: any) => { e.meta.modelName = 'EnergyDataset'; },
+      (e: any) => { delete e.meta.modelName; },
+      (e: any) => { e.meta.target = ['id']; },
+      (e: any) => { e.meta.driverAdapterError.cause.originalCode = 'otro'; },
+      (e: any) => { e.meta.driverAdapterError.cause.kind = 'otro'; },
+      (e: any) => { e.meta.driverAdapterError.cause.constraint.fields = ['"id"']; },
+      (e: any) => { e.meta.driverAdapterError.cause.constraint.fields.reverse(); },
+      (e: any) => { e.meta.driverAdapterError.cause.constraint.fields[0] = 'sourceDatasetId'; },
+      (e: any) => { e.meta.driverAdapterError.cause.constraint.fields[0] = ' "sourceDatasetId"'; },
+      (e: any) => { e.meta.driverAdapterError.cause.constraint.fields.push('"extra"'); },
+    ];
+    for (const change of variants) {
+      const error = capturedCollision(); change(error);
+      preparedCreate.mockRejectedValueOnce(error);
+      expect(await prepareHttp()).toEqual({ status: 500, body: {
+        error: 'DATASET_PREPARATION_FAILED', message: 'No fue posible completar la preparación del dataset.',
+      } });
+    }
+    expect(preparedFind).toHaveBeenCalledTimes(variants.length); // Solo lectura inicial, sin recuperar ganador.
+    expect(artifact).toBeNull();
+  });
+  test('HU03-34: P2002 capturado sin ganador conserva fallo seguro', async () => {
+    preparedCreate.mockRejectedValueOnce(capturedCollision());
+    expect(await prepareHttp()).toEqual({ status: 500, body: {
+      error: 'DATASET_PREPARATION_FAILED', message: 'No fue posible completar la preparación del dataset.',
+    } });
+    expect(preparedFind).toHaveBeenCalledTimes(2);
+    expect(artifact).toBeNull();
+    expect(dataset.status).toBe('aprobado');
   });
 });

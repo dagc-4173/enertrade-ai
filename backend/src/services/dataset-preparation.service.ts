@@ -20,12 +20,18 @@ function expectedCollision(error: unknown) {
   const meta = error.meta;
   if (meta?.modelName !== undefined && meta.modelName !== 'PreparedDataset') return false;
   // Prisma 7 con driver adapter puede conservar la restricción en la causa.
-  const adapter = meta?.driverAdapterError as {cause?: {kind?: string; constraint?: {fields?: unknown; index?: unknown}}} | undefined;
+  const adapter = meta?.driverAdapterError as {name?: string; cause?: {kind?: string; originalCode?: string; constraint?: {fields?: unknown; index?: unknown}}} | undefined;
   const cause = adapter?.cause;
   const target = meta?.target ?? (cause?.kind === 'UniqueConstraintViolation' ? cause.constraint?.fields ?? cause.constraint?.index : undefined);
   const fields = ['sourceDatasetId', 'profileId', 'profileVersion'];
-  return Array.isArray(target) ? target.length === 3 && fields.every((field, i) => target[i] === field)
-    : target === 'PreparedDataset_sourceDatasetId_profileId_profileVersion_key';
+  if (!Array.isArray(target)) return target === 'PreparedDataset_sourceDatasetId_profileId_profileVersion_key';
+  if (target.length !== fields.length) return false;
+  if (fields.every((field, i) => target[i] === field)) return true;
+  // Forma capturada en Prisma 7.8 + adapter-pg: identificadores con comillas.
+  // No normalizar otros formatos, restricciones ni metadatos ambiguos.
+  return meta?.modelName === 'PreparedDataset' && meta.target === undefined &&
+    adapter?.name === 'DriverAdapterError' && cause?.kind === 'UniqueConstraintViolation' &&
+    cause.originalCode === '23505' && fields.every((field, i) => target[i] === `"${field}"`);
 }
 function response(artifact: PreparedDataset, reused: boolean) {
   if (!isPlainObject(artifact.content) || !Array.isArray(artifact.content.records)) throw new Error('Invalid stored artifact');
