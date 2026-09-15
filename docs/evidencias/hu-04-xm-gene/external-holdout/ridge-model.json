@@ -1,0 +1,40 @@
+{
+  "modelType": "Ridge",
+  "modelVersion": "experimental-external-holdout-0.1.0",
+  "alpha": 0.01,
+  "features": [
+    "energy_same_period_previous_day",
+    "energy_same_period_7_days_before",
+    "energy_period24_previous_day",
+    "sin_2pi_hour_minus1_over24",
+    "cos_2pi_hour_minus1_over24"
+  ],
+  "coefficients": [
+    154122.1447154146,
+    656037.8840273399,
+    133591.37052931153,
+    -208605.5216076294,
+    -150922.3353898873
+  ],
+  "intercept": 9542063.662018074,
+  "scaling": {
+    "method": "z-score population ddof=0; fitted only on usable pre-holdout rows",
+    "means": [
+      9534502.897811245,
+      9509542.553534137,
+      9095088.299518071,
+      -1.3401022080638637e-17,
+      -5.598791695843364e-17
+    ],
+    "standardDeviations": [
+      1125490.3452676428,
+      1147576.1378026858,
+      360120.95400626154,
+      0.7071067811865476,
+      0.7071067811865476
+    ]
+  },
+  "trainedRange": "2024-01-08..2024-03-30",
+  "trainingRows": 1992,
+  "snapshotSha256": "4c91a20048d90d082f8eec6c770f4bd042e479d70df7ca020e8dd3a6b3ba0177"
+}

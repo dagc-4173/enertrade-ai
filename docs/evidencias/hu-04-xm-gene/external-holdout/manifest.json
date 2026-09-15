@@ -1,0 +1,42 @@
+{
+  "provider": "XM/SINERGOX",
+  "dataset": "Gene",
+  "unit": "kWh",
+  "range": [
+    "2024-03-31",
+    "2024-04-29"
+  ],
+  "energyDatasetId": 36,
+  "preparedDatasetId": 17,
+  "http": {
+    "import": 201,
+    "validate": 200,
+    "prepare": 200
+  },
+  "validation": {
+    "ruleset": "xm_gene_base@1.0.0",
+    "status": "aprobado",
+    "errorCount": 0,
+    "warningCount": 0,
+    "canProceed": true
+  },
+  "profile": "xm_gene_preparacion_base@1.0.0",
+  "reused": false,
+  "coverage": {
+    "observations": 720,
+    "completeDays": 30,
+    "missingPeriods": 0,
+    "duplicates": 0,
+    "conflicts": 0,
+    "finiteValues": true
+  },
+  "snapshot": {
+    "file": "xm-gene-2024-03-31_2024-04-29.csv",
+    "bytes": 25109,
+    "sha256": "9fdb41321a46f2b027b3578ebb0eca9894100653644bff6401ae901aeced9182",
+    "encoding": "UTF-8 without BOM",
+    "lineEnding": "LF",
+    "finalNewline": true
+  },
+  "retainedInPostgreSQL": true
+}
