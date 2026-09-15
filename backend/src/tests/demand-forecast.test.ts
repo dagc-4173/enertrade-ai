@@ -1,0 +1,51 @@
+import {test, expect, mock, afterAll, beforeEach} from 'bun:test';
+import express from 'express';
+import artifact from '@/models/xm-demandasin-ridge/1.0.0/model.json';
+import fixture from './fixtures/demand-forecast-parity.json';
+import {readFileSync} from 'node:fs';
+import {createModelLoader, loadModel, validateModel} from '@/models/xm-demandasin-ridge/model-loader';
+import {previousDate} from '@/services/forecast.contract';
+const writes = mock();
+mock.module('@/lib/prisma', () => ({prisma:{preparedDataset:{findUnique:mock(),create:writes},energyDataset:{create:writes,updateMany:writes,findUnique:mock()}}}));
+const {createDemandForecastService} = await import('@/services/demand-forecast.service');
+const {createForecastRouter} = await import('@/controllers/forecast.controller');
+const base = () => ({id:33,sourceDatasetId:52,profileId:'xm_demandasin_preparacion_base',profileVersion:'1.0.0',sourceRulesetId:'xm_demandasin_base',sourceRulesetVersion:'1.0.0',content:{variables:{minimum:[{name:'fecha_xm',type:'string',representation:'YYYY-MM-DD'},{name:'demanda_kwh',type:'number',unit:'kWh'}]},records:structuredClone(fixture.cases[0]!.records)}});
+let prepared: ReturnType<typeof base> | null = base();
+let loader = loadModel;
+const read = mock(async (_id:number) => prepared);
+const service = createDemandForecastService(read, () => loader());
+const app = express(); app.use('/forecasts',createForecastRouter(undefined,undefined,service));
+const server = app.listen(0,'127.0.0.1');
+await new Promise<void>(r=>server.listening?r():server.once('listening',r));
+const address=server.address(); if(!address||typeof address==='string')throw Error('listener');
+const url=`http://127.0.0.1:${address.port}/forecasts/demand`;
+afterAll(()=>new Promise<void>(r=>server.close(()=>r())));
+beforeEach(()=>{prepared=base();loader=loadModel;read.mockClear();writes.mockClear();});
+const input={preparedDatasetId:33,targetDate:'2024-09-29'};
+async function post(body:unknown=input, type='application/json',raw=false){const r=await fetch(url,{method:'POST',headers:{'Content-Type':type},body:raw?String(body):JSON.stringify(body)});return {status:r.status,body:await r.json() as any};}
+
+test.each(fixture.cases)('HU06 parity calendar $targetDate',async f=>{
+ prepared!.content.records=structuredClone(f.records);const a=await post({...input,targetDate:f.targetDate});expect(a.status).toBe(200);expect(Math.abs(a.body.prediction.demanda_kwh-f.prediction)).toBeLessThan(1e-7);expect(await post({...input,targetDate:f.targetDate})).toEqual(a);expect(writes).not.toHaveBeenCalled();
+ expect(a.body).toEqual({status:'available',preparedDatasetId:33,sourceDatasetId:52,forecastType:'aggregate_demand_proxy',target:'demanda_kwh',unit:'kWh',horizonDays:1,modelId:'xm-demandasin-ridge',modelVersion:'1.0.0',targetDate:f.targetDate,prediction:{demanda_kwh:a.body.prediction.demanda_kwh},confidence:null,confidenceStatus:'not_defined'});
+});
+test.each([{},null,{...input,alpha:100},{...input,preparedDatasetId:0},{...input,preparedDatasetId:2147483648},{...input,preparedDatasetId:1.5},{...input,preparedDatasetId:'33'},{...input,targetDate:'2024-02-30'},{...input,targetDate:'2024-9-29'},{...input,targetDate:'2024-09-29T00:00:00Z'}])('invalid request %j',async value=>{expect((await post(value)).status).toBe(400);expect(read).not.toHaveBeenCalled();});
+test('parser envelopes',async()=>{expect((await post('{','application/json',true)).status).toBe(400);expect((await post(input,'text/plain')).status).toBe(415);expect((await post(' '.repeat(17000),'application/json',true)).status).toBe(413);});
+test('404',async()=>{prepared=null;expect((await post()).body.error).toBe('PREPARED_DATASET_NOT_FOUND');});
+test.each(['profileId','profileVersion','sourceRulesetId','sourceRulesetVersion'] as const)('profile %s',async k=>{prepared![k]='bad';expect((await post()).body.error).toBe('FORECAST_PROFILE_NOT_APPLICABLE');});
+test.each(['2024-07-30','2024-07-29'])('training boundary %s',async targetDate=>{expect((await post({...input,targetDate})).body.error).toBe('FORECAST_DATE_NOT_SUPPORTED');expect(read).not.toHaveBeenCalled();});
+test.each([0,1,2,3])('missing lag index %s',async i=>{prepared!.content.records.splice(i,1);expect(await post()).toEqual({status:422,body:{status:'unavailable',error:'FORECAST_DATA_INSUFFICIENT',message:'No hay datos hist\u00f3ricos suficientes para pronosticar el d\u00eda solicitado.'}});});
+test('duplicate',async()=>{prepared!.content.records.push(prepared!.content.records[0]!);expect((await post()).body.error).toBe('PREPARED_DATASET_INCONSISTENT');});
+test.each([NaN,Infinity,null,'1',{}])('corrupt demand %j',async v=>{(prepared!.content.records[0] as any).demanda_kwh=v;expect((await post()).status).toBe(409);});
+test('corrupt date and variables',async()=>{prepared!.content.records[0]!.fecha_xm='2024-02-30';expect((await post()).status).toBe(409);prepared=base();prepared.content.variables.minimum[1]!.unit='MW';expect((await post()).status).toBe(409);});
+test('target and future cannot leak',async()=>{const original=await post();prepared!.content.records.push({fecha_xm:input.targetDate,demanda_kwh:1e20},{fecha_xm:'2024-09-30',demanda_kwh:-99});expect(await post()).toEqual(original);prepared!.content.records.at(-1)!.demanda_kwh=999;expect(await post()).toEqual(original);});
+test('empty history unavailable',async()=>{prepared!.content.records=[];expect((await post()).body.error).toBe('FORECAST_DATA_INSUFFICIENT');});
+test('safe model/read errors',async()=>{loader=createModelLoader(()=>{throw Error('secret');});expect((await post()).body.error).toBe('FORECAST_MODEL_INCOMPATIBLE');loader=loadModel;read.mockRejectedValueOnce(Error('secret'));const r=await post();expect(r.status).toBe(500);expect(JSON.stringify(r)).not.toContain('secret');});
+test('negative not clamped and nonfinite fails',async()=>{const m=structuredClone(artifact);m.coefficients.fill(0);m.intercept=-1;loader=()=>validateModel(m);expect((await post()).body.prediction.demanda_kwh).toBe(-1);m.coefficients[0]=Number.MAX_VALUE;m.scaler.standardDeviations[0]=Number.MIN_VALUE;expect((await post()).body.error).toBe('FORECAST_FAILED');});
+test('cache success/failure and deep freeze',()=>{const r=mock(()=>JSON.stringify(artifact));const l=createModelLoader(r);expect(l()).toBe(l());expect(r).toHaveBeenCalledTimes(1);expect(Object.isFrozen(l().scaler.means)).toBe(true);const bad=mock(()=>'{');const fail=createModelLoader(bad);expect(fail).toThrow();expect(fail).toThrow();expect(bad).toHaveBeenCalledTimes(1);});
+test.each(['modelId','modelVersion','modelType','alpha','weekdayConvention','compatibleProfile','compatibleRuleset','target','unit','forecastType','horizonDays','effectiveTrainingRows','trainingSnapshotSha256','externalHoldoutSnapshotSha256'])('invalid identity %s',k=>{const m:any=structuredClone(artifact);m[k]='bad';expect(()=>validateModel(m)).toThrow();});
+test.each(['orderedFeatures','scaler','coefficients','intercept','trainingSourceRange','effectiveTrainingRange','externalHoldoutRange','confidence','evaluationSummary'])('missing structure %s',k=>{const m:any=structuredClone(artifact);delete m[k];expect(()=>validateModel(m)).toThrow();});
+test('invalid numeric/summary',()=>{for(const change of [(m:any)=>m.scaler.standardDeviations[0]=0,(m:any)=>m.scaler.means[0]=Infinity,(m:any)=>m.scaler.ddof=1,(m:any)=>m.orderedFeatures.reverse(),(m:any)=>m.confidence.value=0.9,(m:any)=>m.evaluationSummary.metrics.Ridge.WAPE.value=999,(m:any)=>m.evaluationSummary.criterionResults.zeroModelUnavailable=false]){const m=structuredClone(artifact);change(m);expect(()=>validateModel(m)).toThrow();}});
+test('promoted parameters exactly match experiment',()=>{const e=JSON.parse(readFileSync(new URL('../../../docs/evidencias/hu-06-demandasin/external-holdout/ridge-model.json',import.meta.url),'utf8'));for(const k of ['coefficients','intercept','orderedFeatures','alpha'])expect((artifact as any)[k]).toEqual(e[k]);expect(artifact.scaler.means).toEqual(e.scaler.means);expect(artifact.scaler.standardDeviations).toEqual(e.scaler.standardDeviations);expect(artifact.evaluationSummary.metrics).toEqual(e.metrics);});
+test('dependency boundary read only',()=>{const s=readFileSync(new URL('../services/demand-forecast.service.ts',import.meta.url),'utf8');expect(s).not.toMatch(/fetch\s*\(|XmProvider|prepareDataset|\bfit\s*\(|\.(create|update|delete|upsert)\s*\(/);});
+
+test('array request rejected',async()=>{expect((await post([])).status).toBe(400);expect(read).not.toHaveBeenCalled();});

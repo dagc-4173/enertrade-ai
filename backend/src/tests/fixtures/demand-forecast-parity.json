@@ -1,0 +1,130 @@
+{
+  "origin": "Independent Python stdlib math.fsum; actual lag values from prepared 33 snapshot, calendar-remapped for boundary fixtures",
+  "absoluteToleranceKwh": 1e-07,
+  "cases": [
+    {
+      "targetDate": "2024-09-29",
+      "records": [
+        {
+          "fecha_xm": "2024-09-28",
+          "demanda_kwh": 221450778.48
+        },
+        {
+          "fecha_xm": "2024-09-22",
+          "demanda_kwh": 202838592.13
+        },
+        {
+          "fecha_xm": "2024-09-15",
+          "demanda_kwh": 216322586.45
+        },
+        {
+          "fecha_xm": "2024-09-01",
+          "demanda_kwh": 200065238.5
+        }
+      ],
+      "weekday": 6,
+      "features": [
+        221450778.48,
+        202838592.13,
+        216322586.45,
+        200065238.5,
+        -0.7818314824680299,
+        0.6234898018587334
+      ],
+      "prediction": 209373807.41127455
+    },
+    {
+      "targetDate": "2024-09-30",
+      "records": [
+        {
+          "fecha_xm": "2024-09-29",
+          "demanda_kwh": 221450778.48
+        },
+        {
+          "fecha_xm": "2024-09-23",
+          "demanda_kwh": 202838592.13
+        },
+        {
+          "fecha_xm": "2024-09-16",
+          "demanda_kwh": 216322586.45
+        },
+        {
+          "fecha_xm": "2024-09-02",
+          "demanda_kwh": 200065238.5
+        }
+      ],
+      "weekday": 0,
+      "features": [
+        221450778.48,
+        202838592.13,
+        216322586.45,
+        200065238.5,
+        0.0,
+        1.0
+      ],
+      "prediction": 211846948.45286947
+    },
+    {
+      "targetDate": "2025-01-01",
+      "records": [
+        {
+          "fecha_xm": "2024-12-31",
+          "demanda_kwh": 221450778.48
+        },
+        {
+          "fecha_xm": "2024-12-25",
+          "demanda_kwh": 202838592.13
+        },
+        {
+          "fecha_xm": "2024-12-18",
+          "demanda_kwh": 216322586.45
+        },
+        {
+          "fecha_xm": "2024-12-04",
+          "demanda_kwh": 200065238.5
+        }
+      ],
+      "weekday": 2,
+      "features": [
+        221450778.48,
+        202838592.13,
+        216322586.45,
+        200065238.5,
+        0.9749279121818236,
+        -0.22252093395631434
+      ],
+      "prediction": 215057207.04190382
+    },
+    {
+      "targetDate": "2028-03-01",
+      "records": [
+        {
+          "fecha_xm": "2028-02-29",
+          "demanda_kwh": 221450778.48
+        },
+        {
+          "fecha_xm": "2028-02-23",
+          "demanda_kwh": 202838592.13
+        },
+        {
+          "fecha_xm": "2028-02-16",
+          "demanda_kwh": 216322586.45
+        },
+        {
+          "fecha_xm": "2028-02-02",
+          "demanda_kwh": 200065238.5
+        }
+      ],
+      "weekday": 2,
+      "features": [
+        221450778.48,
+        202838592.13,
+        216322586.45,
+        200065238.5,
+        0.9749279121818236,
+        -0.22252093395631434
+      ],
+      "prediction": 215057207.04190382
+    }
+  ]
+}
