@@ -1,0 +1,39 @@
+{
+  "modelType": "Ridge",
+  "modelVersion": "experimental-0.1.0",
+  "alpha": 0.01,
+  "features": [
+    "energy_same_period_previous_day",
+    "energy_same_period_7_days_before",
+    "energy_period24_previous_day",
+    "sin_2pi_hour_minus1_over24",
+    "cos_2pi_hour_minus1_over24"
+  ],
+  "coefficients": [
+    -17652.609854017493,
+    718835.0573670994,
+    161998.70504465618,
+    -269362.4898901153,
+    -224797.52473552682
+  ],
+  "intercept": 9468452.497248428,
+  "scaling": {
+    "method": "z-score; population standard deviation ddof=0; fitted only on usable TRAIN rows",
+    "means": [
+      9435405.450212264,
+      9354893.244300315,
+      8969031.337358491,
+      -1.3401022080638637e-17,
+      -5.598791695843364e-17
+    ],
+    "standardDeviations": [
+      1097352.5863783725,
+      1126690.6115279328,
+      294323.00826671877,
+      0.7071067811865476,
+      0.7071067811865476
+    ]
+  },
+  "trainedRange": "2024-01-08..2024-02-29",
+  "snapshotSha256": "4c91a20048d90d082f8eec6c770f4bd042e479d70df7ca020e8dd3a6b3ba0177"
+}

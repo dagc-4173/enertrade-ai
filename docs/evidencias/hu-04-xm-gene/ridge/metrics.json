@@ -1,0 +1,1707 @@
+{
+  "experiment": "experimental Ridge; no HU-04 implementation",
+  "runtime": {
+    "python": "3.14.4",
+    "implementation": "CPython",
+    "dependencies": "Python standard library only"
+  },
+  "snapshotSha256": "4c91a20048d90d082f8eec6c770f4bd042e479d70df7ca020e8dd3a6b3ba0177",
+  "partitions": {
+    "train": "2024-01-01..2024-02-29",
+    "validation": "2024-03-01..2024-03-15",
+    "test": "2024-03-16..2024-03-30"
+  },
+  "protocol": {
+    "origin": "Daily before period 1",
+    "horizonPeriods": 24,
+    "availability": "Full previous day assumed available; XM publication latency not verified",
+    "objective": "sum squared residuals + alpha * sum squared standardized coefficients; intercept not penalized",
+    "features": [
+      "energy_same_period_previous_day",
+      "energy_same_period_7_days_before",
+      "energy_period24_previous_day",
+      "sin_2pi_hour_minus1_over24",
+      "cos_2pi_hour_minus1_over24"
+    ],
+    "selection": "minimum validation MAE, smaller alpha on tie",
+    "clearImprovementThreshold": 0.05,
+    "formulas": {
+      "MAE": "mean(abs(prediction-actual))",
+      "RMSE": "sqrt(mean((prediction-actual)^2))",
+      "bias": "mean(prediction-actual)"
+    }
+  },
+  "training": {
+    "used": 1272,
+    "unavailable": 168,
+    "reason": "First 7 days lack lag7 within frozen snapshot",
+    "effectiveRange": "2024-01-08..2024-02-29"
+  },
+  "validation": [
+    {
+      "alpha": 0.01,
+      "normalEquationMaxAbsoluteResidual": 1.1920928955078125e-07,
+      "evaluable": 360,
+      "unavailable": 0,
+      "MAE": 204670.3900549433,
+      "RMSE": 267049.2902848769,
+      "bias": -1651.153888572944,
+      "byHour": [
+        {
+          "hour": 1,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 122908.04947351875,
+          "RMSE": 157087.39720493712,
+          "bias": 58635.958509665106
+        },
+        {
+          "hour": 2,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 140004.79777771005,
+          "RMSE": 174939.0425002526,
+          "bias": 96951.5626828568
+        },
+        {
+          "hour": 3,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 146009.94190254447,
+          "RMSE": 180947.99545070488,
+          "bias": 129476.56674324225
+        },
+        {
+          "hour": 4,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 172503.85625052018,
+          "RMSE": 201561.39780810045,
+          "bias": 151067.59443328355
+        },
+        {
+          "hour": 5,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 156927.55747845277,
+          "RMSE": 181562.15861431736,
+          "bias": 128706.80677581746
+        },
+        {
+          "hour": 6,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 135070.94193408178,
+          "RMSE": 173179.39102810997,
+          "bias": 26817.44661657239
+        },
+        {
+          "hour": 7,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 200809.56918074537,
+          "RMSE": 233878.0727512161,
+          "bias": 72495.90282067755
+        },
+        {
+          "hour": 8,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 196316.38251247915,
+          "RMSE": 242430.38846969482,
+          "bias": 5635.0113987471905
+        },
+        {
+          "hour": 9,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 215281.36831736812,
+          "RMSE": 277765.52750967396,
+          "bias": -68991.47435994397
+        },
+        {
+          "hour": 10,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 193373.04743553797,
+          "RMSE": 268481.9030364561,
+          "bias": -84423.05869389101
+        },
+        {
+          "hour": 11,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 185690.6703172423,
+          "RMSE": 256336.76711942477,
+          "bias": -106922.57574326024
+        },
+        {
+          "hour": 12,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 188602.15599142908,
+          "RMSE": 264559.02143239474,
+          "bias": -76559.39334125271
+        },
+        {
+          "hour": 13,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 201135.79977298615,
+          "RMSE": 254417.00132256912,
+          "bias": 63379.28821888678
+        },
+        {
+          "hour": 14,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 208233.67407697465,
+          "RMSE": 275815.24486688507,
+          "bias": 93445.33607955376
+        },
+        {
+          "hour": 15,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 218295.1265207549,
+          "RMSE": 306938.434252674,
+          "bias": 84218.44004699339
+        },
+        {
+          "hour": 16,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 230970.8808553728,
+          "RMSE": 314302.9858004055,
+          "bias": 113108.0572149627
+        },
+        {
+          "hour": 17,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 250453.89392323408,
+          "RMSE": 328690.5213934486,
+          "bias": 150913.5558069218
+        },
+        {
+          "hour": 18,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 266959.6065469943,
+          "RMSE": 325086.8548232343,
+          "bias": 218374.00136691506
+        },
+        {
+          "hour": 19,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 213607.37561972303,
+          "RMSE": 248844.44178002496,
+          "bias": -69892.24348068722
+        },
+        {
+          "hour": 20,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 295284.95222600683,
+          "RMSE": 355486.59089821135,
+          "bias": -261194.13385887034
+        },
+        {
+          "hour": 21,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 322251.65351455275,
+          "RMSE": 396306.77615251124,
+          "bias": -310708.5120913452
+        },
+        {
+          "hour": 22,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 282072.3133827152,
+          "RMSE": 339081.6027949589,
+          "bias": -257093.60526132758
+        },
+        {
+          "hour": 23,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 202559.75993354656,
+          "RMSE": 268993.82041765266,
+          "bias": -157671.49308610396
+        },
+        {
+          "hour": 24,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 166765.986374148,
+          "RMSE": 203344.47761181675,
+          "bias": -39396.732124164206
+        }
+      ]
+    },
+    {
+      "alpha": 0.1,
+      "normalEquationMaxAbsoluteResidual": 0.0,
+      "evaluable": 360,
+      "unavailable": 0,
+      "MAE": 204681.3122171584,
+      "RMSE": 267077.73271865136,
+      "bias": -1715.665612934134,
+      "byHour": [
+        {
+          "hour": 1,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 122870.76610602556,
+          "RMSE": 157013.55769374064,
+          "bias": 58578.396765907295
+        },
+        {
+          "hour": 2,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 139965.593430724,
+          "RMSE": 174856.16423041737,
+          "bias": 96892.95188357073
+        },
+        {
+          "hour": 3,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 145944.23372742292,
+          "RMSE": 180865.3233623652,
+          "bias": 129415.91144880398
+        },
+        {
+          "hour": 4,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 172451.24076723505,
+          "RMSE": 201478.71797961908,
+          "bias": 151004.9256345544
+        },
+        {
+          "hour": 5,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 156871.7972562906,
+          "RMSE": 181504.9878558781,
+          "bias": 128648.86019493881
+        },
+        {
+          "hour": 6,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 135073.9478279756,
+          "RMSE": 173213.9760298735,
+          "bias": 26777.16689025002
+        },
+        {
+          "hour": 7,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 200825.81969973413,
+          "RMSE": 233928.71168044556,
+          "bias": 72442.5020984495
+        },
+        {
+          "hour": 8,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 196378.59370652324,
+          "RMSE": 242518.333093991,
+          "bias": 5588.133873131747
+        },
+        {
+          "hour": 9,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 215353.02341177556,
+          "RMSE": 277885.2868905261,
+          "bias": -69029.25251286433
+        },
+        {
+          "hour": 10,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 193476.80608778683,
+          "RMSE": 268613.83615675935,
+          "bias": -84467.42219223591
+        },
+        {
+          "hour": 11,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 185775.7257664329,
+          "RMSE": 256454.6999990571,
+          "bias": -106972.19751746493
+        },
+        {
+          "hour": 12,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 188701.7176507571,
+          "RMSE": 264678.7071165759,
+          "bias": -76622.32044295681
+        },
+        {
+          "hour": 13,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 201141.4126644872,
+          "RMSE": 254474.3296567365,
+          "bias": 63282.74902756015
+        },
+        {
+          "hour": 14,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 208246.7293470281,
+          "RMSE": 275859.04763386096,
+          "bias": 93336.90829176779
+        },
+        {
+          "hour": 15,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 218327.87702917022,
+          "RMSE": 307001.924471265,
+          "bias": 84107.88483455293
+        },
+        {
+          "hour": 16,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 231000.1302427272,
+          "RMSE": 314356.8997177664,
+          "bias": 112989.48482558652
+        },
+        {
+          "hour": 17,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 250476.59320601026,
+          "RMSE": 328715.3378917402,
+          "bias": 150788.1514557411
+        },
+        {
+          "hour": 18,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 266877.2159493034,
+          "RMSE": 325046.2526983599,
+          "bias": 218238.29158406158
+        },
+        {
+          "hour": 19,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 213641.3700700658,
+          "RMSE": 248885.06325053162,
+          "bias": -69968.76608854011
+        },
+        {
+          "hour": 20,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 295276.1386762441,
+          "RMSE": 355510.44978675595,
+          "bias": -261226.3179972568
+        },
+        {
+          "hour": 21,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 322250.84436375066,
+          "RMSE": 396317.25182316074,
+          "bias": -310723.91545992036
+        },
+        {
+          "hour": 22,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 282085.6100125268,
+          "RMSE": 339087.4750181311,
+          "bias": -257112.00508988675
+        },
+        {
+          "hour": 23,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 202590.59437532476,
+          "RMSE": 268992.7368248131,
+          "bias": -157702.01515440468
+        },
+        {
+          "hour": 24,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 166747.71183647998,
+          "RMSE": 203335.19824062806,
+          "bias": -39444.08106376517
+        }
+      ]
+    },
+    {
+      "alpha": 1,
+      "normalEquationMaxAbsoluteResidual": 2.384185791015625e-07,
+      "evaluable": 360,
+      "unavailable": 0,
+      "MAE": 204791.04424633732,
+      "RMSE": 267365.1769547099,
+      "bias": -2356.554603925096,
+      "byHour": [
+        {
+          "hour": 1,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 122501.3185065488,
+          "RMSE": 156283.80484352665,
+          "bias": 58008.75311193317
+        },
+        {
+          "hour": 2,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 139577.8006554532,
+          "RMSE": 174036.5977011468,
+          "bias": 96313.4890685924
+        },
+        {
+          "hour": 3,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 145294.34463484093,
+          "RMSE": 180048.39743123352,
+          "bias": 128816.60300728958
+        },
+        {
+          "hour": 4,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 171931.1581994631,
+          "RMSE": 200661.69034887452,
+          "bias": 150385.82821887798
+        },
+        {
+          "hour": 5,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 156320.42083555268,
+          "RMSE": 180941.56936354682,
+          "bias": 128076.13679025316
+        },
+        {
+          "hour": 6,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 135104.34150286292,
+          "RMSE": 173560.80257634862,
+          "bias": 26378.24762456243
+        },
+        {
+          "hour": 7,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 200987.86610019224,
+          "RMSE": 234435.38474739043,
+          "bias": 71913.47287597302
+        },
+        {
+          "hour": 8,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 196996.99920111857,
+          "RMSE": 243394.69638353505,
+          "bias": 5122.768093447759
+        },
+        {
+          "hour": 9,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 216065.4094207539,
+          "RMSE": 279077.39839126833,
+          "bias": -69405.66366494285
+        },
+        {
+          "hour": 10,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 194509.14022221987,
+          "RMSE": 269927.1634120833,
+          "bias": -84909.52693023706
+        },
+        {
+          "hour": 11,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 186622.08730420694,
+          "RMSE": 257629.6416006339,
+          "bias": -107467.05103973373
+        },
+        {
+          "hour": 12,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 189692.4760217129,
+          "RMSE": 265871.12302380055,
+          "bias": -77249.5148006736
+        },
+        {
+          "hour": 13,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 201196.8864289069,
+          "RMSE": 255049.16325775167,
+          "bias": 62323.02891057941
+        },
+        {
+          "hour": 14,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 208376.60108049674,
+          "RMSE": 276299.9810506897,
+          "bias": 92259.39195293548
+        },
+        {
+          "hour": 15,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 218653.70836698412,
+          "RMSE": 307638.6641805367,
+          "bias": 83009.08878924375
+        },
+        {
+          "hour": 16,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 231291.0371088126,
+          "RMSE": 314898.9997571104,
+          "bias": 111811.4217826693
+        },
+        {
+          "hour": 17,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 250702.6674832,
+          "RMSE": 328968.4810104409,
+          "bias": 149542.9750541425
+        },
+        {
+          "hour": 18,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 266059.9476947126,
+          "RMSE": 324649.5360823235,
+          "bias": 216891.82092114538
+        },
+        {
+          "hour": 19,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 213979.60322534194,
+          "RMSE": 249292.1277516181,
+          "bias": -70730.26805557187
+        },
+        {
+          "hour": 20,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 295190.66030871397,
+          "RMSE": 355751.4980596812,
+          "bias": -261549.6478227228
+        },
+        {
+          "hour": 21,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 322245.7960845222,
+          "RMSE": 396425.3215512945,
+          "bias": -310880.7447463537
+        },
+        {
+          "hour": 22,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 282220.47666649026,
+          "RMSE": 339148.9824726242,
+          "bias": -257297.63009728864
+        },
+        {
+          "hour": 23,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 202898.23160011793,
+          "RMSE": 268984.09410336526,
+          "bias": -158006.44960145006
+        },
+        {
+          "hour": 24,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 166566.0832588705,
+          "RMSE": 203244.79932008067,
+          "bias": -39913.839936873315
+        }
+      ]
+    },
+    {
+      "alpha": 10,
+      "normalEquationMaxAbsoluteResidual": 1.1920928955078125e-07,
+      "evaluable": 360,
+      "unavailable": 0,
+      "MAE": 206086.48116446583,
+      "RMSE": 270495.144063789,
+      "bias": -8372.661455441119,
+      "byHour": [
+        {
+          "hour": 1,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 120658.8736574738,
+          "RMSE": 149779.79509068964,
+          "bias": 52865.17923675813
+        },
+        {
+          "hour": 2,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 136093.3770496544,
+          "RMSE": 166690.38935051305,
+          "bias": 91133.6865014879
+        },
+        {
+          "hour": 3,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 139461.0765028018,
+          "RMSE": 172783.27338128776,
+          "bias": 123493.63923008474
+        },
+        {
+          "hour": 4,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 167292.06158526472,
+          "RMSE": 193393.54385216912,
+          "bias": 144897.01367293365
+        },
+        {
+          "hour": 5,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 151383.5559537545,
+          "RMSE": 176068.1763226294,
+          "bias": 122973.70202853544
+        },
+        {
+          "hour": 6,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 135439.19919858687,
+          "RMSE": 177099.35867727257,
+          "bias": 22751.799226362382
+        },
+        {
+          "hour": 7,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 202565.36772095307,
+          "RMSE": 239505.8935262196,
+          "bias": 67086.74535711526
+        },
+        {
+          "hour": 8,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 202834.57023723944,
+          "RMSE": 251852.77654257967,
+          "bias": 788.7817152286569
+        },
+        {
+          "hour": 9,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 222799.22127498605,
+          "RMSE": 290472.34277253796,
+          "bias": -73037.19023260655
+        },
+        {
+          "hour": 10,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 204338.56904386717,
+          "RMSE": 282483.08715528704,
+          "bias": -89184.01935167449
+        },
+        {
+          "hour": 11,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 195783.8347180318,
+          "RMSE": 268949.9493998073,
+          "bias": -112284.73823626353
+        },
+        {
+          "hour": 12,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 199143.4735783813,
+          "RMSE": 277361.99604977726,
+          "bias": -83325.49064531251
+        },
+        {
+          "hour": 13,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 201688.5323730774,
+          "RMSE": 260908.28440978934,
+          "bias": 53250.85842910235
+        },
+        {
+          "hour": 14,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 209608.6606322234,
+          "RMSE": 280945.5731865499,
+          "bias": 82108.54320336605
+        },
+        {
+          "hour": 15,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 222818.20172758884,
+          "RMSE": 314140.5480460939,
+          "bias": 72644.48186358648
+        },
+        {
+          "hour": 16,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 234048.06567300795,
+          "RMSE": 320556.10457795294,
+          "bias": 100736.80466725864
+        },
+        {
+          "hour": 17,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 252872.91653303182,
+          "RMSE": 331925.18905988184,
+          "bias": 137907.26343544497
+        },
+        {
+          "hour": 18,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 258495.96516624576,
+          "RMSE": 321516.9378639284,
+          "bias": 204404.2642516731
+        },
+        {
+          "hour": 19,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 217201.0934812998,
+          "RMSE": 253428.56531248192,
+          "bias": -78000.98576953312
+        },
+        {
+          "hour": 20,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 294579.79958376224,
+          "RMSE": 358382.7739049788,
+          "bias": -264915.8313781839
+        },
+        {
+          "hour": 21,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 322472.0457948043,
+          "RMSE": 397805.7401237261,
+          "bias": -312701.4824801521
+        },
+        {
+          "hour": 22,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 283739.1953966243,
+          "RMSE": 340015.7268395613,
+          "bias": -259298.67414361486
+        },
+        {
+          "hour": 23,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 205904.62957667385,
+          "RMSE": 269095.19102456793,
+          "bias": -160973.9751293781
+        },
+        {
+          "hour": 24,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 164853.26148784545,
+          "RMSE": 202554.56916131105,
+          "bias": -44264.25038280549
+        }
+      ]
+    },
+    {
+      "alpha": 100,
+      "normalEquationMaxAbsoluteResidual": 1.1920928955078125e-07,
+      "evaluable": 360,
+      "unavailable": 0,
+      "MAE": 228444.42277694718,
+      "RMSE": 307118.6582998716,
+      "bias": -46094.31667630652,
+      "byHour": [
+        {
+          "hour": 1,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 112531.71046594766,
+          "RMSE": 125233.03637812339,
+          "bias": 32020.822806924458
+        },
+        {
+          "hour": 2,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 123067.6661810354,
+          "RMSE": 138337.17780226923,
+          "bias": 73266.25427809413
+        },
+        {
+          "hour": 3,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 126146.58035649608,
+          "RMSE": 148554.77266723808,
+          "bias": 107171.60897763098
+        },
+        {
+          "hour": 4,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 151864.2249586029,
+          "RMSE": 169304.3722296591,
+          "bias": 128691.97190412712
+        },
+        {
+          "hour": 5,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 137784.1130627503,
+          "RMSE": 165959.94251819915,
+          "bias": 106845.98588749456
+        },
+        {
+          "hour": 6,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 154756.26328373246,
+          "RMSE": 209227.60826164111,
+          "bias": 8203.885009387819
+        },
+        {
+          "hour": 7,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 223568.79601445998,
+          "RMSE": 282497.10913040675,
+          "bias": 45710.63262171776
+        },
+        {
+          "hour": 8,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 241272.9999233431,
+          "RMSE": 312465.4174113449,
+          "bias": -23055.67218642297
+        },
+        {
+          "hour": 9,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 273056.51725611405,
+          "RMSE": 368594.6337925326,
+          "bias": -99485.6370886468
+        },
+        {
+          "hour": 10,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 277975.7518116649,
+          "RMSE": 368641.8180038735,
+          "bias": -121622.05654751348
+        },
+        {
+          "hour": 11,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 271931.43414555996,
+          "RMSE": 350527.90020291036,
+          "bias": -151145.7712064327
+        },
+        {
+          "hour": 12,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 274856.32692891493,
+          "RMSE": 360690.78423624195,
+          "bias": -131488.02702721098
+        },
+        {
+          "hour": 13,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 217346.26955376926,
+          "RMSE": 314396.88262227224,
+          "bias": -8214.64236388045
+        },
+        {
+          "hour": 14,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 234075.04871925974,
+          "RMSE": 328919.37728494895,
+          "bias": 14689.561828069016
+        },
+        {
+          "hour": 15,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 272878.6146347817,
+          "RMSE": 374299.3092111698,
+          "bias": 2847.0766570025435
+        },
+        {
+          "hour": 16,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 271558.6628059,
+          "RMSE": 376934.6805185828,
+          "bias": 27954.99500583162
+        },
+        {
+          "hour": 17,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 279720.6134387337,
+          "RMSE": 372136.05604620127,
+          "bias": 64909.04988173197
+        },
+        {
+          "hour": 18,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 243042.9216598517,
+          "RMSE": 325504.44515489077,
+          "bias": 131020.33416152411
+        },
+        {
+          "hour": 19,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 245971.1773908415,
+          "RMSE": 293740.6826017488,
+          "bias": -131673.9186651159
+        },
+        {
+          "hour": 20,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 309260.8783128439,
+          "RMSE": 393860.1545584045,
+          "bias": -303722.88250159734
+        },
+        {
+          "hour": 21,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 349518.9154711727,
+          "RMSE": 425083.1081002115,
+          "bias": -342087.39201662183
+        },
+        {
+          "hour": 22,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 305770.5985132011,
+          "RMSE": 359836.540898707,
+          "bias": -284780.17656877066
+        },
+        {
+          "hour": 23,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 230096.9266362611,
+          "RMSE": 278714.046157671,
+          "bias": -184612.37974722421
+        },
+        {
+          "hour": 24,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 154613.13512149377,
+          "RMSE": 204369.58975847054,
+          "bias": -67707.22333145514
+        }
+      ]
+    }
+  ],
+  "selectedAlpha": 0.01,
+  "decisionBeforeTest": {
+    "validationMAEReductionFraction": 0.13517240490116722,
+    "principalCandidate": true,
+    "referenceBaseline": "B7"
+  },
+  "test": {
+    "evaluable": 360,
+    "unavailable": 0,
+    "MAE": 545400.284653601,
+    "RMSE": 739546.6571623267,
+    "bias": 515393.58987551334,
+    "byHour": [
+      {
+        "hour": 1,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 340058.82148717606,
+        "RMSE": 380692.45161738084,
+        "bias": 340058.82148717606
+      },
+      {
+        "hour": 2,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 358042.90364637284,
+        "RMSE": 393201.6541048931,
+        "bias": 358042.90364637284
+      },
+      {
+        "hour": 3,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 392156.9186224689,
+        "RMSE": 436613.57303650235,
+        "bias": 392156.9186224689
+      },
+      {
+        "hour": 4,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 393726.97361617687,
+        "RMSE": 418544.4718821681,
+        "bias": 393726.97361617687
+      },
+      {
+        "hour": 5,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 422092.0603470016,
+        "RMSE": 453505.26181467343,
+        "bias": 422092.0603470016
+      },
+      {
+        "hour": 6,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 494008.4208526172,
+        "RMSE": 586893.4015755684,
+        "bias": 494008.4208526172
+      },
+      {
+        "hour": 7,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 598864.2647536937,
+        "RMSE": 729109.8524966768,
+        "bias": 598864.2647536937
+      },
+      {
+        "hour": 8,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 569145.6897626551,
+        "RMSE": 729860.6942030388,
+        "bias": 562902.2634579464
+      },
+      {
+        "hour": 9,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 537661.289717751,
+        "RMSE": 735457.7642128016,
+        "bias": 498733.91026339703
+      },
+      {
+        "hour": 10,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 548849.1174260296,
+        "RMSE": 757173.3058598968,
+        "bias": 512458.42884772
+      },
+      {
+        "hour": 11,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 603901.3353491548,
+        "RMSE": 813515.3897408154,
+        "bias": 562619.138910484
+      },
+      {
+        "hour": 12,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 606849.4408282315,
+        "RMSE": 843497.5849373613,
+        "bias": 579302.407404201
+      },
+      {
+        "hour": 13,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 637705.5743485156,
+        "RMSE": 847762.9872013688,
+        "bias": 621421.0795523255
+      },
+      {
+        "hour": 14,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 722014.2441909738,
+        "RMSE": 938399.071464111,
+        "bias": 699546.0410644419
+      },
+      {
+        "hour": 15,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 801106.3756571817,
+        "RMSE": 1046936.7158385682,
+        "bias": 774908.9094133471
+      },
+      {
+        "hour": 16,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 856168.8119496804,
+        "RMSE": 1120375.0223949768,
+        "bias": 827625.9291831573
+      },
+      {
+        "hour": 17,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 894347.7477814213,
+        "RMSE": 1150791.965471413,
+        "bias": 882982.7413985548
+      },
+      {
+        "hour": 18,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 865781.0135047854,
+        "RMSE": 1045032.7333292189,
+        "bias": 856931.4944662199
+      },
+      {
+        "hour": 19,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 572849.8244767131,
+        "RMSE": 764246.2801091332,
+        "bias": 528520.1181923515
+      },
+      {
+        "hour": 20,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 457787.8179697665,
+        "RMSE": 666190.0319526263,
+        "bias": 347264.4653884798
+      },
+      {
+        "hour": 21,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 416114.6813416651,
+        "RMSE": 615759.2390146276,
+        "bias": 287974.54742653284
+      },
+      {
+        "hour": 22,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 349200.08577808004,
+        "RMSE": 502916.15610346,
+        "bias": 268726.94135411194
+      },
+      {
+        "hour": 23,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 327499.3498163827,
+        "RMSE": 417459.4289865271,
+        "bias": 261505.25392697752
+      },
+      {
+        "hour": 24,
+        "evaluable": 15,
+        "unavailable": 0,
+        "MAE": 323674.06846192776,
+        "RMSE": 397213.00840158015,
+        "bias": 297072.12343656394
+      }
+    ]
+  },
+  "comparison": {
+    "B7Validation": {
+      "evaluable": 360,
+      "unavailable": 0,
+      "MAE": 236660.3369444444,
+      "RMSE": 278936.6592744871,
+      "bias": -227919.06372222205,
+      "byHour": [
+        {
+          "hour": 1,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 229803.3006666666,
+          "RMSE": 280634.35349704983,
+          "bias": -229803.3006666666
+        },
+        {
+          "hour": 2,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 226272.63333333316,
+          "RMSE": 263619.4670437385,
+          "bias": -218817.4439999998
+        },
+        {
+          "hour": 3,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 214495.8566666665,
+          "RMSE": 248308.8509868145,
+          "bias": -211702.64066666662
+        },
+        {
+          "hour": 4,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 212114.08266666663,
+          "RMSE": 242963.54637323946,
+          "bias": -205460.5653333332
+        },
+        {
+          "hour": 5,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 199650.48666666646,
+          "RMSE": 231630.53086152038,
+          "bias": -195275.19866666658
+        },
+        {
+          "hour": 6,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 195245.94200000024,
+          "RMSE": 232379.97501869823,
+          "bias": -185206.13933333338
+        },
+        {
+          "hour": 7,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 198928.87533333307,
+          "RMSE": 254169.7083968109,
+          "bias": -180393.12333333323
+        },
+        {
+          "hour": 8,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 206104.8400000001,
+          "RMSE": 257953.10265120553,
+          "bias": -192410.23600000018
+        },
+        {
+          "hour": 9,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 220493.58600000007,
+          "RMSE": 252945.78991990475,
+          "bias": -193072.85933333338
+        },
+        {
+          "hour": 10,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 232621.30999999997,
+          "RMSE": 264002.9547801266,
+          "bias": -225099.55800000002
+        },
+        {
+          "hour": 11,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 243272.5106666668,
+          "RMSE": 283244.52078321297,
+          "bias": -243272.5106666668
+        },
+        {
+          "hour": 12,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 231362.9793333334,
+          "RMSE": 274454.7846597145,
+          "bias": -227871.5953333333
+        },
+        {
+          "hour": 13,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 220905.43466666664,
+          "RMSE": 274838.2205234544,
+          "bias": -213652.46133333346
+        },
+        {
+          "hour": 14,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 227416.47666666645,
+          "RMSE": 277495.6270911869,
+          "bias": -224684.46066666656
+        },
+        {
+          "hour": 15,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 243727.5666666668,
+          "RMSE": 292335.417214977,
+          "bias": -232843.9666666668
+        },
+        {
+          "hour": 16,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 234924.07266666653,
+          "RMSE": 284632.7821014393,
+          "bias": -231607.13266666644
+        },
+        {
+          "hour": 17,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 243725.65066666654,
+          "RMSE": 288419.26518609514,
+          "bias": -243725.65066666654
+        },
+        {
+          "hour": 18,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 240317.33066666673,
+          "RMSE": 275714.4024425806,
+          "bias": -240317.33066666673
+        },
+        {
+          "hour": 19,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 310922.2060000001,
+          "RMSE": 345609.13303648826,
+          "bias": -285097.24466666643
+        },
+        {
+          "hour": 20,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 310452.9486666667,
+          "RMSE": 342614.80971003434,
+          "bias": -274729.8020000001
+        },
+        {
+          "hour": 21,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 298899.71,
+          "RMSE": 336609.9177030196,
+          "bias": -276824.022
+        },
+        {
+          "hour": 22,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 259435.0053333336,
+          "RMSE": 293090.38061148825,
+          "bias": -259435.0053333336
+        },
+        {
+          "hour": 23,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 245828.47000000006,
+          "RMSE": 282897.86023194593,
+          "bias": -245828.47000000006
+        },
+        {
+          "hour": 24,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 232926.81133333346,
+          "RMSE": 275824.9519542831,
+          "bias": -232926.81133333346
+        }
+      ]
+    },
+    "B7Test": {
+      "evaluable": 360,
+      "unavailable": 0,
+      "MAE": 515943.7604722218,
+      "RMSE": 806030.323224357,
+      "bias": 449211.6238611112,
+      "byHour": [
+        {
+          "hour": 1,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 306072.078,
+          "RMSE": 425204.86270738475,
+          "bias": 240086.41399999993
+        },
+        {
+          "hour": 2,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 286715.48266666644,
+          "RMSE": 409044.56884570466,
+          "bias": 225793.6186666665
+        },
+        {
+          "hour": 3,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 298908.34866666683,
+          "RMSE": 442948.2787724276,
+          "bias": 233437.88599999994
+        },
+        {
+          "hour": 4,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 271697.3219999999,
+          "RMSE": 384108.65814664797,
+          "bias": 212193.5193333332
+        },
+        {
+          "hour": 5,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 317133.7000000001,
+          "RMSE": 449790.32791427616,
+          "bias": 267554.89733333327
+        },
+        {
+          "hour": 6,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 469172.00733333355,
+          "RMSE": 653561.7416612284,
+          "bias": 423472.7340000001
+        },
+        {
+          "hour": 7,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 525720.594,
+          "RMSE": 769103.7855418327,
+          "bias": 483662.94733333326
+        },
+        {
+          "hour": 8,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 569933.608666667,
+          "RMSE": 830997.148246956,
+          "bias": 508899.0740000001
+        },
+        {
+          "hour": 9,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 603046.0846666667,
+          "RMSE": 892239.9372235291,
+          "bias": 521665.9806666668
+        },
+        {
+          "hour": 10,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 608335.4846666666,
+          "RMSE": 918048.3251261059,
+          "bias": 539591.582
+        },
+        {
+          "hour": 11,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 646113.539333333,
+          "RMSE": 958718.9398706146,
+          "bias": 594124.2926666667
+        },
+        {
+          "hour": 12,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 640291.9453333332,
+          "RMSE": 973436.9540540263,
+          "bias": 584782.18
+        },
+        {
+          "hour": 13,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 575313.7013333332,
+          "RMSE": 897919.5681412888,
+          "bias": 507532.84666666674
+        },
+        {
+          "hour": 14,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 618444.2646666669,
+          "RMSE": 953251.7976427997,
+          "bias": 534224.9860000001
+        },
+        {
+          "hour": 15,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 675042.7386666668,
+          "RMSE": 1056819.2145134842,
+          "bias": 595859.8133333336
+        },
+        {
+          "hour": 16,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 702604.6566666664,
+          "RMSE": 1109727.4512080378,
+          "bias": 618968.07
+        },
+        {
+          "hour": 17,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 686013.5780000001,
+          "RMSE": 1097947.8275931212,
+          "bias": 627304.67
+        },
+        {
+          "hour": 18,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 602820.7733333334,
+          "RMSE": 930027.6341923928,
+          "bias": 544020.8160000001
+        },
+        {
+          "hour": 19,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 569082.4953333328,
+          "RMSE": 868470.6721781722,
+          "bias": 491411.61799999996
+        },
+        {
+          "hour": 20,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 590389.0133333333,
+          "RMSE": 886627.2248310953,
+          "bias": 502283.8653333334
+        },
+        {
+          "hour": 21,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 582810.6773333334,
+          "RMSE": 860095.7711723883,
+          "bias": 492655.8253333334
+        },
+        {
+          "hour": 22,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 485240.5926666663,
+          "RMSE": 715430.3875575062,
+          "bias": 431993.01133333356
+        },
+        {
+          "hour": 23,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 404943.30266666634,
+          "RMSE": 569453.912916281,
+          "bias": 332000.6173333332
+        },
+        {
+          "hour": 24,
+          "evaluable": 15,
+          "unavailable": 0,
+          "MAE": 346804.26200000034,
+          "RMSE": 483153.02905497246,
+          "bias": 267557.70733333344
+        }
+      ]
+    }
+  },
+  "model": {
+    "modelType": "Ridge",
+    "modelVersion": "experimental-0.1.0",
+    "alpha": 0.01,
+    "features": [
+      "energy_same_period_previous_day",
+      "energy_same_period_7_days_before",
+      "energy_period24_previous_day",
+      "sin_2pi_hour_minus1_over24",
+      "cos_2pi_hour_minus1_over24"
+    ],
+    "coefficients": [
+      -17652.609854017493,
+      718835.0573670994,
+      161998.70504465618,
+      -269362.4898901153,
+      -224797.52473552682
+    ],
+    "intercept": 9468452.497248428,
+    "scaling": {
+      "method": "z-score; population standard deviation ddof=0; fitted only on usable TRAIN rows",
+      "means": [
+        9435405.450212264,
+        9354893.244300315,
+        8969031.337358491,
+        -1.3401022080638637e-17,
+        -5.598791695843364e-17
+      ],
+      "standardDeviations": [
+        1097352.5863783725,
+        1126690.6115279328,
+        294323.00826671877,
+        0.7071067811865476,
+        0.7071067811865476
+      ]
+    },
+    "trainedRange": "2024-01-08..2024-02-29",
+    "snapshotSha256": "4c91a20048d90d082f8eec6c770f4bd042e479d70df7ca020e8dd3a6b3ba0177"
+  }
+}
