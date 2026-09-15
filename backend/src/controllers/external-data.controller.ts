@@ -2,18 +2,23 @@ import express, { Router, type ErrorRequestHandler } from 'express';
 import { ExternalDataService } from '@/integrations/external-data.service';
 import { XmProvider } from '@/integrations/providers/xm.provider';
 import { ExternalDataError } from '@/integrations/types/external-data';
+import { importExternalData } from '@/integrations/external-data-import.service';
 
 export function createExternalDataRouter(service = new ExternalDataService([new XmProvider()])) {
   const router = Router();
   router.get('/providers', (_req, res) => { res.json({ providers: service.listProviders() }); });
-  router.post('/query', (req, res, next) => {
+  router.post(['/query', '/import'], (req, res, next) => {
     if (!req.is('application/json')) {
       res.status(415).json({ error: 'UNSUPPORTED_MEDIA_TYPE', message: 'Se requiere Content-Type application/json.' });
       return;
     }
     next();
-  }, express.json({ limit: '16kb' }), async (req, res, next) => {
+  }, express.json({ limit: '16kb' }));
+  router.post('/query', async (req, res, next) => {
     try { res.json(await service.query(req.body)); } catch (error) { next(error); }
+  });
+  router.post('/import', async (req, res, next) => {
+    try { res.status(201).json(await importExternalData(req.body, service)); } catch (error) { next(error); }
   });
   const handleError: ErrorRequestHandler = (error, _req, res, _next) => {
     if (error instanceof ExternalDataError) {

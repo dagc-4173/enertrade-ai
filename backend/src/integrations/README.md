@@ -1,4 +1,42 @@
-# Consulta de fuentes externas: XM
+# Consulta e importación de fuentes externas: XM
+
+## Importación Gene mediante HU-01
+
+`POST /external-data/import`, Content-Type application/json, acepta únicamente:
+
+```json
+{"provider":"xm","dataset":"Gene","startDate":"2024-04-01","endDate":"2024-04-01"}
+```
+
+No admite claves adicionales ni filters. Reutiliza ExternalDataService.query()
+para validar fechas/rango (máximo 30 días inclusivos) y consultar XM. Un resultado
+vacío devuelve 422 EXTERNAL_DATA_EMPTY sin registrar nada.
+
+Transforma date → fecha_xm, hour → hora_xm, value → energia_kwh; las tres columnas
+son obligatorias y dataType es generacion. No agrega zona ni genera timestamps.
+Conserva periodos 1..24 y valores normalizados sin nuevas conversiones.
+
+source se genera en backend con este formato determinista, tomando unit y fechas
+de la respuesta normalizada:
+`XM/SINERGOX;metric=Gene;unit=kWh;startDate=2024-04-01;endDate=2024-04-01;mapping=xm-gene-v1`.
+
+El único punto de persistencia es registerDataset() real de HU-01. HTTP 201
+devuelve exactamente su resultado: id, source, dataType, uploadedAt, status,
+pendingOptionalFields y recordCount. No ejecuta HU-02 ni HU-03. Fallos del registro
+devuelven 500 EXTERNAL_IMPORT_FAILED con mensaje seguro; los errores de consulta
+conservan sus envelopes existentes. Se comparte el parser limitado a 16 KiB.
+
+**Sin idempotencia:** repetir la importación consulta nuevamente y puede crear
+otro EnergyDataset, incluso con el mismo source. source no acredita autenticidad
+criptográfica ni completitud histórica; tampoco se conserva el payload crudo.
+
+Pruebas IMP-01..IMP-07 parametrizadas: HTTP local, registerDataset real y módulo
+Prisma/transporte externo sustituidos. Verificación final: bun test, 174 aprobadas,
+0 fallidas, 736 aserciones; archivo external-data.test.ts aislado, 73 aprobadas,
+0 fallidas, 292 aserciones. Typecheck backend correcto. No se acredita integración
+real de importación con XM/PostgreSQL en este incremento.
+
+## Antecedente: alcance del incremento inicial de consulta
 
 Incremento de infraestructura de consulta, sin importar a EnergyDataset, integrar
 frontend ni ejecutar modelos. Apoya la futura adquisición de datos para HU-01 y

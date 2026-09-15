@@ -14,6 +14,11 @@ export interface ExternalQuery {
   endDate: string;
 }
 
+export interface ExternalImportQuery extends ExternalQuery {
+  provider: 'xm';
+  dataset: 'Gene';
+}
+
 export interface ExternalDataResult extends ExternalQuery {
   unit: string;
   granularity: 'hourly' | 'daily';
