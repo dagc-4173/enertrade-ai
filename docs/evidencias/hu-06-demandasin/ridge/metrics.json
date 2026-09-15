@@ -1,0 +1,460 @@
+{
+  "snapshotSha256": "73e795ae04e4dd36e1dff7fda38e47627514602565ee086b2710f1c6da6c807f",
+  "runtime": {
+    "implementation": "Python stdlib; no added dependency",
+    "version": "3.14.4",
+    "solver": "normal equations centered with unpenalized intercept; Gaussian elimination with partial pivoting; math.fsum"
+  },
+  "partitions": {
+    "train": {
+      "startDate": "2023-08-01",
+      "endDate": "2024-04-11"
+    },
+    "validation": {
+      "startDate": "2024-04-12",
+      "endDate": "2024-06-05"
+    },
+    "test": {
+      "startDate": "2024-06-06",
+      "endDate": "2024-07-30"
+    }
+  },
+  "trainingRows": {
+    "total": 255,
+    "effective": 227,
+    "excludedMissingHistory": 28
+  },
+  "predefinedAlphas": [
+    0.01,
+    0.1,
+    1,
+    10,
+    100
+  ],
+  "selection": {
+    "criteria": [
+      "validation MAE",
+      "validation RMSE",
+      "smaller alpha"
+    ],
+    "selectedAlpha": 100,
+    "frozenBeforeTest": true,
+    "thresholdImprovementPercent": 5,
+    "improvementPercent": 21.556173794700438,
+    "experimentalCandidate": true
+  },
+  "validation": {
+    "0.01": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 5161092.453228062,
+      "RMSE": 6958294.404540909,
+      "bias": 1176334.876415302,
+      "WAPE": {
+        "value": 2.3084824217411426,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 283860084.9275434,
+        "denominatorAbsoluteActualKwh": 12296393607.08
+      },
+      "byCalendarWeekday": {
+        "Monday": {
+          "n": 8,
+          "MAE": 9785597.901012987,
+          "RMSE": 11864769.97066754
+        },
+        "Tuesday": {
+          "n": 8,
+          "MAE": 3286377.7073883116,
+          "RMSE": 4597370.37968752
+        },
+        "Wednesday": {
+          "n": 8,
+          "MAE": 5701181.926153071,
+          "RMSE": 8347317.032423653
+        },
+        "Thursday": {
+          "n": 7,
+          "MAE": 3811383.901344363,
+          "RMSE": 4469926.627308325
+        },
+        "Friday": {
+          "n": 8,
+          "MAE": 4005513.8212294504,
+          "RMSE": 4317556.653161158
+        },
+        "Saturday": {
+          "n": 8,
+          "MAE": 2885530.6968645863,
+          "RMSE": 3221326.5479657007
+        },
+        "Sunday": {
+          "n": 8,
+          "MAE": 6483347.649618197,
+          "RMSE": 7401726.709419698
+        }
+      }
+    },
+    "0.1": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 5159473.75509429,
+      "RMSE": 6956950.299389089,
+      "bias": 1176047.6553213005,
+      "WAPE": {
+        "value": 2.307758401347828,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 283771056.53018594,
+        "denominatorAbsoluteActualKwh": 12296393607.08
+      },
+      "byCalendarWeekday": {
+        "Monday": {
+          "n": 8,
+          "MAE": 9785792.19170687,
+          "RMSE": 11863092.70848562
+        },
+        "Tuesday": {
+          "n": 8,
+          "MAE": 3282941.0473183207,
+          "RMSE": 4593940.90788304
+        },
+        "Wednesday": {
+          "n": 8,
+          "MAE": 5698907.904678866,
+          "RMSE": 8347263.721507388
+        },
+        "Thursday": {
+          "n": 7,
+          "MAE": 3808718.424021793,
+          "RMSE": 4465480.76682084
+        },
+        "Friday": {
+          "n": 8,
+          "MAE": 4004065.385774154,
+          "RMSE": 4315687.327276794
+        },
+        "Saturday": {
+          "n": 8,
+          "MAE": 2882673.9405429997,
+          "RMSE": 3218641.716109286
+        },
+        "Sunday": {
+          "n": 8,
+          "MAE": 6484372.975232966,
+          "RMSE": 7402524.502461412
+        }
+      }
+    },
+    "1": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 5143487.179093386,
+      "RMSE": 6943917.068879284,
+      "bias": 1173238.5244480371,
+      "WAPE": {
+        "value": 2.3006078358393895,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 282891794.8501362,
+        "denominatorAbsoluteActualKwh": 12296393607.08
+      },
+      "byCalendarWeekday": {
+        "Monday": {
+          "n": 8,
+          "MAE": 9787576.871048398,
+          "RMSE": 11846635.262842717
+        },
+        "Tuesday": {
+          "n": 8,
+          "MAE": 3248927.3906705603,
+          "RMSE": 4560249.453958034
+        },
+        "Wednesday": {
+          "n": 8,
+          "MAE": 5676363.092593312,
+          "RMSE": 8346693.489442133
+        },
+        "Thursday": {
+          "n": 7,
+          "MAE": 3782459.2286204654,
+          "RMSE": 4421991.961013997
+        },
+        "Friday": {
+          "n": 8,
+          "MAE": 3989767.505758047,
+          "RMSE": 4297914.607990179
+        },
+        "Saturday": {
+          "n": 8,
+          "MAE": 2854542.0430887043,
+          "RMSE": 3192624.4326160317
+        },
+        "Sunday": {
+          "n": 8,
+          "MAE": 6494645.628065098,
+          "RMSE": 7410669.700395037
+        }
+      }
+    },
+    "10": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 5004569.833965043,
+      "RMSE": 6846527.367026661,
+      "bias": 1150496.8537358772,
+      "WAPE": {
+        "value": 2.238472105427672,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 275251340.86807734,
+        "denominatorAbsoluteActualKwh": 12296393607.08
+      },
+      "byCalendarWeekday": {
+        "Monday": {
+          "n": 8,
+          "MAE": 9794563.467010126,
+          "RMSE": 11707967.599455154
+        },
+        "Tuesday": {
+          "n": 8,
+          "MAE": 2961030.4338411093,
+          "RMSE": 4275317.042410771
+        },
+        "Wednesday": {
+          "n": 8,
+          "MAE": 5468367.746467408,
+          "RMSE": 8336987.746310337
+        },
+        "Thursday": {
+          "n": 7,
+          "MAE": 3553756.9364565485,
+          "RMSE": 4068397.7926622815
+        },
+        "Friday": {
+          "n": 8,
+          "MAE": 3863201.3441649564,
+          "RMSE": 4193153.088300464
+        },
+        "Saturday": {
+          "n": 8,
+          "MAE": 2610604.730009917,
+          "RMSE": 3000685.585573417
+        },
+        "Sunday": {
+          "n": 8,
+          "MAE": 6599112.567616671,
+          "RMSE": 7505695.247858281
+        }
+      }
+    },
+    "100": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 4794437.658801558,
+      "RMSE": 6790783.804423111,
+      "bias": 1106996.4668561714,
+      "WAPE": {
+        "value": 2.1444830058323467,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 263694071.2340857,
+        "denominatorAbsoluteActualKwh": 12296393607.08
+      },
+      "byCalendarWeekday": {
+        "Monday": {
+          "n": 8,
+          "MAE": 9685235.619577624,
+          "RMSE": 11150549.48846228
+        },
+        "Tuesday": {
+          "n": 8,
+          "MAE": 2730298.3240035847,
+          "RMSE": 3446737.6540275007
+        },
+        "Wednesday": {
+          "n": 8,
+          "MAE": 4530048.373849668,
+          "RMSE": 8056645.877286653
+        },
+        "Thursday": {
+          "n": 7,
+          "MAE": 2545529.903275243,
+          "RMSE": 3123477.4096627533
+        },
+        "Friday": {
+          "n": 8,
+          "MAE": 3326843.274167251,
+          "RMSE": 4639933.867981187
+        },
+        "Saturday": {
+          "n": 8,
+          "MAE": 2646499.7825096548,
+          "RMSE": 2899503.7591362004
+        },
+        "Sunday": {
+          "n": 8,
+          "MAE": 7815494.864787094,
+          "RMSE": 8800106.075252386
+        }
+      }
+    }
+  },
+  "test": {
+    "evaluable": 55,
+    "unavailable": 0,
+    "MAE": 4859706.40192287,
+    "RMSE": 6680491.331833406,
+    "bias": 411162.10924237693,
+    "WAPE": {
+      "value": 2.1968394524672443,
+      "unit": "percent",
+      "numeratorAbsoluteErrorKwh": 267283852.10575786,
+      "denominatorAbsoluteActualKwh": 12166744902.8
+    },
+    "byCalendarWeekday": {
+      "Monday": {
+        "n": 8,
+        "MAE": 12158441.68710889,
+        "RMSE": 12757857.38180741
+      },
+      "Tuesday": {
+        "n": 8,
+        "MAE": 1950503.8960721307,
+        "RMSE": 2274283.6470693103
+      },
+      "Wednesday": {
+        "n": 7,
+        "MAE": 2705817.247808546,
+        "RMSE": 3213986.008815823
+      },
+      "Thursday": {
+        "n": 8,
+        "MAE": 2280222.396494489,
+        "RMSE": 2651250.173030794
+      },
+      "Friday": {
+        "n": 8,
+        "MAE": 2576619.3981187157,
+        "RMSE": 3551001.7140403083
+      },
+      "Saturday": {
+        "n": 8,
+        "MAE": 4354845.542076137,
+        "RMSE": 5675214.647090616
+      },
+      "Sunday": {
+        "n": 8,
+        "MAE": 7722258.5015168935,
+        "RMSE": 8831961.540693311
+      }
+    }
+  },
+  "baselineReference": {
+    "id": "B7",
+    "source": "../baselines/metrics.json",
+    "validation": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 6111937.536363636,
+      "RMSE": 8321703.3060514685,
+      "bias": 1342307.5141818172,
+      "WAPE": {
+        "value": 2.733781751313232,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 336156564.5,
+        "denominatorAbsoluteActualKwh": 12296393607.080002
+      },
+      "byCalendarWeekday": {
+        "domingo": {
+          "n": 8,
+          "MAE": 4494630.530000001,
+          "RMSE": 5380313.215728036
+        },
+        "lunes": {
+          "n": 8,
+          "MAE": 12586037.414999995,
+          "RMSE": 15248397.896352721
+        },
+        "martes": {
+          "n": 8,
+          "MAE": 4873232.567500006,
+          "RMSE": 6200196.86505505
+        },
+        "mi\u00e9rcoles": {
+          "n": 8,
+          "MAE": 7343664.8737499975,
+          "RMSE": 10184438.725724136
+        },
+        "jueves": {
+          "n": 7,
+          "MAE": 4038839.064285713,
+          "RMSE": 4380124.824713084
+        },
+        "viernes": {
+          "n": 8,
+          "MAE": 5052591.353749994,
+          "RMSE": 5903522.654769684
+        },
+        "s\u00e1bado": {
+          "n": 8,
+          "MAE": 4135429.641250003,
+          "RMSE": 4564356.427762196
+        }
+      }
+    },
+    "test": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 4579906.609272726,
+      "RMSE": 7193260.237815659,
+      "bias": -1006303.0925454552,
+      "WAPE": {
+        "value": 2.070355428032604,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 251894863.50999993,
+        "denominatorAbsoluteActualKwh": 12166744902.799997
+      },
+      "byCalendarWeekday": {
+        "domingo": {
+          "n": 8,
+          "MAE": 3854199.959999997,
+          "RMSE": 4798709.007730524
+        },
+        "lunes": {
+          "n": 8,
+          "MAE": 10476734.587499999,
+          "RMSE": 14870874.619732678
+        },
+        "martes": {
+          "n": 8,
+          "MAE": 3127929.295000002,
+          "RMSE": 3766227.2240514625
+        },
+        "mi\u00e9rcoles": {
+          "n": 7,
+          "MAE": 1933236.3185714227,
+          "RMSE": 2482260.599605381
+        },
+        "jueves": {
+          "n": 8,
+          "MAE": 2403426.986249998,
+          "RMSE": 2966968.08792442
+        },
+        "viernes": {
+          "n": 8,
+          "MAE": 3427172.451249998,
+          "RMSE": 4670009.987469687
+        },
+        "s\u00e1bado": {
+          "n": 8,
+          "MAE": 6505812.880000003,
+          "RMSE": 7834205.757123907
+        }
+      }
+    }
+  },
+  "normalEquationMaxAbsoluteResidualByAlpha": {
+    "0.01": 2.384185791015625e-07,
+    "0.1": 2.384185791015625e-07,
+    "1": 0.0,
+    "10": 2.384185791015625e-07,
+    "100": 2.384185791015625e-07
+  },
+  "testEvaluationsOfSelectedModel": 1
+}

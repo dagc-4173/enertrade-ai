@@ -1,0 +1,64 @@
+{
+  "modelType": "Ridge",
+  "experimentalVersion": "demandasin-ridge-experiment-1.0.0",
+  "status": "experimental_not_production",
+  "alpha": 100,
+  "orderedFeatures": [
+    "demanda_kwh_D_minus_1",
+    "demanda_kwh_D_minus_7",
+    "demanda_kwh_D_minus_14",
+    "demanda_kwh_D_minus_28",
+    "sin_2pi_weekday_over_7",
+    "cos_2pi_weekday_over_7"
+  ],
+  "weekdayConvention": "Monday=0, Sunday=6; calendar date only",
+  "scaler": {
+    "type": "standardization",
+    "fittedOn": "effective TRAIN only",
+    "standardDeviation": "population ddof=0",
+    "means": [
+      224954634.4663436,
+      224763112.72819385,
+      224997265.89718065,
+      224869547.98493394,
+      0.009650410280913723,
+      -0.002202643171806186
+    ],
+    "standardDeviations": [
+      13509894.944087941,
+      13506725.32432518,
+      13339950.159941647,
+      13199612.889367107,
+      0.7078193209904016,
+      0.7063241655055804
+    ]
+  },
+  "coefficients": [
+    3195737.798153975,
+    3765307.5179261533,
+    966946.4512404827,
+    2192456.875776435,
+    2335659.3108115215,
+    -144735.9516219993
+  ],
+  "intercept": 225000290.37281936,
+  "coefficientSpace": "standardized features; target is not scaled",
+  "trainingSourceRange": {
+    "startDate": "2023-08-01",
+    "endDate": "2024-04-11"
+  },
+  "effectiveTrainingRange": {
+    "startDate": "2023-08-29",
+    "endDate": "2024-04-11"
+  },
+  "trainingRows": {
+    "total": 255,
+    "effective": 227,
+    "excludedMissingHistory": 28
+  },
+  "trainingSnapshotSha256": "73e795ae04e4dd36e1dff7fda38e47627514602565ee086b2710f1c6da6c807f",
+  "target": "demanda_kwh",
+  "unit": "kWh",
+  "horizonDays": 1,
+  "objective": "sum((y-intercept-X_scaled*coefficients)^2)+alpha*sum(coefficients^2); intercept unpenalized"
+}
