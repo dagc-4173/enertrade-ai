@@ -233,6 +233,16 @@
       "noLeakageOrNumericalFailure": true
     },
     "relativeMAEvsB7": -3.673806810082002,
-    "selectedForImplementation": true
-  }
+    "selectedForImplementation": true,
+    "modelId": "xm-demandasin-ridge",
+    "modelVersion": "1.0.0",
+    "type": "external_temporal_holdout",
+    "range": {
+      "start": "2024-07-31",
+      "end": "2024-09-28"
+    },
+    "snapshotSha256": "ddb2b802941ae82230d9fbe0dee1847cdbaa12d986f0af460cf54a6376fd8eaa"
+  },
+  "trainedAt": null,
+  "trainedAtStatus": "not_recorded"
 }

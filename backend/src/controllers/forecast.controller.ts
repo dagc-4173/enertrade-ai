@@ -1,9 +1,10 @@
+import {getDemandForecastMetrics} from '@/services/demand-forecast-metrics.service';
 import { forecastDemand } from '@/services/demand-forecast.service';
 import express, { Router, type ErrorRequestHandler } from 'express';
 import { forecastSupply } from '@/services/forecast.service';
 import { ForecastError, messages } from '@/services/forecast.contract';
 import {getForecastMetrics} from '@/services/forecast-metrics.service';
-export function createForecastRouter(service = forecastSupply, metrics = getForecastMetrics, demand = forecastDemand) {
+export function createForecastRouter(service = forecastSupply, metrics = getForecastMetrics, demand = forecastDemand, demandMetrics = getDemandForecastMetrics) {
   const router = Router();
   router.get('/supply/metrics',async(req,res)=>{
     try{
@@ -11,6 +12,17 @@ export function createForecastRouter(service = forecastSupply, metrics = getFore
       if(!hasBody)for await(const chunk of req)if(chunk.length){hasBody=true;break;}
       if(hasBody||Object.keys(req.query).length){res.status(400).json({error:'INVALID_FORECAST_REQUEST',message:messages.INVALID_FORECAST_REQUEST});return;}
       res.json(metrics());
+    }catch(error){
+      if(error instanceof ForecastError){res.status(error.status).json({status:'unavailable',error:error.code,message:error.message});}
+      else res.status(500).json({error:'FORECAST_FAILED',message:messages.FORECAST_FAILED});
+    }
+  });
+  router.get('/demand/metrics',async(req,res)=>{
+    try{
+      let hasBody=Number(req.get('Content-Length') ?? 0)>0 || req.get('Transfer-Encoding')!==undefined;
+      if(!hasBody)for await(const chunk of req)if(chunk.length){hasBody=true;break;}
+      if(hasBody||Object.keys(req.query).length){res.status(400).json({error:'INVALID_FORECAST_REQUEST',message:messages.INVALID_FORECAST_REQUEST});return;}
+      res.json(demandMetrics());
     }catch(error){
       if(error instanceof ForecastError){res.status(error.status).json({status:'unavailable',error:error.code,message:error.message});}
       else res.status(500).json({error:'FORECAST_FAILED',message:messages.FORECAST_FAILED});

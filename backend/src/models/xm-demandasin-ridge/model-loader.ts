@@ -18,6 +18,7 @@ export function validateModel(v:unknown):ForecastModel {
  if(!object(v.confidence)||v.confidence.value!==null||v.confidence.status!=='not_defined')return bad();
  const e=v.evaluationSummary;
  if(!object(e)||!object(e.metrics)||!object(e.promotionRule)||!object(e.criterionResults)||e.selectedForImplementation!==true)return bad();
+ if(v.trainedAt!==null||v.trainedAtStatus!=='not_recorded'||e.modelId!==v.modelId||e.modelVersion!==v.modelVersion||e.type!=='external_temporal_holdout'||!object(e.range)||e.range.start!==v.externalHoldoutRange.start||e.range.end!==v.externalHoldoutRange.end||e.snapshotSha256!==v.externalHoldoutSnapshotSha256)return bad();
  const days=(Date.parse(v.externalHoldoutRange.end)-Date.parse(v.externalHoldoutRange.start))/86400000+1;
  const close=(x:number,y:number)=>Math.abs(x-y)<=1e-10*Math.max(1,Math.abs(y));
  for(const name of ['B1','B7','Ridge']){
