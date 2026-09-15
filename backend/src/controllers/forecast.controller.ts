@@ -1,8 +1,20 @@
 import express, { Router, type ErrorRequestHandler } from 'express';
 import { forecastSupply } from '@/services/forecast.service';
 import { ForecastError, messages } from '@/services/forecast.contract';
-export function createForecastRouter(service = forecastSupply) {
+import {getForecastMetrics} from '@/services/forecast-metrics.service';
+export function createForecastRouter(service = forecastSupply, metrics = getForecastMetrics) {
   const router = Router();
+  router.get('/supply/metrics',async(req,res)=>{
+    try{
+      let hasBody=Number(req.get('Content-Length') ?? 0)>0 || req.get('Transfer-Encoding')!==undefined;
+      if(!hasBody)for await(const chunk of req)if(chunk.length){hasBody=true;break;}
+      if(hasBody||Object.keys(req.query).length){res.status(400).json({error:'INVALID_FORECAST_REQUEST',message:messages.INVALID_FORECAST_REQUEST});return;}
+      res.json(metrics());
+    }catch(error){
+      if(error instanceof ForecastError){res.status(error.status).json({status:'unavailable',error:error.code,message:error.message});}
+      else res.status(500).json({error:'FORECAST_FAILED',message:messages.FORECAST_FAILED});
+    }
+  });
   router.post('/supply', (req,res,next) => {
     if (!req.is('application/json')) { res.status(415).json({error:'UNSUPPORTED_MEDIA_TYPE',message:'Se requiere Content-Type application/json.'}); return; } next();
   }, express.json({limit:'16kb'}), async (req,res,next) => { try { res.json(await service(req.body)); } catch (error) { next(error); } });

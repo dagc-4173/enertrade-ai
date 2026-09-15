@@ -1,0 +1,35 @@
+{
+  "modelId": "xm-gene-ridge",
+  "modelVersion": "1.0.0",
+  "trainingSnapshotSha256": "4c91a20048d90d082f8eec6c770f4bd042e479d70df7ca020e8dd3a6b3ba0177",
+  "evaluationType": "external_temporal_holdout",
+  "evaluationRange": {
+    "start": "2024-03-31",
+    "end": "2024-04-29"
+  },
+  "evaluationSnapshotSha256": "9fdb41321a46f2b027b3578ebb0eca9894100653644bff6401ae901aeced9182",
+  "evaluable": 720,
+  "unavailable": 0,
+  "metrics": {
+    "MAE": {
+      "value": 329144.1790612068,
+      "unit": "kWh"
+    },
+    "RMSE": {
+      "value": 438880.23646857974,
+      "unit": "kWh"
+    },
+    "bias": {
+      "value": -17643.615971800806,
+      "unit": "kWh"
+    },
+    "WAPE": {
+      "value": 3.4778347681971216,
+      "unit": "percent",
+      "numeratorAbsoluteErrorKwh": 236983808.9240689,
+      "denominatorAbsoluteActualKwh": 6814119264.41
+    }
+  },
+  "trainedAt": null,
+  "trainedAtStatus": "not_recorded"
+}
