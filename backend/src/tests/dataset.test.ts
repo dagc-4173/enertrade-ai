@@ -436,13 +436,15 @@ describe('HU-02 XM Gene: HTTP con Prisma sustituido', () => {
     }
     expect(updateMany).not.toHaveBeenCalled();
   });
-  test('XM-12: aprobado por HU-02 no habilita preparación simulada', async () => {
+  test('XM-12: aprobado por HU-02 selecciona preparación XM', async () => {
     expect((await validateHttp()).body).toMatchObject({ rulesetId: 'xm_gene_base', status: 'aprobado', canProceed: true });
-    expect(await prepareHttp()).toEqual({ status: 409, body: {
-      error: 'DATASET_VALIDATION_INCONSISTENT', message: 'El informe de validación es inconsistente con el perfil.',
+    preparedFind.mockResolvedValue(null);
+    preparedCreate.mockImplementation(async (args: any) => ({ id: 8, preparedAt: generatedAt, ...args.data }));
+    expect(await prepareHttp()).toMatchObject({ status: 200, body: {
+      profileId: 'xm_gene_preparacion_base', profileVersion: '1.0.0', reused: false,
+      content: { records: [{ sourceRecordIndex: 0, fecha_xm: '2024-04-01', hora_xm: 1, energia_kwh: 12.5 }] },
     } });
-    expect(preparedFind).not.toHaveBeenCalled();
-    expect(preparedCreate).not.toHaveBeenCalled();
+    expect(preparedCreate).toHaveBeenCalledTimes(1);
   });
   test('XM-13: validación completada no se sobrescribe', async () => {
     await validateHttp(); const report = structuredClone(dataset.validationReport);
@@ -454,6 +456,131 @@ describe('HU-02 XM Gene: HTTP con Prisma sustituido', () => {
     updateMany.mockRejectedValueOnce(new Error('private SQL stack'));
     expect(await validateHttp()).toEqual({ status: 500, body: { error: 'DATASET_VALIDATION_FAILED', message: 'No fue posible completar la validación del dataset.' } });
     expect(dataset.status).toBe('recibido');
+  });
+});
+
+describe('HU-03 XM: preparación HTTP con Prisma sustituido', () => {
+  let dataset: any;
+  let artifact: any;
+  beforeEach(() => {
+    const records = Array.from({ length: 24 }, (_, i) => ({ fecha_xm: '2024-04-01', hora_xm: i + 1,
+      energia_kwh: i === 0 ? 0 : i === 1 ? -12.5 : 8305353.94 }));
+    dataset = { id: 1, dataType: 'generacion', status: 'aprobado', validatedAt: generatedAt, source: 'libre',
+      validationReport: evaluateXmGene(records).report,
+      content: { columns: ['fecha_xm', 'hora_xm', 'energia_kwh'].map(name => ({ name, optional: false })), records } };
+    artifact = null;
+    findUnique.mockReset(); updateMany.mockReset(); preparedFind.mockReset(); preparedCreate.mockReset();
+    findUnique.mockImplementation(async () => dataset);
+    preparedFind.mockImplementation(async () => artifact);
+    preparedCreate.mockImplementation(async (args: any) => {
+      if (artifact) throw capturedCollision();
+      artifact = { id: 9, preparedAt: generatedAt, ...structuredClone(args.data) };
+      return artifact;
+    });
+  });
+  test('XMP-01: contrato exacto, 24 periodos, valores e índices intactos', async () => {
+    const before = structuredClone(dataset);
+    const r = await prepareHttp();
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ profileId: 'xm_gene_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_gene_base', sourceRulesetVersion: '1.0.0', recordCount: 24, reused: false });
+    expect(r.body.content).toEqual({ variables: { minimum: [
+      { name: 'fecha_xm', type: 'string', representation: 'YYYY-MM-DD' },
+      { name: 'hora_xm', type: 'number', representation: 'integer 1..24' },
+      { name: 'energia_kwh', type: 'number', unit: 'kWh' },
+    ], context: [] }, records: before.content.records.map((record: any, sourceRecordIndex: number) => ({ sourceRecordIndex, ...record })) });
+    expect(r.body.content.records[0].hora_xm).toBe(1);
+    expect(r.body.content.records[23].hora_xm).toBe(24);
+    expect(r.body.transformations).toEqual({ temporalIdentity: { fields: ['fecha_xm', 'hora_xm'], representation: 'calendar-date-and-period', preserved: true },
+      variableSelection: { minimum: ['fecha_xm', 'hora_xm', 'energia_kwh'], optionalContext: [], unusedColumns: [] }, excludedOptionalContext: [], generatedFeatures: [] });
+    expect(dataset).toEqual(before);
+    expect(updateMany).not.toHaveBeenCalled(); expect(create).not.toHaveBeenCalled();
+    expect(preparedCreate.mock.calls[0]![0].data).not.toHaveProperty('preparedAt');
+  });
+  test('XMP-02: orden original y columnas extra sin copiar a preparados', async () => {
+    dataset.content.records.reverse();
+    dataset.content.columns.push({ name: 'zona', optional: true }, { name: 'extra', optional: false });
+    dataset.content.records.forEach((row: any) => Object.assign(row, { zona: 'texto', extra: 5 }));
+    const r = await prepareHttp();
+    expect(r.body.transformations.variableSelection.unusedColumns).toEqual(['zona', 'extra']);
+    expect(r.body.content.records.map((row: any) => row.hora_xm)).toEqual(dataset.content.records.map((row: any) => row.hora_xm));
+    expect(r.body.content.records.map((row: any) => row.sourceRecordIndex)).toEqual(Array.from({ length: 24 }, (_, i) => i));
+    expect(Object.keys(r.body.content.records[0]).sort()).toEqual(['energia_kwh', 'fecha_xm', 'hora_xm', 'sourceRecordIndex']);
+  });
+  test.each([['recibido',409,'DATASET_NOT_VALIDATED'],['rechazado',422,'DATASET_REJECTED']])('XMP-03: estado %s bloqueado', async (status, http, error) => {
+    dataset.status = status;
+    expect(await prepareHttp()).toMatchObject({ status: http, body: { error } });
+    expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('XMP-04: informes incompatibles no seleccionan por source ni columnas', async () => {
+    const original = structuredClone(dataset.validationReport);
+    for (const report of [null, {}, { ...original, rulesetId: 'otro' }, { ...original, rulesetVersion: '2.0.0' },
+      { ...original, errorCount: 1 }, { ...original, warningCount: 1 }, { ...original, issues: [{}] },
+      { ...original, recordCount: 0 }, { ...original, recordCount: 1.5 }, { ...original, recordCount: '24' }]) {
+      dataset.validationReport = report;
+      expect(await prepareHttp()).toMatchObject({ status: 409, body: { error: 'DATASET_VALIDATION_INCONSISTENT' } });
+    }
+    dataset.validationReport = original; dataset.status = 'advertencia';
+    expect((await prepareHttp()).status).toBe(409);
+    dataset.status = 'aprobado'; dataset.validatedAt = null;
+    expect((await prepareHttp()).status).toBe(409);
+    expect(preparedFind).not.toHaveBeenCalled(); expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('XMP-05: conteo inconsistente', async () => {
+    dataset.validationReport.recordCount = 23;
+    expect(await prepareHttp()).toMatchObject({ status: 409, body: { error: 'DATASET_CONTENT_INCONSISTENT' } });
+    expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('XMP-06: estructuras y valores corruptos', async () => {
+    const original = structuredClone(dataset.content);
+    for (const content of [null, {}, { ...original, records: [] }, { ...original, records: null },
+      ...[{ fecha_xm: '2024-02-30' }, { hora_xm: 25 }, { hora_xm: 1.5 }, { hora_xm: '1' }, { energia_kwh: '2' }, { energia_kwh: Infinity }].map(change => ({ ...original, records: [{ ...original.records[0], ...change }] }))]) {
+      dataset.content = content;
+      expect(await prepareHttp()).toMatchObject({ status: 409, body: { error: 'DATASET_CONTENT_INCONSISTENT' } });
+    }
+    expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('XMP-07: columnas incompatibles', async () => {
+    const original = structuredClone(dataset.content.columns);
+    for (let i = 0; i < 3; i++) {
+      dataset.content.columns = structuredClone(original); dataset.content.columns[i].optional = true;
+      expect(await prepareHttp()).toMatchObject({ status: 422, body: { error: 'PREPARATION_PROFILE_NOT_APPLICABLE' } });
+    }
+    expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('XMP-08: duplicados pese a informe aprobado', async () => {
+    dataset.content.records[1] = { ...dataset.content.records[0] };
+    expect(await prepareHttp()).toMatchObject({ status: 409, body: { error: 'DATASET_CONTENT_INCONSISTENT' } });
+    expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('XMP-09: idempotencia secuencial por perfil/version', async () => {
+    const first = await prepareHttp(); const second = await prepareHttp();
+    expect(second.body).toEqual({ ...first.body, reused: true });
+    expect(preparedCreate).toHaveBeenCalledTimes(1);
+    expect(preparedFind.mock.calls[1]![0].where).toEqual({ sourceDatasetId_profileId_profileVersion: { sourceDatasetId: 1, profileId: 'xm_gene_preparacion_base', profileVersion: '1.0.0' } });
+  });
+  test('XMP-10: concurrencia y P2002 capturado recuperan ganador', async () => {
+    let reads = 0; let release!: () => void;
+    const barrier = new Promise<void>(resolve => { release = resolve; });
+    preparedFind.mockImplementation(async () => { reads++; if (reads <= 2) { if (reads === 2) release(); await barrier; return null; } return artifact; });
+    const results = await Promise.all([prepareHttp(), prepareHttp()]);
+    expect(results.map(r => r.status)).toEqual([200,200]);
+    expect(results.map(r => r.body.reused).sort()).toEqual([false,true]);
+    expect(results[0]!.body.preparedDatasetId).toBe(results[1]!.body.preparedDatasetId);
+    expect(results[0]!.body.preparedAt).toBe(results[1]!.body.preparedAt);
+    expect(preparedCreate).toHaveBeenCalledTimes(2);
+    expect(preparedFind).toHaveBeenCalledTimes(3);
+  });
+  test('XMP-11: P2002 ajeno y otros errores conservan fallo seguro', async () => {
+    for (const error of [collision(['id']), new Error('private stack')]) {
+      preparedCreate.mockRejectedValueOnce(error);
+      expect(await prepareHttp()).toEqual({ status: 500, body: { error: 'DATASET_PREPARATION_FAILED', message: 'No fue posible completar la preparación del dataset.' } });
+    }
+    expect(preparedFind).toHaveBeenCalledTimes(2); expect(artifact).toBeNull();
+  });
+  test('XMP-12: P2002 esperado sin ganador', async () => {
+    preparedCreate.mockRejectedValueOnce(capturedCollision());
+    expect(await prepareHttp()).toEqual({ status: 500, body: { error: 'DATASET_PREPARATION_FAILED', message: 'No fue posible completar la preparación del dataset.' } });
+    expect(preparedFind).toHaveBeenCalledTimes(2); expect(artifact).toBeNull();
   });
 });
 

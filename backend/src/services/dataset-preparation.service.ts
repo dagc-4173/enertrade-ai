@@ -3,6 +3,7 @@ import { Prisma } from '@/generated/prisma/client';
 import type { PreparedDataset } from '@/generated/prisma/client';
 import { isPlainObject } from './dataset-validation.rules';
 import { DatasetPreparationError, checkContent, prepareContent, profileId, profileVersion, sourceRulesetId, sourceRulesetVersion } from './dataset-preparation.profile';
+import * as xmProfile from './dataset-preparation-xm-gene.profile';
 export { DatasetPreparationError } from './dataset-preparation.profile';
 
 function consistentReport(report: unknown, status: string): boolean {
@@ -46,16 +47,22 @@ export async function prepareDataset(id: number) {
   if (dataset.status === 'recibido') throw new DatasetPreparationError(409, 'DATASET_NOT_VALIDATED', 'El dataset debe completar validación antes de prepararse.');
   if (dataset.status === 'rechazado') throw new DatasetPreparationError(422, 'DATASET_REJECTED', 'El dataset contiene errores críticos y no puede prepararse mediante este perfil.');
   if (dataset.dataType !== 'generacion') throw new DatasetPreparationError(422, 'PREPARATION_PROFILE_NOT_APPLICABLE', 'El perfil no aplica al tipo de dataset.');
-  if (!dataset.validatedAt || !consistentReport(dataset.validationReport, dataset.status)) throw new DatasetPreparationError(409, 'DATASET_VALIDATION_INCONSISTENT', 'El informe de validación es inconsistente con el perfil.');
-  const where = {sourceDatasetId_profileId_profileVersion: {sourceDatasetId: id, profileId, profileVersion}};
+  const report = dataset.validationReport;
+  const simulatedProfile = { profileId, profileVersion, sourceRulesetId, sourceRulesetVersion, consistentReport, checkContent, prepareContent };
+  const selected = isPlainObject(report) && report.rulesetId === sourceRulesetId && report.rulesetVersion === sourceRulesetVersion
+    ? simulatedProfile : isPlainObject(report) && report.rulesetId === xmProfile.sourceRulesetId && report.rulesetVersion === xmProfile.sourceRulesetVersion
+      ? xmProfile : null;
+  if (!dataset.validatedAt || !selected || !selected.consistentReport(report, dataset.status)) throw new DatasetPreparationError(409, 'DATASET_VALIDATION_INCONSISTENT', 'El informe de validación es inconsistente con el perfil.');
+  const where = {sourceDatasetId_profileId_profileVersion: {sourceDatasetId: id, profileId: selected.profileId, profileVersion: selected.profileVersion}};
   const existing = await prisma.preparedDataset.findUnique({where});
   if (existing) return response(existing, true);
-  const content = checkContent(dataset.content);
+  const content = selected.checkContent(dataset.content);
   if ((dataset.validationReport as {recordCount: number}).recordCount !== content.records.length) throw new DatasetPreparationError(409, 'DATASET_CONTENT_INCONSISTENT', 'El contenido almacenado es inconsistente con la validación.');
-  const prepared = prepareContent(content);
+  const prepared = selected.prepareContent(content);
   let artifact: PreparedDataset;
   try {
-    artifact = await prisma.preparedDataset.create({data: {sourceDatasetId: id, profileId, profileVersion, sourceRulesetId, sourceRulesetVersion, ...prepared}});
+    artifact = await prisma.preparedDataset.create({data: {sourceDatasetId: id, profileId: selected.profileId, profileVersion: selected.profileVersion,
+      sourceRulesetId: selected.sourceRulesetId, sourceRulesetVersion: selected.sourceRulesetVersion, ...prepared}});
   } catch (error) {
     if (!expectedCollision(error)) throw error;
     const winner = await prisma.preparedDataset.findUnique({where});
