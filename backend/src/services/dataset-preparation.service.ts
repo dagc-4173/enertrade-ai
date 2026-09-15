@@ -1,4 +1,5 @@
-﻿import { prisma } from '@/lib/prisma';
+﻿import * as demandProfile from './dataset-preparation-xm-demandasin.profile';
+import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma/client';
 import type { PreparedDataset } from '@/generated/prisma/client';
 import { isPlainObject } from './dataset-validation.rules';
@@ -46,10 +47,10 @@ export async function prepareDataset(id: number) {
   if (!dataset) throw new DatasetPreparationError(404, 'DATASET_NOT_FOUND', 'Dataset no encontrado.');
   if (dataset.status === 'recibido') throw new DatasetPreparationError(409, 'DATASET_NOT_VALIDATED', 'El dataset debe completar validación antes de prepararse.');
   if (dataset.status === 'rechazado') throw new DatasetPreparationError(422, 'DATASET_REJECTED', 'El dataset contiene errores críticos y no puede prepararse mediante este perfil.');
-  if (dataset.dataType !== 'generacion') throw new DatasetPreparationError(422, 'PREPARATION_PROFILE_NOT_APPLICABLE', 'El perfil no aplica al tipo de dataset.');
+  if (!['generacion', 'demanda'].includes(dataset.dataType)) throw new DatasetPreparationError(422, 'PREPARATION_PROFILE_NOT_APPLICABLE', 'El perfil no aplica al tipo de dataset.');
   const report = dataset.validationReport;
   const simulatedProfile = { profileId, profileVersion, sourceRulesetId, sourceRulesetVersion, consistentReport, checkContent, prepareContent };
-  const selected = isPlainObject(report) && report.rulesetId === sourceRulesetId && report.rulesetVersion === sourceRulesetVersion
+  const selected = dataset.dataType === 'demanda' ? (isPlainObject(report) && report.rulesetId === demandProfile.sourceRulesetId && report.rulesetVersion === demandProfile.sourceRulesetVersion ? demandProfile : null) : isPlainObject(report) && report.rulesetId === sourceRulesetId && report.rulesetVersion === sourceRulesetVersion
     ? simulatedProfile : isPlainObject(report) && report.rulesetId === xmProfile.sourceRulesetId && report.rulesetVersion === xmProfile.sourceRulesetVersion
       ? xmProfile : null;
   if (!dataset.validatedAt || !selected || !selected.consistentReport(report, dataset.status)) throw new DatasetPreparationError(409, 'DATASET_VALIDATION_INCONSISTENT', 'El informe de validación es inconsistente con el perfil.');

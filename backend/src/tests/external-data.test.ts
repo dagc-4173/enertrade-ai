@@ -71,9 +71,18 @@ describe('Importación XM: registro HU-01 real, transporte y Prisma sustituidos'
       content: { columns: ['fecha_xm', 'hora_xm', 'energia_kwh'].map(name => ({ name, optional: false })), records: expectedRecords }, pendingOptionalFields: [] });
     expect(outbound).toHaveBeenCalledTimes(1);
   });
+  test('IMP-DemaSIN: mapping diario exacto y source determinista', async () => {
+    outbound.mockImplementation(async () => Response.json(daily()));
+    const r = await importHttp({...valid, dataset:'DemaSIN'});
+    expect(r.status).toBe(201);
+    const source='XM/SINERGOX;metric=DemaSIN;unit=kWh;startDate=2024-04-01;endDate=2024-04-01;mapping=xm-demandasin-v1';
+    expect(r.body).toMatchObject({dataType:'demanda',source,recordCount:1,status:'recibido',pendingOptionalFields:[]});
+    expect(create.mock.calls[0][0].data).toEqual({source,dataType:'demanda',pendingOptionalFields:[],content:{columns:[{name:'fecha_xm',optional:false},{name:'demanda_kwh',optional:false}],records:[{fecha_xm:'2024-04-01',demanda_kwh:225816448.51}]}});
+    expect(outbound).toHaveBeenCalledTimes(1);
+  });
   test.each([
     [{ ...valid, provider: 'noaa' }, 'UNSUPPORTED_PROVIDER'],
-    [{ ...valid, dataset: 'DemaSIN' }, 'UNSUPPORTED_EXTERNAL_DATASET'],
+    [{ ...valid, dataset: 'unknown' }, 'UNSUPPORTED_EXTERNAL_DATASET'],
     [{ ...valid, dataset: 'PrecBolsNaci' }, 'UNSUPPORTED_EXTERNAL_DATASET'],
     [{ ...valid, startDate: '2024-02-30' }, 'INVALID_EXTERNAL_DATES'],
     [{ ...valid, endDate: '2024-03-31' }, 'INVALID_EXTERNAL_DATE_RANGE'],

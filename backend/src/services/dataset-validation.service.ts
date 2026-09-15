@@ -1,3 +1,4 @@
+import { evaluateXmDemaSin } from './dataset-validation-xm-demandasin.rules';
 import { prisma } from '@/lib/prisma';
 import { evaluateGeneration, hasDatasetStructure } from './dataset-validation.rules';
 import { evaluateXmGene } from './dataset-validation-xm-gene.rules';
@@ -12,18 +13,19 @@ export async function validateDataset(id: number) {
   const dataset = await prisma.energyDataset.findUnique({ where: { id } });
   if (!dataset) throw notFound();
   if (dataset.status !== 'recibido') throw alreadyValidated();
-  if (dataset.dataType !== 'generacion') throw new DatasetValidationError(422, 'RULESET_NOT_APPLICABLE', 'El ruleset no aplica al tipo de dataset.');
+  if (!['generacion', 'demanda'].includes(dataset.dataType)) throw new DatasetValidationError(422, 'RULESET_NOT_APPLICABLE', 'El ruleset no aplica al tipo de dataset.');
   const content = dataset.content;
   if (!hasDatasetStructure(content)) throw new DatasetValidationError(409, 'DATASET_CONTENT_INCOMPATIBLE', 'El contenido almacenado no cumple el contrato de registro.');
   const expected = [['fecha', false], ['energia_kwh', false], ['zona', true]] as const;
-  const simulated = expected.every(([name, optional]) => content.columns.some(column => column.name === name && column.optional === optional));
-  const xm = ['fecha_xm', 'hora_xm', 'energia_kwh'].every(name => content.columns.some(column => column.name === name && column.optional === false));
-  if (!simulated && !xm) {
+  const simulated = dataset.dataType === 'generacion' && expected.every(([name, optional]) => content.columns.some(column => column.name === name && column.optional === optional));
+  const xm = dataset.dataType === 'generacion' && ['fecha_xm', 'hora_xm', 'energia_kwh'].every(name => content.columns.some(column => column.name === name && column.optional === false));
+  const demand = dataset.dataType === 'demanda' && ['fecha_xm','demanda_kwh'].every(name => content.columns.some(column => column.name === name && column.optional === false));
+  if (!simulated && !xm && !demand) {
     throw new DatasetValidationError(422, 'RULESET_NOT_APPLICABLE', 'Las columnas no corresponden a la referencia del ruleset.');
   }
   // El contrato histórico tiene prioridad, incluso si hay columnas XM extra.
   // Las columnas seleccionan compatibilidad de formato, no autenticidad del origen.
-  const { status, report } = simulated ? evaluateGeneration(content.records) : evaluateXmGene(content.records);
+  const { status, report } = simulated ? evaluateGeneration(content.records) : xm ? evaluateXmGene(content.records) : evaluateXmDemaSin(content.records);
   const validatedAt = new Date();
   const result = await prisma.energyDataset.updateMany({
     where: { id, status: 'recibido' },
