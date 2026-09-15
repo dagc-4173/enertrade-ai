@@ -1,0 +1,266 @@
+{
+  "snapshot": {
+    "path": "docs/evidencias/hu-06-demandasin/demandasin-2023-08-01_2024-07-30.csv",
+    "sha256": "73e795ae04e4dd36e1dff7fda38e47627514602565ee086b2710f1c6da6c807f",
+    "observations": 365,
+    "uniqueDates": 365,
+    "missingDates": [],
+    "nonFinite": 0
+  },
+  "partitions": {
+    "train": {
+      "startDate": "2023-08-01",
+      "endDate": "2024-04-11",
+      "n": 255
+    },
+    "validation": {
+      "startDate": "2024-04-12",
+      "endDate": "2024-06-05",
+      "n": 55
+    },
+    "test": {
+      "startDate": "2024-06-06",
+      "endDate": "2024-07-30",
+      "n": 55
+    }
+  },
+  "protocol": {
+    "horizon": "D+1",
+    "informationAvailable": "Only calendar dates strictly before target D; rolling daily origin",
+    "lookup": "calendar date keys, not row offsets",
+    "baselines": {
+      "B1": "prediction(D)=demanda(D-1)",
+      "B7": "prediction(D)=demanda(D-7)"
+    },
+    "assumption": "Demand for D-1 is fully available at forecast origin",
+    "training": false
+  },
+  "selection": {
+    "partition": "validation",
+    "criteria": [
+      "MAE ascending",
+      "RMSE ascending",
+      "stable ID ascending"
+    ],
+    "selectedBaseline": "B7",
+    "frozenBeforeTest": true
+  },
+  "validation": {
+    "B1": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 9782197.35363636,
+      "RMSE": 13194617.180725373,
+      "bias": 275384.01981818187,
+      "WAPE": {
+        "value": 4.375436177809231,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 538020854.4499998,
+        "denominatorAbsoluteActualKwh": 12296393607.080002
+      },
+      "byCalendarWeekday": {
+        "domingo": {
+          "n": 8,
+          "MAE": 19122557.08125,
+          "RMSE": 19290323.696551222
+        },
+        "lunes": {
+          "n": 8,
+          "MAE": 20049250.21625,
+          "RMSE": 22392646.514553823
+        },
+        "martes": {
+          "n": 8,
+          "MAE": 8850371.405000005,
+          "RMSE": 11466577.627400478
+        },
+        "miércoles": {
+          "n": 8,
+          "MAE": 3797734.8100000024,
+          "RMSE": 6606132.250534572
+        },
+        "jueves": {
+          "n": 7,
+          "MAE": 4365096.519999998,
+          "RMSE": 6949935.9297619
+        },
+        "viernes": {
+          "n": 8,
+          "MAE": 2206235.379999995,
+          "RMSE": 3351168.3365975125
+        },
+        "sábado": {
+          "n": 8,
+          "MAE": 9406998.458749995,
+          "RMSE": 9734392.019702202
+        }
+      }
+    },
+    "B7": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 6111937.536363636,
+      "RMSE": 8321703.3060514685,
+      "bias": 1342307.5141818172,
+      "WAPE": {
+        "value": 2.733781751313232,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 336156564.5,
+        "denominatorAbsoluteActualKwh": 12296393607.080002
+      },
+      "byCalendarWeekday": {
+        "domingo": {
+          "n": 8,
+          "MAE": 4494630.530000001,
+          "RMSE": 5380313.215728036
+        },
+        "lunes": {
+          "n": 8,
+          "MAE": 12586037.414999995,
+          "RMSE": 15248397.896352721
+        },
+        "martes": {
+          "n": 8,
+          "MAE": 4873232.567500006,
+          "RMSE": 6200196.86505505
+        },
+        "miércoles": {
+          "n": 8,
+          "MAE": 7343664.8737499975,
+          "RMSE": 10184438.725724136
+        },
+        "jueves": {
+          "n": 7,
+          "MAE": 4038839.064285713,
+          "RMSE": 4380124.824713084
+        },
+        "viernes": {
+          "n": 8,
+          "MAE": 5052591.353749994,
+          "RMSE": 5903522.654769684
+        },
+        "sábado": {
+          "n": 8,
+          "MAE": 4135429.641250003,
+          "RMSE": 4564356.427762196
+        }
+      }
+    }
+  },
+  "test": {
+    "B7": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 4579906.609272726,
+      "RMSE": 7193260.237815659,
+      "bias": -1006303.0925454552,
+      "WAPE": {
+        "value": 2.070355428032604,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 251894863.50999993,
+        "denominatorAbsoluteActualKwh": 12166744902.799997
+      },
+      "byCalendarWeekday": {
+        "domingo": {
+          "n": 8,
+          "MAE": 3854199.959999997,
+          "RMSE": 4798709.007730524
+        },
+        "lunes": {
+          "n": 8,
+          "MAE": 10476734.587499999,
+          "RMSE": 14870874.619732678
+        },
+        "martes": {
+          "n": 8,
+          "MAE": 3127929.295000002,
+          "RMSE": 3766227.2240514625
+        },
+        "miércoles": {
+          "n": 7,
+          "MAE": 1933236.3185714227,
+          "RMSE": 2482260.599605381
+        },
+        "jueves": {
+          "n": 8,
+          "MAE": 2403426.986249998,
+          "RMSE": 2966968.08792442
+        },
+        "viernes": {
+          "n": 8,
+          "MAE": 3427172.451249998,
+          "RMSE": 4670009.987469687
+        },
+        "sábado": {
+          "n": 8,
+          "MAE": 6505812.880000003,
+          "RMSE": 7834205.757123907
+        }
+      }
+    },
+    "B1": {
+      "evaluable": 55,
+      "unavailable": 0,
+      "MAE": 9123353.804545457,
+      "RMSE": 13007335.730045162,
+      "bias": -173782.23509090923,
+      "WAPE": {
+        "value": 4.124229309143499,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 501784459.2500001,
+        "denominatorAbsoluteActualKwh": 12166744902.799997
+      },
+      "byCalendarWeekday": {
+        "domingo": {
+          "n": 8,
+          "MAE": 16614511.8525,
+          "RMSE": 17234729.521238938
+        },
+        "lunes": {
+          "n": 8,
+          "MAE": 21654812.459999997,
+          "RMSE": 24148987.774673488
+        },
+        "martes": {
+          "n": 8,
+          "MAE": 7634825.071250003,
+          "RMSE": 11231960.30206768
+        },
+        "miércoles": {
+          "n": 7,
+          "MAE": 2481808.8585714316,
+          "RMSE": 2835913.809301511
+        },
+        "jueves": {
+          "n": 8,
+          "MAE": 1309835.8824999966,
+          "RMSE": 1594848.0178588347
+        },
+        "viernes": {
+          "n": 8,
+          "MAE": 2272209.2600000054,
+          "RMSE": 3166540.3284183596
+        },
+        "sábado": {
+          "n": 8,
+          "MAE": 11065280.128749996,
+          "RMSE": 11713776.640223777
+        }
+      }
+    }
+  },
+  "finalTestBaseline": "B7",
+  "otherTestPurpose": "documentation only, no reselection",
+  "formulas": {
+    "MAE": "sum(abs(prediction-actual))/n",
+    "RMSE": "sqrt(sum((prediction-actual)^2)/n)",
+    "bias": "sum(prediction-actual)/n",
+    "WAPE": "100*sum(abs(actual-prediction))/sum(abs(actual))"
+  },
+  "limitations": [
+    "Demanda agregada del SIN; no usuario/zona",
+    "Sin modelo entrenable HU-06, baseline no es IA",
+    "Sin generalizacion fuera del periodo",
+    "La caracterizacion descriptiva previa incluyo test; no hubo seleccion usando estas metricas test"
+  ]
+}
