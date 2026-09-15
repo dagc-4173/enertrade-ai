@@ -1,0 +1,237 @@
+{
+  "modelType": "Ridge",
+  "experimentalVersion": "demandasin-ridge-external-holdout-1.0.0",
+  "status": "EXPERIMENTAL",
+  "alpha": 100,
+  "orderedFeatures": [
+    "demand_D_minus_1",
+    "demand_D_minus_7",
+    "demand_D_minus_14",
+    "demand_D_minus_28",
+    "weekday_sin",
+    "weekday_cos"
+  ],
+  "weekdayConvention": "Monday=0, Sunday=6",
+  "horizonDays": 1,
+  "target": "demanda_kwh",
+  "unit": "kWh",
+  "scaler": {
+    "type": "standardization",
+    "standardDeviation": "population ddof=0",
+    "means": [
+      224134803.0620178,
+      224044051.46103856,
+      224031457.9482196,
+      224182402.20320472,
+      0.0023199747254244365,
+      0.001850118106405718
+    ],
+    "standardDeviations": [
+      12938831.014841352,
+      12931217.494277373,
+      12970430.218369015,
+      13029469.237155007,
+      0.7073363891889897,
+      0.7068708703216932
+    ],
+    "fittedOn": "effective training only"
+  },
+  "coefficients": [
+    2961354.269504406,
+    3979553.9771244596,
+    967462.3716029205,
+    2433781.1337215304,
+    2262920.1988115795,
+    -52764.881738259
+  ],
+  "intercept": 224148974.55344212,
+  "coefficientSpace": "standardized features; unscaled target; unpenalized intercept",
+  "trainingSourceRange": {
+    "startDate": "2023-08-01",
+    "endDate": "2024-07-30"
+  },
+  "effectiveTrainingRange": {
+    "startDate": "2023-08-29",
+    "endDate": "2024-07-30"
+  },
+  "effectiveTrainingRows": 337,
+  "excludedTrainingRows": 28,
+  "trainingSnapshotSha256": "73e795ae04e4dd36e1dff7fda38e47627514602565ee086b2710f1c6da6c807f",
+  "externalHoldoutSha256": "ddb2b802941ae82230d9fbe0dee1847cdbaa12d986f0af460cf54a6376fd8eaa",
+  "metrics": {
+    "B1": {
+      "evaluable": 60,
+      "unavailable": 0,
+      "MAE": 10134510.983666666,
+      "RMSE": 13606509.531035617,
+      "bias": 236455.59566666684,
+      "WAPE": {
+        "value": 4.451967013320059,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 608070659.02,
+        "denominatorAbsoluteActualKwh": 13658471799.11
+      },
+      "byCalendarWeekday": {
+        "Monday": {
+          "n": 8,
+          "MAE": 23417201.343750004,
+          "RMSE": 24244367.31775357
+        },
+        "Tuesday": {
+          "n": 8,
+          "MAE": 7343093.379999999,
+          "RMSE": 10370680.467278622
+        },
+        "Wednesday": {
+          "n": 9,
+          "MAE": 4490435.286666665,
+          "RMSE": 6792806.293879456
+        },
+        "Thursday": {
+          "n": 9,
+          "MAE": 4663570.83666666,
+          "RMSE": 7341973.721066248
+        },
+        "Friday": {
+          "n": 9,
+          "MAE": 1606309.4366666707,
+          "RMSE": 2177019.0697986144
+        },
+        "Saturday": {
+          "n": 9,
+          "MAE": 11579554.402222224,
+          "RMSE": 11946702.916363101
+        },
+        "Sunday": {
+          "n": 8,
+          "MAE": 20116183.946250007,
+          "RMSE": 20365147.78527111
+        }
+      }
+    },
+    "B7": {
+      "evaluable": 60,
+      "unavailable": 0,
+      "MAE": 5337033.312166665,
+      "RMSE": 7253962.306663714,
+      "bias": -52556.10683333278,
+      "WAPE": {
+        "value": 2.3444936112901433,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 320221998.7299999,
+        "denominatorAbsoluteActualKwh": 13658471799.11
+      },
+      "byCalendarWeekday": {
+        "Monday": {
+          "n": 8,
+          "MAE": 7852397.372500002,
+          "RMSE": 8895637.588989088
+        },
+        "Tuesday": {
+          "n": 8,
+          "MAE": 5370162.753749996,
+          "RMSE": 6026256.319141902
+        },
+        "Wednesday": {
+          "n": 9,
+          "MAE": 8361870.099999994,
+          "RMSE": 12109596.657528797
+        },
+        "Thursday": {
+          "n": 9,
+          "MAE": 4228123.9811111055,
+          "RMSE": 4832029.913741222
+        },
+        "Friday": {
+          "n": 9,
+          "MAE": 2717411.5055555534,
+          "RMSE": 3345524.608228848
+        },
+        "Saturday": {
+          "n": 9,
+          "MAE": 4200408.281111117,
+          "RMSE": 5213178.425263442
+        },
+        "Sunday": {
+          "n": 8,
+          "MAE": 4858899.113749996,
+          "RMSE": 6692977.715877241
+        }
+      }
+    },
+    "Ridge": {
+      "evaluable": 60,
+      "unavailable": 0,
+      "MAE": 5140961.018887941,
+      "RMSE": 6644945.165229929,
+      "bias": -1246487.8464061364,
+      "WAPE": {
+        "value": 2.2583614453366287,
+        "unit": "percent",
+        "numeratorAbsoluteErrorKwh": 308457661.13327646,
+        "denominatorAbsoluteActualKwh": 13658471799.11
+      },
+      "byCalendarWeekday": {
+        "Monday": {
+          "n": 8,
+          "MAE": 9026719.894938082,
+          "RMSE": 10012755.528946206
+        },
+        "Tuesday": {
+          "n": 8,
+          "MAE": 4759545.7759117,
+          "RMSE": 5459112.525478325
+        },
+        "Wednesday": {
+          "n": 9,
+          "MAE": 5178465.965177198,
+          "RMSE": 8601335.442148356
+        },
+        "Thursday": {
+          "n": 9,
+          "MAE": 3196448.7545998725,
+          "RMSE": 3646799.0849164664
+        },
+        "Friday": {
+          "n": 9,
+          "MAE": 4383162.988348309,
+          "RMSE": 4792436.543266419
+        },
+        "Saturday": {
+          "n": 9,
+          "MAE": 3051200.8659144905,
+          "RMSE": 4028561.592009171
+        },
+        "Sunday": {
+          "n": 8,
+          "MAE": 6985503.575014919,
+          "RMSE": 7669342.123554116
+        }
+      }
+    }
+  },
+  "promotionRule": {
+    "zeroModelUnavailable": true,
+    "maximumRelativeMAEvsB7Percent": 5,
+    "strictImprovementRequired": "MAE < B7 MAE OR RMSE < B7 RMSE",
+    "finiteWAPEPositiveDenominator": true,
+    "noLeakageOrNumericalFailure": true
+  },
+  "criterionResults": {
+    "zeroModelUnavailable": true,
+    "MAENoMoreThan5PercentWorseThanB7": true,
+    "MAEOrRMSEStrictlyBetterThanB7": true,
+    "finiteWAPEAndPositiveDenominator": true,
+    "noLeakageOrNumericalFailure": true
+  },
+  "relativeMAEvsB7": -3.673806810082002,
+  "selectedForImplementation": true,
+  "runtime": {
+    "python": "3.14.4",
+    "dependencies": "stdlib only",
+    "solver": "centered normal equations; Gaussian elimination with partial pivoting; math.fsum",
+    "objective": "SSE + alpha*sum(coefficients^2); unpenalized intercept",
+    "maxAbsoluteNormalEquationResidual": 2.384185791015625e-07,
+    "relativeNormalEquationResidual": 7.527401238583152e-17
+  }
+}
