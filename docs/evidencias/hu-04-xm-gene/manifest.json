@@ -1,0 +1,79 @@
+{
+  "provider": "XM/SINERGOX",
+  "dataset": "Gene",
+  "unit": "kWh",
+  "globalRange": "2024-01-01..2024-03-30",
+  "observations": 2160,
+  "completeDays": 90,
+  "missingPeriods": 0,
+  "duplicates": 0,
+  "conflicts": 0,
+  "energyDatasetIds": [
+    33,
+    34,
+    35
+  ],
+  "preparedDatasetIds": [
+    14,
+    15,
+    16
+  ],
+  "ruleset": "xm_gene_base@1.0.0",
+  "profile": "xm_gene_preparacion_base@1.0.0",
+  "partitions": {
+    "train": "2024-01-01..2024-02-29",
+    "validation": "2024-03-01..2024-03-15",
+    "test": "2024-03-16..2024-03-30"
+  },
+  "csv": {
+    "file": "xm-gene-2024-01-01_2024-03-30.csv",
+    "encoding": "UTF-8 without BOM",
+    "delimiter": ",",
+    "lineEnding": "LF",
+    "finalNewline": true,
+    "columns": [
+      "fecha_xm",
+      "hora_xm",
+      "energia_kwh",
+      "prepared_dataset_id",
+      "source_dataset_id",
+      "source_record_index"
+    ],
+    "bytes": 75125,
+    "sha256": "4c91a20048d90d082f8eec6c770f4bd042e479d70df7ca020e8dd3a6b3ba0177",
+    "order": [
+      "fecha_xm ascending",
+      "hora_xm numeric ascending"
+    ],
+    "numberSerialization": "ECMAScript Number.toString(); no rounding; numeric round-trip equality verified against PreparedDataset"
+  },
+  "statistics": {
+    "n": 2160,
+    "mean": 9469980.167731486,
+    "median": 9508801.58,
+    "sampleStandardDeviation": 1143768.3550048359,
+    "minimum": 6353959.47,
+    "maximum": 11746388.47
+  },
+  "verification": {
+    "dataRows": 2160,
+    "distinctDates": 90,
+    "periodsPerDate": 24,
+    "minimumHour": 1,
+    "maximumHour": 24,
+    "uniqueTemporalKey": true,
+    "exclusiveProvenance": true,
+    "sourceRecordIndicesContinuous": true,
+    "noNullOrNonFiniteValues": true,
+    "csvMatchesPreparedDataset": true
+  },
+  "notes": [
+    "Generacion XM usada como proxy tecnico de disponibilidad energetica.",
+    "No equivale a ofertas transaccionales observadas.",
+    "No se infirieron timestamps ni zona; no se imputaron valores ni crearon features.",
+    "Snapshot derivado exclusivamente de PreparedDataset 14, 15 y 16 leidos desde PostgreSQL en una transaccion READ ONLY.",
+    "Validacion academica/formal pendiente. No se entrenaron modelos.",
+    "SHA-256 calculado sobre los bytes del CSV final; identifica esta copia, no autenticidad de XM.",
+    "Para reproducir: leer los PreparedDataset indicados, mapear las seis columnas, ordenar por fecha_xm y hora_xm numerica, serializar numeros sin redondear y escribir UTF-8 sin BOM con LF y salto final. Comparar SHA-256 byte por byte."
+  ]
+}
