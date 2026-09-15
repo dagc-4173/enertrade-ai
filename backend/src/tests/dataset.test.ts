@@ -315,6 +315,148 @@ describe('HU-02: HTTP y concurrencia con Prisma sustituido', () => {
   });
 });
 
+const { evaluateXmGene } = await import('@/services/dataset-validation-xm-gene.rules');
+describe('HU-02 XM Gene: HTTP con Prisma sustituido', () => {
+  let dataset: any;
+  const xmReference = () => ({
+    id: 1, status: 'recibido', dataType: 'generacion', source: 'texto libre',
+    content: {
+      columns: ['fecha_xm', 'hora_xm', 'energia_kwh'].map(name => ({ name, optional: false })),
+      records: [{ fecha_xm: '2024-04-01', hora_xm: 1, energia_kwh: 12.5 }],
+    }, pendingOptionalFields: [],
+  });
+  beforeEach(() => {
+    dataset = xmReference();
+    findUnique.mockReset(); updateMany.mockReset(); preparedFind.mockReset(); preparedCreate.mockReset();
+    findUnique.mockImplementation(async () => dataset);
+    updateMany.mockImplementation(async (args: any) => {
+      if (dataset.status !== args.where.status) return { count: 0 };
+      Object.assign(dataset, structuredClone(args.data));
+      return { count: 1 };
+    });
+  });
+  test('XM-01: selección, envelope y persistencia atómica sin cambiar contenido', async () => {
+    const before = structuredClone(dataset.content);
+    const result = await validateHttp();
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ datasetId: 1, status: 'aprobado', rulesetId: 'xm_gene_base', rulesetVersion: '1.0.0', recordCount: 1, errorCount: 0, warningCount: 0, issues: [], canProceed: true });
+    expect(updateMany.mock.calls[0]![0].where).toEqual({ id: 1, status: 'recibido' });
+    expect(Object.keys(updateMany.mock.calls[0]![0].data).sort()).toEqual(['status', 'validatedAt', 'validationReport']);
+    expect(dataset.validationReport.rulesetId).toBe('xm_gene_base');
+    expect(dataset.content).toEqual(before);
+    expect(create).not.toHaveBeenCalled();
+    expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('XM-02: contrato simulado tiene prioridad aun con columnas XM', async () => {
+    dataset = { ...reference(), source: 'XM Gene' };
+    dataset.content.columns.push({ name: 'fecha_xm', optional: false }, { name: 'hora_xm', optional: false });
+    Object.assign(dataset.content.records[0], { fecha_xm: 'inválida', hora_xm: 0 });
+    expect((await validateHttp()).body).toMatchObject({ status: 'aprobado', rulesetId: 'generacion_simulada_base', rulesetVersion: '1.0.0' });
+  });
+  test.each([
+    ['2024-04-01', 'aprobado'], ['2024-02-29', 'aprobado'], ['2000-02-29', 'aprobado'],
+    ['2023-02-29', 'rechazado'], ['1900-02-29', 'rechazado'], ['2024-04-31', 'rechazado'],
+    ['2024-13-01', 'rechazado'], ['2024-01-00', 'rechazado'], ['0000-01-01', 'rechazado'],
+    ['2024-4-01', 'rechazado'], ['2024-04-01T00:00:00Z', 'rechazado'], [' 2024-04-01', 'rechazado'],
+  ])('XM-03: calendario %s -> %s', async (value, status) => {
+    dataset.content.records[0].fecha_xm = value;
+    const result = await validateHttp();
+    expect(result.status).toBe(200);
+    expect(result.body.status).toBe(status);
+    expect(result.body.warningCount).toBe(0);
+    expect(result.body.canProceed).toBe(status === 'aprobado');
+    expect(result.body.issues.map((i: any) => i.code)).toEqual(status === 'aprobado' ? [] : ['INVALID_XM_DATE']);
+  });
+  test.each([
+    [0, 'INVALID_XM_HOUR'], [1, null], [24, null], [25, 'INVALID_XM_HOUR'],
+    [1.5, 'INVALID_XM_HOUR'], ['1', 'CRITICAL_TYPE_MISMATCH'], [true, 'CRITICAL_TYPE_MISMATCH'],
+  ])('XM-04: periodo %j', async (value, code) => {
+    dataset.content.records[0].hora_xm = value;
+    const result = await validateHttp();
+    expect(result.status).toBe(200);
+    expect(result.body.status).toBe(code ? 'rechazado' : 'aprobado');
+    expect(result.body.issues.map((i: any) => i.code)).toEqual(code ? [code] : []);
+    expect(result.body.warningCount).toBe(0);
+    expect(result.body.canProceed).toBe(!code);
+  });
+  test.each([0, -12.5, 12.5])('XM-05: energía finita %s aceptada sin transformación', async value => {
+    dataset.content.records[0].energia_kwh = value;
+    expect((await validateHttp()).body.status).toBe('aprobado');
+    expect(dataset.content.records[0].energia_kwh).toBe(value);
+  });
+  test.each([['energia_kwh', '12.5'], ['energia_kwh', false], ['fecha_xm', 20240401]])('XM-06: tipo incompatible %s=%j', async (field, value) => {
+    dataset.content.records[0][field as string] = value;
+    const result = await validateHttp();
+    expect(result.body).toMatchObject({ status: 'rechazado', errorCount: 1, warningCount: 0, canProceed: false });
+    expect(result.body.issues[0]).toMatchObject({ code: 'CRITICAL_TYPE_MISMATCH', field, recordIndex: 0, severity: 'error' });
+  });
+  test('XM-07: críticos vacíos y ausencias estructurales mantienen su distinción', async () => {
+    for (const field of ['fecha_xm', 'hora_xm', 'energia_kwh']) {
+      for (const value of [null, '', ' ']) {
+        dataset = xmReference(); dataset.content.records[0][field] = value;
+        expect((await validateHttp()).body.issues[0]).toMatchObject({ code: 'CRITICAL_VALUE_MISSING', field });
+      }
+      dataset = xmReference(); delete dataset.content.records[0][field];
+      expect((await validateHttp()).status).toBe(409);
+    }
+  });
+  test('XM-08: identidad por pareja, referencia al primer duplicado', async () => {
+    const row = dataset.content.records[0];
+    dataset.content.records.push({ ...row, hora_xm: 24 }, { ...row, fecha_xm: '2024-04-02' }, { ...row, energia_kwh: 99 }, { ...row });
+    const result = await validateHttp();
+    expect(result.body).toMatchObject({ status: 'rechazado', recordCount: 5, errorCount: 2, warningCount: 0, canProceed: false });
+    expect(result.body.issues.map((i: any) => [i.code, i.recordIndex, i.relatedRecordIndex])).toEqual([
+      ['DUPLICATE_XM_PERIOD', 3, 0], ['DUPLICATE_XM_PERIOD', 4, 0],
+    ]);
+  });
+  test('XM-09: no exigir zona, días completos ni orden; ignorar contexto extra', async () => {
+    dataset.content.columns.push({ name: 'zona', optional: true });
+    dataset.content.records = [
+      { fecha_xm: '2024-04-03', hora_xm: 24, energia_kwh: -1, zona: false },
+      { fecha_xm: '2024-04-01', hora_xm: 1, energia_kwh: 0 },
+    ];
+    expect((await validateHttp()).body).toMatchObject({ status: 'aprobado', warningCount: 0, issues: [] });
+  });
+  test('XM-10: columnas incompatibles o tipo ajeno -> 422 sin escritura', async () => {
+    for (const field of ['fecha_xm', 'hora_xm', 'energia_kwh']) {
+      dataset = xmReference(); dataset.content.columns.find((c: any) => c.name === field).optional = true;
+      expect(await validateHttp()).toMatchObject({ status: 422, body: { error: 'RULESET_NOT_APPLICABLE' } });
+    }
+    dataset = xmReference(); dataset.dataType = 'consumo';
+    expect((await validateHttp()).status).toBe(422);
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+  test('XM-11: vacío y números no finitos almacenados -> 409 sin escritura', async () => {
+    dataset.content.records = [];
+    expect((await validateHttp()).status).toBe(409);
+    for (const value of [NaN, Infinity, -Infinity]) {
+      dataset = xmReference(); dataset.content.records[0].energia_kwh = value;
+      expect((await validateHttp()).status).toBe(409);
+      expect(evaluateXmGene(dataset.content.records).report.issues[0]?.code).toBe('CRITICAL_TYPE_MISMATCH');
+    }
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+  test('XM-12: aprobado por HU-02 no habilita preparación simulada', async () => {
+    expect((await validateHttp()).body).toMatchObject({ rulesetId: 'xm_gene_base', status: 'aprobado', canProceed: true });
+    expect(await prepareHttp()).toEqual({ status: 409, body: {
+      error: 'DATASET_VALIDATION_INCONSISTENT', message: 'El informe de validación es inconsistente con el perfil.',
+    } });
+    expect(preparedFind).not.toHaveBeenCalled();
+    expect(preparedCreate).not.toHaveBeenCalled();
+  });
+  test('XM-13: validación completada no se sobrescribe', async () => {
+    await validateHttp(); const report = structuredClone(dataset.validationReport);
+    expect((await validateHttp()).status).toBe(409);
+    expect(updateMany).toHaveBeenCalledTimes(1);
+    expect(dataset.validationReport).toEqual(report);
+  });
+  test('XM-14: errores de persistencia seguros', async () => {
+    updateMany.mockRejectedValueOnce(new Error('private SQL stack'));
+    expect(await validateHttp()).toEqual({ status: 500, body: { error: 'DATASET_VALIDATION_FAILED', message: 'No fue posible completar la validación del dataset.' } });
+    expect(dataset.status).toBe('recibido');
+  });
+});
+
 const { Prisma } = await import('@/generated/prisma/client');
 const { DriverAdapterError } = await import('@prisma/driver-adapter-utils');
 const { evaluateGeneration } = await import('@/services/dataset-validation.rules');

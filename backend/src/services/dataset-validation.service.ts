@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { evaluateGeneration, hasDatasetStructure } from './dataset-validation.rules';
+import { evaluateXmGene } from './dataset-validation-xm-gene.rules';
 
 export class DatasetValidationError extends Error {
   constructor(public readonly status: number, public readonly code: string, message: string) { super(message); }
@@ -15,10 +16,14 @@ export async function validateDataset(id: number) {
   const content = dataset.content;
   if (!hasDatasetStructure(content)) throw new DatasetValidationError(409, 'DATASET_CONTENT_INCOMPATIBLE', 'El contenido almacenado no cumple el contrato de registro.');
   const expected = [['fecha', false], ['energia_kwh', false], ['zona', true]] as const;
-  if (!expected.every(([name, optional]) => content.columns.some(column => column.name === name && column.optional === optional))) {
+  const simulated = expected.every(([name, optional]) => content.columns.some(column => column.name === name && column.optional === optional));
+  const xm = ['fecha_xm', 'hora_xm', 'energia_kwh'].every(name => content.columns.some(column => column.name === name && column.optional === false));
+  if (!simulated && !xm) {
     throw new DatasetValidationError(422, 'RULESET_NOT_APPLICABLE', 'Las columnas no corresponden a la referencia del ruleset.');
   }
-  const { status, report } = evaluateGeneration(content.records);
+  // El contrato histórico tiene prioridad, incluso si hay columnas XM extra.
+  // Las columnas seleccionan compatibilidad de formato, no autenticidad del origen.
+  const { status, report } = simulated ? evaluateGeneration(content.records) : evaluateXmGene(content.records);
   const validatedAt = new Date();
   const result = await prisma.energyDataset.updateMany({
     where: { id, status: 'recibido' },
