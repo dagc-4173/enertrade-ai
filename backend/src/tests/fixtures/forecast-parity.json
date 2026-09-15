@@ -1,0 +1,273 @@
+{
+  "targetDate": "2024-04-08",
+  "records": [
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 1,
+      "energia_kwh": 8305353.94
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 2,
+      "energia_kwh": 8195713.93
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 3,
+      "energia_kwh": 8007228.21
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 4,
+      "energia_kwh": 7921339.78
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 5,
+      "energia_kwh": 8019800.1
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 6,
+      "energia_kwh": 8361341.12
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 7,
+      "energia_kwh": 8513669.57
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 8,
+      "energia_kwh": 9181780.23
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 9,
+      "energia_kwh": 9759203.32
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 10,
+      "energia_kwh": 10078670.55
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 11,
+      "energia_kwh": 10186230.29
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 12,
+      "energia_kwh": 10488818.22
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 13,
+      "energia_kwh": 10422176.19
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 14,
+      "energia_kwh": 10576320.61
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 15,
+      "energia_kwh": 10848491.63
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 16,
+      "energia_kwh": 10854765.26
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 17,
+      "energia_kwh": 10662308.34
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 18,
+      "energia_kwh": 10449793.86
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 19,
+      "energia_kwh": 10566565.78
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 20,
+      "energia_kwh": 10733419.21
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 21,
+      "energia_kwh": 10720883.37
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 22,
+      "energia_kwh": 10268680.69
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 23,
+      "energia_kwh": 9688109.9
+    },
+    {
+      "fecha_xm": "2024-04-01",
+      "hora_xm": 24,
+      "energia_kwh": 9251914.57
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 1,
+      "energia_kwh": 8534195.82
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 2,
+      "energia_kwh": 8217727.32
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 3,
+      "energia_kwh": 7977334.33
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 4,
+      "energia_kwh": 7914361.0
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 5,
+      "energia_kwh": 7801510.87
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 6,
+      "energia_kwh": 7691768.36
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 7,
+      "energia_kwh": 7377119.86
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 8,
+      "energia_kwh": 7658242.55
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 9,
+      "energia_kwh": 8037169.36
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 10,
+      "energia_kwh": 8407819.54
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 11,
+      "energia_kwh": 8852525.51
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 12,
+      "energia_kwh": 9183016.31
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 13,
+      "energia_kwh": 9328535.4
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 14,
+      "energia_kwh": 9344404.84
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 15,
+      "energia_kwh": 9274092.4
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 16,
+      "energia_kwh": 9274593.4
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 17,
+      "energia_kwh": 9183460.83
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 18,
+      "energia_kwh": 9153250.93
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 19,
+      "energia_kwh": 9951010.32
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 20,
+      "energia_kwh": 10310143.38
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 21,
+      "energia_kwh": 10269744.46
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 22,
+      "energia_kwh": 10015566.07
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 23,
+      "energia_kwh": 9560655.31
+    },
+    {
+      "fecha_xm": "2024-04-07",
+      "hora_xm": 24,
+      "energia_kwh": 9033933.41
+    }
+  ],
+  "predictions": [
+    8480559.56339466,
+    8305462.625683371,
+    8114962.543765917,
+    8030058.92838138,
+    8068213.661432855,
+    8270440.322752242,
+    8359624.157408501,
+    8845354.785035525,
+    9308289.860960191,
+    9632763.697792752,
+    9850167.868685065,
+    10160879.632099368,
+    10226336.856908657,
+    10385712.381596833,
+    10581505.74961177,
+    10612340.93991098,
+    10492517.98481419,
+    10344887.494903984,
+    10475697.110870738,
+    10554967.8100257,
+    10461320.5777943,
+    10076914.90328895,
+    9587705.8339106,
+    9173742.924577693
+  ],
+  "absoluteToleranceKwh": 1e-07,
+  "reference": "CPython 3.14.4 math.fsum, external-holdout frozen Ridge"
+}

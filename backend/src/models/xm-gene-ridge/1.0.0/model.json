@@ -1,0 +1,90 @@
+{
+  "modelId": "xm-gene-ridge",
+  "modelVersion": "1.0.0",
+  "modelType": "ridge",
+  "alpha": 0.01,
+  "orderedFeatures": [
+    "energy_same_period_previous_day",
+    "energy_same_period_7_days_before",
+    "energy_period24_previous_day",
+    "sin_2pi_hour_minus1_over24",
+    "cos_2pi_hour_minus1_over24"
+  ],
+  "scaler": {
+    "means": [
+      9534502.897811245,
+      9509542.553534137,
+      9095088.299518071,
+      -1.3401022080638637e-17,
+      -5.598791695843364e-17
+    ],
+    "standardDeviations": [
+      1125490.3452676428,
+      1147576.1378026858,
+      360120.95400626154,
+      0.7071067811865476,
+      0.7071067811865476
+    ],
+    "ddof": 0
+  },
+  "coefficients": [
+    154122.1447154146,
+    656037.8840273399,
+    133591.37052931153,
+    -208605.5216076294,
+    -150922.3353898873
+  ],
+  "intercept": 9542063.662018074,
+  "trainingSourceRange": {
+    "start": "2024-01-01",
+    "end": "2024-03-30"
+  },
+  "effectiveTrainingRange": {
+    "start": "2024-01-08",
+    "end": "2024-03-30"
+  },
+  "trainingSnapshotSha256": "4c91a20048d90d082f8eec6c770f4bd042e479d70df7ca020e8dd3a6b3ba0177",
+  "compatibleProfile": "xm_gene_preparacion_base@1.0.0",
+  "compatibleRuleset": "xm_gene_base@1.0.0",
+  "target": "energia_kwh",
+  "unit": "kWh",
+  "forecastType": "generation_availability_proxy",
+  "horizonPeriods": 24,
+  "evaluationSummary": {
+    "holdoutRange": [
+      "2024-03-31",
+      "2024-04-29"
+    ],
+    "holdoutSnapshotSha256": "9fdb41321a46f2b027b3578ebb0eca9894100653644bff6401ae901aeced9182",
+    "metrics": {
+      "Ridge": {
+        "evaluable": 720,
+        "unavailable": 0,
+        "MAE": 329144.1790612068,
+        "RMSE": 438880.23646857974,
+        "bias": -17643.615971800806
+      },
+      "B1": {
+        "evaluable": 720,
+        "unavailable": 0,
+        "MAE": 451560.25926388893,
+        "RMSE": 668090.3235779965,
+        "bias": -14580.982319444442
+      },
+      "B7": {
+        "evaluable": 720,
+        "unavailable": 0,
+        "MAE": 381967.83608333336,
+        "RMSE": 543845.1052233716,
+        "bias": -46206.41808333335
+      }
+    },
+    "criteria": {
+      "noModelUnavailability": true,
+      "MAENotWorseThanB7ByMoreThan5Percent": true,
+      "improvesMAEOrRMSEAgainstB7": true,
+      "noNumericalFailureOrLeakageEvidence": true
+    },
+    "candidateForHU04": true
+  }
+}
