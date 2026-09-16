@@ -16,7 +16,7 @@ export interface ExternalQuery {
 
 export interface ExternalImportQuery extends ExternalQuery {
   provider: 'xm';
-  dataset: 'Gene' | 'DemaSIN';
+  dataset: 'Gene' | 'DemaSIN' | 'PrecBolsNaci';
 }
 
 export interface ExternalDataResult extends ExternalQuery {

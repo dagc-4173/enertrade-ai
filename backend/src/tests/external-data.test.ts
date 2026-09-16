@@ -71,6 +71,20 @@ describe('Importación XM: registro HU-01 real, transporte y Prisma sustituidos'
       content: { columns: ['fecha_xm', 'hora_xm', 'energia_kwh'].map(name => ({ name, optional: false })), records: expectedRecords }, pendingOptionalFields: [] });
     expect(outbound).toHaveBeenCalledTimes(1);
   });
+  test('IMP-Precio: 201 exacto, HU-01 real, periodos y valores intactos', async () => {
+    const fixture = hourly('PrecBolsNaci');
+    Object.assign(fixture.Items[0]!.HourlyEntities[0]!.Values, { Hour01: '0', Hour02: '-12.5', Hour24: '768.17121' });
+    outbound.mockImplementation(async () => Response.json(fixture));
+    const result = await importHttp({...valid,dataset:'PrecBolsNaci'});
+    const source = 'XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-04-01;endDate=2024-04-01;mapping=xm-preciobolsnaci-v1';
+    expect(result).toEqual({ status: 201, body: { id: 51, source, dataType: 'precios', uploadedAt: uploadedAt.toISOString(), status: 'recibido', pendingOptionalFields: [], recordCount: 24 } });
+    expect(create).toHaveBeenCalledTimes(1);
+    const expectedRecords = Array.from({ length: 24 }, (_, i) => ({ fecha_xm: '2024-04-01', periodo: i + 1,
+      precio_cop_kwh: i === 0 ? 0 : i === 1 ? -12.5 : i === 23 ? 768.17121 : i + 1.25 }));
+    expect(create.mock.calls[0][0].data).toEqual({ source, dataType: 'precios',
+      content: { columns: ['fecha_xm', 'periodo', 'precio_cop_kwh'].map(name => ({ name, optional: false })), records: expectedRecords }, pendingOptionalFields: [] });
+    expect(outbound).toHaveBeenCalledTimes(1);
+  });
   test('IMP-DemaSIN: mapping diario exacto y source determinista', async () => {
     outbound.mockImplementation(async () => Response.json(daily()));
     const r = await importHttp({...valid, dataset:'DemaSIN'});
@@ -83,7 +97,6 @@ describe('Importación XM: registro HU-01 real, transporte y Prisma sustituidos'
   test.each([
     [{ ...valid, provider: 'noaa' }, 'UNSUPPORTED_PROVIDER'],
     [{ ...valid, dataset: 'unknown' }, 'UNSUPPORTED_EXTERNAL_DATASET'],
-    [{ ...valid, dataset: 'PrecBolsNaci' }, 'UNSUPPORTED_EXTERNAL_DATASET'],
     [{ ...valid, startDate: '2024-02-30' }, 'INVALID_EXTERNAL_DATES'],
     [{ ...valid, endDate: '2024-03-31' }, 'INVALID_EXTERNAL_DATE_RANGE'],
     [{ ...valid, endDate: '2024-05-01' }, 'INVALID_EXTERNAL_DATE_RANGE'],
@@ -96,9 +109,9 @@ describe('Importación XM: registro HU-01 real, transporte y Prisma sustituidos'
     expect(result.status).toBe(400); expect(result.body.error).toBe(code);
     expect(outbound).not.toHaveBeenCalled(); expect(create).not.toHaveBeenCalled();
   });
-  test('IMP-03: vacío -> 422 sin escritura', async () => {
-    outbound.mockImplementation(async () => Response.json({ Metric: { Id: 'Gene' }, Items: [] }));
-    expect(await importHttp()).toEqual({ status: 422, body: { error: 'EXTERNAL_DATA_EMPTY', message: 'No hay registros para importar en el rango consultado.' } });
+  test.each(['Gene','PrecBolsNaci'])('IMP-03: vacío -> 422 sin escritura %s', async dataset => {
+    outbound.mockImplementation(async () => Response.json({ Metric: { Id: dataset }, Items: [] }));
+    expect(await importHttp({...valid,dataset})).toEqual({ status: 422, body: { error: 'EXTERNAL_DATA_EMPTY', message: 'No hay registros para importar en el rango consultado.' } });
     expect(create).not.toHaveBeenCalled();
   });
   test.each(['http', 'network', 'timeout', 'malformed'])('IMP-04: fallo XM %s sin escritura', async kind => {
@@ -108,7 +121,7 @@ describe('Importación XM: registro HU-01 real, transporte y Prisma sustituidos'
       if (kind === 'malformed') return Response.json({});
       return new Promise((_resolve, reject) => { init.signal!.addEventListener('abort', () => reject(new Error('private timeout')), { once: true }); });
     });
-    const result = await importHttp();
+    const result = await importHttp({...valid,dataset:'PrecBolsNaci'});
     expect(result.status).toBe(kind === 'timeout' ? 504 : 502);
     expect(result.body.error).toBe({ http: 'EXTERNAL_HTTP_ERROR', network: 'EXTERNAL_NETWORK_ERROR', timeout: 'EXTERNAL_TIMEOUT', malformed: 'EXTERNAL_RESPONSE_INVALID' }[kind]);
     expect(Object.keys(result.body).sort()).toEqual(['error', 'message']);
