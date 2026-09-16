@@ -1,5 +1,7 @@
 export const features = ['energy_same_period_previous_day', 'energy_same_period_7_days_before', 'energy_period24_previous_day', 'sin_2pi_hour_minus1_over24', 'cos_2pi_hour_minus1_over24'] as const;
 export const messages = {
+  INVALID_FORECAST_DATE: 'La fecha objetivo debe ser una fecha calendario válida YYYY-MM-DD.',
+  FORECAST_RULE_INCOMPATIBLE: 'La regla de pronóstico no está disponible o no es compatible.',
   INVALID_FORECAST_REQUEST: 'La solicitud de pronóstico no es válida.',
   PREPARED_DATASET_NOT_FOUND: 'Dataset preparado no encontrado.',
   FORECAST_PROFILE_NOT_APPLICABLE: 'El perfil del dataset no es compatible con el pronóstico.',

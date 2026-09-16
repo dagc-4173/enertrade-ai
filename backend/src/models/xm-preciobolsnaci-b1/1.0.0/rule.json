@@ -1,0 +1,116 @@
+{
+  "ruleId": "xm-preciobolsnaci-b1",
+  "ruleVersion": "1.0.0",
+  "type": "deterministic_baseline",
+  "description": "same period previous day",
+  "formula": "prediction(D,p) = price(D-1,p)",
+  "forecastType": "market_reference_price",
+  "target": "precio_cop_kwh",
+  "unit": "COP/kWh",
+  "granularity": "hourly",
+  "horizonDays": 1,
+  "sourceProfileId": "xm_preciobolsnaci_preparacion_base",
+  "sourceProfileVersion": "1.0.0",
+  "sourceRulesetId": "xm_preciobolsnaci_base",
+  "sourceRulesetVersion": "1.0.0",
+  "corpusSnapshotSha256": "07fdc38fa15929ff2bf8a6aefe0a3f2aa292276c5f18c8dbb0919be8537e0506",
+  "corpusRange": {
+    "startDate": "2023-08-01",
+    "endDate": "2024-07-30"
+  },
+  "externalHoldoutSnapshotSha256": "80f0732509f547e1a7766cd211c728aa7b636017ec0b0d8a5b34123e02910c6a",
+  "evaluation": {
+    "validation": {
+      "range": {
+        "startDate": "2024-04-12",
+        "endDate": "2024-06-05"
+      },
+      "snapshotSha256": "07fdc38fa15929ff2bf8a6aefe0a3f2aa292276c5f18c8dbb0919be8537e0506",
+      "metrics": {
+        "evaluable": 1320,
+        "unavailable": 0,
+        "MAE": 62.984024742424246,
+        "RMSE": 108.18670646524782,
+        "bias": 11.56717118181818,
+        "WAPE": 15.34308223191027,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 83138.91266,
+        "wapeDenominatorAbsoluteActual": 541865.78292
+      }
+    },
+    "internalTest": {
+      "range": {
+        "startDate": "2024-06-06",
+        "endDate": "2024-07-30"
+      },
+      "snapshotSha256": "07fdc38fa15929ff2bf8a6aefe0a3f2aa292276c5f18c8dbb0919be8537e0506",
+      "metrics": {
+        "evaluable": 1320,
+        "unavailable": 0,
+        "MAE": 48.14971375757575,
+        "RMSE": 79.92427547553532,
+        "bias": -0.10217693939393939,
+        "WAPE": 17.15446171547583,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 63557.62216,
+        "wapeDenominatorAbsoluteActual": 370501.99076
+      }
+    },
+    "externalHoldout": {
+      "range": {
+        "startDate": "2024-07-31",
+        "endDate": "2024-09-28"
+      },
+      "snapshotSha256": "80f0732509f547e1a7766cd211c728aa7b636017ec0b0d8a5b34123e02910c6a",
+      "metrics": {
+        "evaluable": 1440,
+        "unavailable": 0,
+        "MAE": 48.51072504166666,
+        "RMSE": 84.41018906790686,
+        "bias": -8.539198555555556,
+        "WAPE": 7.137016325284218,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 69855.44406,
+        "wapeDenominatorAbsoluteActual": 978776.5766
+      }
+    }
+  },
+  "promotionCriterion": {
+    "evaluableRequired": 1440,
+    "unavailableRequired": 0,
+    "failuresAllowed": 0,
+    "finiteWAPERequired": true,
+    "positiveDenominatorRequired": true,
+    "testInternalMAE": 48.14971375757575,
+    "maximumMAEMultiplier": 1.25,
+    "maximumExternalMAE": 60.18714219696969,
+    "fixedBeforeEvaluation": true
+  },
+  "passed": true,
+  "factors": {
+    "used": [
+      "previous_day_same_period_price"
+    ],
+    "omitted": [
+      "commercial_supply",
+      "commercial_demand",
+      "generation_forecast",
+      "demand_forecast"
+    ]
+  },
+  "scope": {
+    "referencePrice": true,
+    "personalized": false,
+    "financialSettlement": false,
+    "commercialNegotiation": false
+  },
+  "limitations": [
+    "Deterministic baseline, not a trained ML model.",
+    "Assumes all 24 previous-day periods available at forecast origin in the same PreparedDataset.",
+    "No inferred timestamps, timezone, confidence or daily aggregation.",
+    "No commercial supply/demand, generation forecast or demand forecast is used.",
+    "Stability criterion does not demonstrate universal generalization.",
+    "Internal test was previously observed; July 2024 was descriptively inspected.",
+    "Academic/formal validation pending."
+  ]
+}
