@@ -1,0 +1,939 @@
+{
+  "snapshot": {
+    "path": "docs/evidencias/hu-08-precio/corpus/preciobolsnaci-2023-08-01_2024-07-30.csv",
+    "sha256": "07fdc38fa15929ff2bf8a6aefe0a3f2aa292276c5f18c8dbb0919be8537e0506",
+    "integrityVerified": true,
+    "rows": 8760,
+    "days": 365
+  },
+  "runtime": {
+    "python": "3.14.4",
+    "dependencies": "stdlib only"
+  },
+  "partitions": {
+    "train": [
+      "2023-08-01",
+      "2024-04-11"
+    ],
+    "validation": [
+      "2024-04-12",
+      "2024-06-05"
+    ],
+    "test": [
+      "2024-06-06",
+      "2024-07-30"
+    ]
+  },
+  "protocol": {
+    "origin": "before period 1 of target day D",
+    "horizon": "D+1, 24 periods",
+    "lags": [
+      1,
+      7,
+      14,
+      28
+    ],
+    "lookup": "calendar date and same period, not positional",
+    "missing": "unavailable without imputation",
+    "pastWithinPartitionAllowed": true,
+    "previousDayCompleteAvailabilityAssumed": true,
+    "timestampInferred": false,
+    "targetNotScaled": true
+  },
+  "method": {
+    "solver": "Gaussian elimination with partial pivoting on centered normal equations",
+    "objective": "sum((y-intercept-z*w)^2) + alpha*sum(w^2); unpenalized intercept",
+    "scaling": "all eight features, means and population std on effective TRAIN only",
+    "intercept": "mean(y) - dot(mean(z), coefficients)",
+    "prediction": "intercept + fsum(coefficients[j]*(feature[j]-means[j])/std[j])",
+    "arithmetic": "IEEE-754 float, math.fsum; no intermediate rounding",
+    "error": "prediction - actual",
+    "MAE": "fsum(abs(error))/n",
+    "RMSE": "sqrt(fsum(error^2)/n)",
+    "bias": "fsum(error)/n",
+    "WAPE": "100*fsum(abs(error))/fsum(abs(actual)), evaluable pairs only",
+    "percentiles": "linear interpolation at (n-1)*p of sorted absolute errors"
+  },
+  "baselineValidation": {
+    "evaluable": 1320,
+    "unavailable": 0,
+    "MAE": 62.984024742424246,
+    "RMSE": 108.18670646524782,
+    "bias": 11.56717118181818,
+    "WAPE": 15.34308223191027
+  },
+  "predefinedAlphas": [
+    0.01,
+    0.1,
+    1,
+    10,
+    100,
+    1000
+  ],
+  "validationCandidates": [
+    {
+      "alpha": 0.01,
+      "evaluable": 1320,
+      "unavailable": 0,
+      "MAE": 73.6384964466848,
+      "RMSE": 111.48540445164066,
+      "bias": 40.58028419971997,
+      "WAPE": 17.938540940123314,
+      "WAPEUnit": "percent",
+      "wapeNumeratorAbsoluteError": 97202.81530962393,
+      "wapeDenominatorAbsoluteActual": 541865.78292,
+      "minAbsoluteError": 0.05227947344059203,
+      "maxAbsoluteError": 547.4617800762069,
+      "absoluteErrorPercentiles": {
+        "P50": 50.34718865078047,
+        "P90": 171.14353400887967,
+        "P95": 242.87687850568446,
+        "P99": 424.07724709948343
+      },
+      "normalEquationMaxAbsoluteResidual": 1.1641532182693481e-10,
+      "normalEquationRelativeResidual": 8.654620102206598e-17
+    },
+    {
+      "alpha": 0.1,
+      "evaluable": 1320,
+      "unavailable": 0,
+      "MAE": 73.64165755602488,
+      "RMSE": 111.48735621994925,
+      "bias": 40.58446982303361,
+      "WAPE": 17.93931099508165,
+      "WAPEUnit": "percent",
+      "wapeNumeratorAbsoluteError": 97206.98797395284,
+      "wapeDenominatorAbsoluteActual": 541865.78292,
+      "minAbsoluteError": 0.0545110851779782,
+      "maxAbsoluteError": 547.4625921208581,
+      "absoluteErrorPercentiles": {
+        "P50": 50.35358473249342,
+        "P90": 171.15198214932283,
+        "P95": 242.8882292612059,
+        "P99": 424.0849953123243
+      },
+      "normalEquationMaxAbsoluteResidual": 5.820766091346741e-11,
+      "normalEquationRelativeResidual": 4.327310051103299e-17
+    },
+    {
+      "alpha": 1,
+      "evaluable": 1320,
+      "unavailable": 0,
+      "MAE": 73.67325926830016,
+      "RMSE": 111.5068911305316,
+      "bias": 40.62631379895577,
+      "WAPE": 17.947009259396953,
+      "WAPEUnit": "percent",
+      "wapeNumeratorAbsoluteError": 97248.70223415621,
+      "wapeDenominatorAbsoluteActual": 541865.78292,
+      "minAbsoluteError": 0.05532416615881175,
+      "maxAbsoluteError": 547.4706918618381,
+      "absoluteErrorPercentiles": {
+        "P50": 50.41752797267394,
+        "P90": 171.23642489274704,
+        "P95": 243.00168331750848,
+        "P99": 424.16243929707446
+      },
+      "normalEquationMaxAbsoluteResidual": 1.1641532182693481e-10,
+      "normalEquationRelativeResidual": 8.654620102206598e-17
+    },
+    {
+      "alpha": 10,
+      "evaluable": 1320,
+      "unavailable": 0,
+      "MAE": 73.98841330289947,
+      "RMSE": 111.70394339556044,
+      "bias": 41.04353315026621,
+      "WAPE": 18.023781651894105,
+      "WAPEUnit": "percent",
+      "wapeNumeratorAbsoluteError": 97664.70555982731,
+      "wapeDenominatorAbsoluteActual": 541865.78292,
+      "minAbsoluteError": 0.000813163585746679,
+      "maxAbsoluteError": 547.5496343527527,
+      "absoluteErrorPercentiles": {
+        "P50": 50.88904896038322,
+        "P90": 171.4523427059795,
+        "P95": 243.36455307267315,
+        "P99": 424.933084179345
+      },
+      "normalEquationMaxAbsoluteResidual": 1.1641532182693481e-10,
+      "normalEquationRelativeResidual": 8.654620102206598e-17
+    },
+    {
+      "alpha": 100,
+      "evaluable": 1320,
+      "unavailable": 0,
+      "MAE": 77.33857809346547,
+      "RMSE": 113.82657323154743,
+      "bias": 45.09873632103412,
+      "WAPE": 18.83989103966846,
+      "WAPEUnit": "percent",
+      "wapeNumeratorAbsoluteError": 102086.92308337442,
+      "wapeDenominatorAbsoluteActual": 541865.78292,
+      "minAbsoluteError": 0.044098175593717315,
+      "maxAbsoluteError": 548.1482584857872,
+      "absoluteErrorPercentiles": {
+        "P50": 54.89724428485289,
+        "P90": 173.83561967093289,
+        "P95": 246.9101772766225,
+        "P99": 432.2784330597858
+      },
+      "normalEquationMaxAbsoluteResidual": 1.1641532182693481e-10,
+      "normalEquationRelativeResidual": 8.654620102206598e-17
+    },
+    {
+      "alpha": 1000,
+      "evaluable": 1320,
+      "unavailable": 0,
+      "MAE": 111.02920491224076,
+      "RMSE": 140.43142660004597,
+      "bias": 77.30882814429836,
+      "WAPE": 27.04702070213491,
+      "WAPEUnit": "percent",
+      "wapeNumeratorAbsoluteError": 146558.5504841578,
+      "wapeDenominatorAbsoluteActual": 541865.78292,
+      "minAbsoluteError": 0.2067459210505831,
+      "maxAbsoluteError": 543.8997131107621,
+      "absoluteErrorPercentiles": {
+        "P50": 89.6320917015526,
+        "P90": 217.37572656007265,
+        "P95": 257.6331997718078,
+        "P99": 459.7579135642059
+      },
+      "normalEquationMaxAbsoluteResidual": 2.9103830456733704e-11,
+      "normalEquationRelativeResidual": 2.1636550255516494e-17
+    }
+  ],
+  "selection": {
+    "selectedAlpha": 0.01,
+    "selectedUsing": "validation MAE only; RMSE then lower alpha for practical ties",
+    "absoluteTieTolerance": 1e-09,
+    "tieToleranceUnit": "COP/kWh",
+    "improvementPercentVsB1": -16.91614936935588,
+    "minimumImprovementPercent": 5,
+    "numericalFailures": 0,
+    "futureOrSameDayPriceReferencesObserved": 0,
+    "finiteWAPE": true,
+    "positiveWAPEDenominator": true,
+    "promotedToTest": false,
+    "frozenBeforeTest": true
+  },
+  "selectedExperimentalParameters": {
+    "modelType": "ridge",
+    "experimental": true,
+    "experimentalVersion": "preciobolsnaci-ridge-experiment-1",
+    "alpha": 0.01,
+    "orderedFeatures": [
+      "price_D_minus_1_same_period",
+      "price_D_minus_7_same_period",
+      "price_D_minus_14_same_period",
+      "price_D_minus_28_same_period",
+      "period_sin",
+      "period_cos",
+      "weekday_sin",
+      "weekday_cos"
+    ],
+    "scaler": {
+      "means": [
+        715.0631254698973,
+        698.7096201174743,
+        689.6273896328928,
+        683.3465990381791,
+        -1.3401022080638637e-17,
+        -5.598791695843364e-17,
+        0.009650410280913723,
+        -0.002202643171806186
+      ],
+      "std": [
+        271.8977638447442,
+        280.64345278615764,
+        277.9308040588684,
+        279.8079781877387,
+        0.7071067811865476,
+        0.7071067811865476,
+        0.7078193209904016,
+        0.7063241655055804
+      ],
+      "ddof": 0,
+      "fitPartition": "effective TRAIN only"
+    },
+    "coefficients": [
+      246.87275965415483,
+      -1.3348585057140752,
+      4.604178834692808,
+      -5.69392947350739,
+      -4.103661846800864,
+      -1.956678605327895,
+      12.595816667098031,
+      11.01566602664179
+    ],
+    "intercept": 718.0091442070485,
+    "targetScaled": false,
+    "trainingSnapshotSha256": "07fdc38fa15929ff2bf8a6aefe0a3f2aa292276c5f18c8dbb0919be8537e0506",
+    "trainingSourceRange": {
+      "startDate": "2023-08-01",
+      "endDate": "2024-04-11"
+    },
+    "effectiveTrainingRange": {
+      "startDate": "2023-08-29",
+      "endDate": "2024-04-11"
+    },
+    "totalTrainRows": 6120,
+    "effectiveRows": 5448,
+    "excludedTrainRows": 672,
+    "target": "precio_cop_kwh",
+    "unit": "COP/kWh",
+    "horizonDays": 1,
+    "temporalGranularity": "hourly",
+    "weekdayConvention": "Monday=0..Sunday=6; sin/cos(2*pi*weekday/7)",
+    "periodConvention": "period=1..24, periodIndex=period-1; sin/cos(2*pi*periodIndex/24)",
+    "objective": "sum((y-intercept-z*w)^2) + alpha*sum(w^2); unpenalized intercept"
+  },
+  "selectedValidationBreakdown": {
+    "byPeriod": [
+      {
+        "period": 1,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 67.86106863110446,
+        "RMSE": 107.54642682661084,
+        "bias": 45.18934068060051,
+        "WAPE": 19.64857598165827,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3732.358774710745,
+        "wapeDenominatorAbsoluteActual": 18995.56883,
+        "minAbsoluteError": 0.8508257294536179,
+        "maxAbsoluteError": 488.3429794030029,
+        "absoluteErrorPercentiles": {
+          "P50": 50.20768188213867,
+          "P90": 92.88672077936626,
+          "P95": 173.23260095957482,
+          "P99": 447.74721858451414
+        }
+      },
+      {
+        "period": 2,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 63.85410188109856,
+        "RMSE": 103.35765537274999,
+        "bias": 44.39302668627617,
+        "WAPE": 18.815152728969757,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3511.9756034604206,
+        "wapeDenominatorAbsoluteActual": 18665.67683,
+        "minAbsoluteError": 1.4155351182830032,
+        "maxAbsoluteError": 486.44916889827584,
+        "absoluteErrorPercentiles": {
+          "P50": 49.74025169119744,
+          "P90": 97.24396684383915,
+          "P95": 122.7447074455728,
+          "P99": 445.7193816856664
+        }
+      },
+      {
+        "period": 3,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 70.57649551630398,
+        "RMSE": 107.6053123287379,
+        "bias": 44.0146621482344,
+        "WAPE": 21.080578355411145,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3881.7072533967184,
+        "wapeDenominatorAbsoluteActual": 18413.66583,
+        "minAbsoluteError": 0.23124482463458662,
+        "maxAbsoluteError": 445.6950213351779,
+        "absoluteErrorPercentiles": {
+          "P50": 51.777046720282215,
+          "P90": 126.77765905593513,
+          "P95": 220.2016606492266,
+          "P99": 409.4496818455254
+        }
+      },
+      {
+        "period": 4,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 62.41614704911924,
+        "RMSE": 95.81784985849832,
+        "bias": 43.72120806487646,
+        "WAPE": 18.4206487070846,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3432.888087701558,
+        "wapeDenominatorAbsoluteActual": 18636.08683,
+        "minAbsoluteError": 1.4965509145873455,
+        "maxAbsoluteError": 414.4821753769153,
+        "absoluteErrorPercentiles": {
+          "P50": 49.31991098192168,
+          "P90": 99.79303236085177,
+          "P95": 151.13265462355756,
+          "P99": 394.6801948320345
+        }
+      },
+      {
+        "period": 5,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 68.98998758173033,
+        "RMSE": 108.30316050858083,
+        "bias": 41.94698399160486,
+        "WAPE": 19.774053992674567,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3794.4493169951684,
+        "wapeDenominatorAbsoluteActual": 19189.03083,
+        "minAbsoluteError": 1.1473718554914,
+        "maxAbsoluteError": 414.45858700385395,
+        "absoluteErrorPercentiles": {
+          "P50": 48.129045494965055,
+          "P90": 139.33911690741826,
+          "P95": 245.128463651641,
+          "P99": 395.3130973133883
+        }
+      },
+      {
+        "period": 6,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 66.62394726947896,
+        "RMSE": 103.89015178226772,
+        "bias": 40.639378801343874,
+        "WAPE": 18.345586268279675,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3664.3170998213427,
+        "wapeDenominatorAbsoluteActual": 19973.83483,
+        "minAbsoluteError": 3.8567826406125505,
+        "maxAbsoluteError": 450.6965090348748,
+        "absoluteErrorPercentiles": {
+          "P50": 49.10016831643247,
+          "P90": 154.0846805605287,
+          "P95": 205.42368541884645,
+          "P99": 391.0016861997695
+        }
+      },
+      {
+        "period": 7,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 66.25323804749293,
+        "RMSE": 106.81688601084664,
+        "bias": 41.7068802097769,
+        "WAPE": 18.261643310981945,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3643.928092612111,
+        "wapeDenominatorAbsoluteActual": 19953.99883,
+        "minAbsoluteError": 1.6236668437425124,
+        "maxAbsoluteError": 493.32791630525287,
+        "absoluteErrorPercentiles": {
+          "P50": 47.70540987304838,
+          "P90": 149.4481435594019,
+          "P95": 202.94872698599406,
+          "P99": 410.8161396763303
+        }
+      },
+      {
+        "period": 8,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 82.29130429893603,
+        "RMSE": 132.9325680419109,
+        "bias": 41.17326375990847,
+        "WAPE": 22.298680242499877,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4526.021736441481,
+        "wapeDenominatorAbsoluteActual": 20297.26283,
+        "minAbsoluteError": 3.8710898725945526,
+        "maxAbsoluteError": 547.4617800762069,
+        "absoluteErrorPercentiles": {
+          "P50": 51.81097887934504,
+          "P90": 197.87086170642922,
+          "P95": 324.0318625267745,
+          "P99": 446.587002482741
+        }
+      },
+      {
+        "period": 9,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 77.29400120687096,
+        "RMSE": 120.97700031787917,
+        "bias": 41.32693765585695,
+        "WAPE": 20.589374512855514,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4251.170066377903,
+        "wapeDenominatorAbsoluteActual": 20647.39783,
+        "minAbsoluteError": 1.828800229807257,
+        "maxAbsoluteError": 464.70619615456883,
+        "absoluteErrorPercentiles": {
+          "P50": 51.37194691709547,
+          "P90": 194.50099529192929,
+          "P95": 294.1771663898507,
+          "P99": 396.8901695847065
+        }
+      },
+      {
+        "period": 10,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 77.67539717455861,
+        "RMSE": 121.10855346904401,
+        "bias": 42.81213983339773,
+        "WAPE": 20.684415045846357,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4272.146844600724,
+        "wapeDenominatorAbsoluteActual": 20653.94083,
+        "minAbsoluteError": 1.5509507866040622,
+        "maxAbsoluteError": 465.54802348420253,
+        "absoluteErrorPercentiles": {
+          "P50": 50.16373676705098,
+          "P90": 191.17047255523724,
+          "P95": 288.74068388368914,
+          "P99": 400.01188331738666
+        }
+      },
+      {
+        "period": 11,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 73.95037595613152,
+        "RMSE": 113.20125391577557,
+        "bias": 42.533448815093735,
+        "WAPE": 19.11832236483022,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4067.2706775872334,
+        "wapeDenominatorAbsoluteActual": 21274.20283,
+        "minAbsoluteError": 0.18446955458421144,
+        "maxAbsoluteError": 420.4391034162859,
+        "absoluteErrorPercentiles": {
+          "P50": 53.35460097588009,
+          "P90": 161.05188697529607,
+          "P95": 221.9191221929767,
+          "P99": 419.4177564973691
+        }
+      },
+      {
+        "period": 12,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 81.42551065457417,
+        "RMSE": 128.1864460709864,
+        "bias": 42.874416413831504,
+        "WAPE": 20.28473306523611,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4478.403086001579,
+        "wapeDenominatorAbsoluteActual": 22077.702830000002,
+        "minAbsoluteError": 0.6976955810407617,
+        "maxAbsoluteError": 494.20891457329105,
+        "absoluteErrorPercentiles": {
+          "P50": 52.76324307334974,
+          "P90": 179.51177716982443,
+          "P95": 273.32804276624336,
+          "P99": 453.8945219357006
+        }
+      },
+      {
+        "period": 13,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 79.0592967781672,
+        "RMSE": 118.82248408279727,
+        "bias": 44.736573954399134,
+        "WAPE": 19.807648483622494,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4348.261322799196,
+        "wapeDenominatorAbsoluteActual": 21952.43583,
+        "minAbsoluteError": 0.06654490241237454,
+        "maxAbsoluteError": 494.4388325429761,
+        "absoluteErrorPercentiles": {
+          "P50": 57.820235653280236,
+          "P90": 177.63095134003635,
+          "P95": 237.74841742748612,
+          "P99": 403.2377695762473
+        }
+      },
+      {
+        "period": 14,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 77.23886813647393,
+        "RMSE": 102.73871289538522,
+        "bias": 45.18139478021002,
+        "WAPE": 18.92085659561104,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4248.137747506066,
+        "wapeDenominatorAbsoluteActual": 22452.14283,
+        "minAbsoluteError": 3.8688330677787235,
+        "maxAbsoluteError": 279.6065882885056,
+        "absoluteErrorPercentiles": {
+          "P50": 59.39270981491944,
+          "P90": 171.51895919535548,
+          "P95": 235.50298410321182,
+          "P99": 266.4514611888131
+        }
+      },
+      {
+        "period": 15,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 82.28868798482837,
+        "RMSE": 112.65837672952357,
+        "bias": 44.93906511393062,
+        "WAPE": 19.13250263096264,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4525.8778391655605,
+        "wapeDenominatorAbsoluteActual": 23655.44083,
+        "minAbsoluteError": 4.7571042136293045,
+        "maxAbsoluteError": 308.8094101805723,
+        "absoluteErrorPercentiles": {
+          "P50": 52.99919046382888,
+          "P90": 182.1209491718918,
+          "P95": 275.10601503451284,
+          "P99": 308.7177656586772
+        }
+      },
+      {
+        "period": 16,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 73.26261821921344,
+        "RMSE": 104.11098282989373,
+        "bias": 43.37378685054168,
+        "WAPE": 16.148477603656673,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4029.444002056739,
+        "wapeDenominatorAbsoluteActual": 24952.469830000002,
+        "minAbsoluteError": 2.9043632819148684,
+        "maxAbsoluteError": 423.9477986777416,
+        "absoluteErrorPercentiles": {
+          "P50": 52.23327165156934,
+          "P90": 172.4753113923061,
+          "P95": 184.58418156209774,
+          "P99": 320.91705658771497
+        }
+      },
+      {
+        "period": 17,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 81.16543162190422,
+        "RMSE": 121.03731933113816,
+        "bias": 43.587313189052416,
+        "WAPE": 17.81821207496309,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4464.098739204732,
+        "wapeDenominatorAbsoluteActual": 25053.57283,
+        "minAbsoluteError": 0.05227947344059203,
+        "maxAbsoluteError": 498.8670067289512,
+        "absoluteErrorPercentiles": {
+          "P50": 51.84445529702009,
+          "P90": 171.91193929677817,
+          "P95": 198.6861479815627,
+          "P99": 440.3311276449416
+        }
+      },
+      {
+        "period": 18,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 70.85356520111057,
+        "RMSE": 104.67031353630836,
+        "bias": 42.13996146153783,
+        "WAPE": 15.10372633009457,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3896.946086061081,
+        "wapeDenominatorAbsoluteActual": 25801.22283,
+        "minAbsoluteError": 2.6251125355291833,
+        "maxAbsoluteError": 424.10761154408954,
+        "absoluteErrorPercentiles": {
+          "P50": 47.45639657101003,
+          "P90": 160.41492511524095,
+          "P95": 184.11023930268183,
+          "P99": 339.9149570148454
+        }
+      },
+      {
+        "period": 19,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 78.75799408224552,
+        "RMSE": 115.53105013687963,
+        "bias": 31.434472305987345,
+        "WAPE": 15.338354633994008,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4331.6896745235035,
+        "wapeDenominatorAbsoluteActual": 28240.90183,
+        "minAbsoluteError": 1.382603220361375,
+        "maxAbsoluteError": 348.3016495982523,
+        "absoluteErrorPercentiles": {
+          "P50": 49.690836513476484,
+          "P90": 204.96969732990146,
+          "P95": 278.0327065630267,
+          "P99": 340.67705478232716
+        }
+      },
+      {
+        "period": 20,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 79.026214488931,
+        "RMSE": 122.06486346535071,
+        "bias": 24.444226113302623,
+        "WAPE": 14.691267729778053,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4346.441796891205,
+        "wapeDenominatorAbsoluteActual": 29585.20583,
+        "minAbsoluteError": 0.7098061870371453,
+        "maxAbsoluteError": 524.0231017008383,
+        "absoluteErrorPercentiles": {
+          "P50": 44.107020933818546,
+          "P90": 192.46951547848155,
+          "P95": 262.3817804350484,
+          "P99": 400.264668006797
+        }
+      },
+      {
+        "period": 21,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 77.2367271693611,
+        "RMSE": 110.62012124301376,
+        "bias": 25.19079661354876,
+        "WAPE": 14.77843435624062,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4248.019994314861,
+        "wapeDenominatorAbsoluteActual": 28744.72283,
+        "minAbsoluteError": 0.054429781968565294,
+        "maxAbsoluteError": 332.12282795843436,
+        "absoluteErrorPercentiles": {
+          "P50": 46.06931264954875,
+          "P90": 190.5908433292822,
+          "P95": 240.95941989993298,
+          "P99": 308.82017782535064
+        }
+      },
+      {
+        "period": 22,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 65.77588384686396,
+        "RMSE": 95.56777765864366,
+        "bias": 36.989709655721406,
+        "WAPE": 13.72901524409907,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3617.673611577518,
+        "wapeDenominatorAbsoluteActual": 26350.56883,
+        "minAbsoluteError": 0.7595019952592565,
+        "maxAbsoluteError": 333.6798657911176,
+        "absoluteErrorPercentiles": {
+          "P50": 43.6271431288269,
+          "P90": 174.31470749552048,
+          "P95": 214.8187405736143,
+          "P99": 285.0490460849038
+        }
+      },
+      {
+        "period": 23,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 68.17489071493782,
+        "RMSE": 89.71176397327334,
+        "bias": 39.524297782889434,
+        "WAPE": 15.647775500809106,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 3749.6189893215796,
+        "wapeDenominatorAbsoluteActual": 23962.63283,
+        "minAbsoluteError": 1.6352703837676472,
+        "maxAbsoluteError": 252.10162693980902,
+        "absoluteErrorPercentiles": {
+          "P50": 53.84067919941154,
+          "P90": 137.06167708004978,
+          "P95": 185.27698553298515,
+          "P99": 248.29416582442406
+        }
+      },
+      {
+        "period": 24,
+        "evaluable": 55,
+        "unavailable": 0,
+        "MAE": 75.27216120899818,
+        "RMSE": 116.86668940412929,
+        "bias": 40.05353591135647,
+        "WAPE": 18.53488137767763,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 4139.9688664949,
+        "wapeDenominatorAbsoluteActual": 22336.09583,
+        "minAbsoluteError": 0.5128095173474776,
+        "maxAbsoluteError": 490.18545918505583,
+        "absoluteErrorPercentiles": {
+          "P50": 51.624224461856954,
+          "P90": 179.2113706896472,
+          "P95": 240.8789691096214,
+          "P99": 427.97695642927965
+        }
+      }
+    ],
+    "byWeekday": [
+      {
+        "weekday": 0,
+        "name": "lunes",
+        "evaluable": 192,
+        "unavailable": 0,
+        "MAE": 75.17768724729956,
+        "RMSE": 107.99770683533733,
+        "bias": 16.426895319795435,
+        "WAPE": 18.462077445858174,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 14434.115951481515,
+        "wapeDenominatorAbsoluteActual": 78182.5122,
+        "minAbsoluteError": 0.35627243609746984,
+        "maxAbsoluteError": 413.1656445539495,
+        "absoluteErrorPercentiles": {
+          "P50": 54.54860737056697,
+          "P90": 176.9982358610704,
+          "P95": 228.72738633217276,
+          "P99": 381.88574591609535
+        }
+      },
+      {
+        "weekday": 1,
+        "name": "martes",
+        "evaluable": 192,
+        "unavailable": 0,
+        "MAE": 77.64816091401472,
+        "RMSE": 103.47039932292117,
+        "bias": 63.2675314249743,
+        "WAPE": 19.524632898532413,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 14908.446895490828,
+        "wapeDenominatorAbsoluteActual": 76357.11756,
+        "minAbsoluteError": 0.18446955458421144,
+        "maxAbsoluteError": 374.98452815584045,
+        "absoluteErrorPercentiles": {
+          "P50": 61.396121809610165,
+          "P90": 164.05041324077652,
+          "P95": 191.75538808989987,
+          "P99": 320.04219689096055
+        }
+      },
+      {
+        "weekday": 2,
+        "name": "miércoles",
+        "evaluable": 192,
+        "unavailable": 0,
+        "MAE": 81.94317694062624,
+        "RMSE": 130.53954379369762,
+        "bias": 53.60594854549646,
+        "WAPE": 21.062827418059808,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 15733.089972600239,
+        "wapeDenominatorAbsoluteActual": 74696.00192,
+        "minAbsoluteError": 1.025713773873349,
+        "maxAbsoluteError": 524.0231017008383,
+        "absoluteErrorPercentiles": {
+          "P50": 50.868321170826846,
+          "P90": 241.5140974452442,
+          "P95": 340.9396038484027,
+          "P99": 423.96218183571295
+        }
+      },
+      {
+        "weekday": 3,
+        "name": "jueves",
+        "evaluable": 168,
+        "unavailable": 0,
+        "MAE": 55.79968935149958,
+        "RMSE": 76.7061426859393,
+        "bias": 31.89822106843552,
+        "WAPE": 14.637494635936577,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 9374.34781105193,
+        "wapeDenominatorAbsoluteActual": 64043.39024,
+        "minAbsoluteError": 0.05227947344059203,
+        "maxAbsoluteError": 270.4375412043086,
+        "absoluteErrorPercentiles": {
+          "P50": 39.131513768933985,
+          "P90": 111.99785550979558,
+          "P95": 205.0300377614536,
+          "P99": 230.32765599633288
+        }
+      },
+      {
+        "weekday": 4,
+        "name": "viernes",
+        "evaluable": 192,
+        "unavailable": 0,
+        "MAE": 60.94712727323748,
+        "RMSE": 84.96559700056697,
+        "bias": 3.5229343011295,
+        "WAPE": 13.187543908752637,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 11701.848436461596,
+        "wapeDenominatorAbsoluteActual": 88734.10028,
+        "minAbsoluteError": 0.06654490241237454,
+        "maxAbsoluteError": 269.43512976947477,
+        "absoluteErrorPercentiles": {
+          "P50": 45.56777622939968,
+          "P90": 155.3054520904235,
+          "P95": 188.6410768417679,
+          "P99": 259.5050090009015
+        }
+      },
+      {
+        "weekday": 5,
+        "name": "sábado",
+        "evaluable": 192,
+        "unavailable": 0,
+        "MAE": 43.674448842851966,
+        "RMSE": 66.53628856240496,
+        "bias": 8.539046757282948,
+        "WAPE": 9.533050602952889,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 8385.494177827577,
+        "wapeDenominatorAbsoluteActual": 87962.33784,
+        "minAbsoluteError": 0.054429781968565294,
+        "maxAbsoluteError": 295.7547590667024,
+        "absoluteErrorPercentiles": {
+          "P50": 29.78672620401339,
+          "P90": 102.962405371134,
+          "P95": 153.53687156207576,
+          "P99": 255.08065316041873
+        }
+      },
+      {
+        "weekday": 6,
+        "name": "domingo",
+        "evaluable": 192,
+        "unavailable": 0,
+        "MAE": 118.04933367036584,
+        "RMSE": 171.0104062580448,
+        "bias": 105.71615408951509,
+        "WAPE": 31.527848473491566,
+        "WAPEUnit": "percent",
+        "wapeNumeratorAbsoluteError": 22665.47206471024,
+        "wapeDenominatorAbsoluteActual": 71890.32288,
+        "minAbsoluteError": 1.1473718554914,
+        "maxAbsoluteError": 547.4617800762069,
+        "absoluteErrorPercentiles": {
+          "P50": 60.96717628540043,
+          "P90": 279.20184132734624,
+          "P95": 457.0008682387369,
+          "P99": 494.8373682197139
+        }
+      }
+    ]
+  },
+  "test": null,
+  "testStatus": "not_evaluated_validation_gate_failed",
+  "testComparison": null,
+  "testPriorExposure": {
+    "descriptiveRange": [
+      "2024-07-01",
+      "2024-07-30"
+    ],
+    "B1AndB7TestMetricsAlreadyObserved": true,
+    "notCompletelyUnseen": true,
+    "usedForSelection": false
+  },
+  "formalValidation": "pending",
+  "hu08Implemented": false
+}
