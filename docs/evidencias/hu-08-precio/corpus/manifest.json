@@ -1,0 +1,1202 @@
+{
+  "source": "XM/SINERGOX",
+  "dataset": "PrecBolsNaci",
+  "unit": "COP/kWh",
+  "granularity": "hourly",
+  "startDate": "2023-08-01",
+  "endDate": "2024-07-30",
+  "numberOfDays": 365,
+  "recordCount": 8760,
+  "minRecordsPerDay": 24,
+  "maxRecordsPerDay": 24,
+  "duplicateKeys": 0,
+  "conflicts": 0,
+  "missingDates": [],
+  "nonFiniteValues": 0,
+  "n": 8760,
+  "mean": 589.9018611324201,
+  "median": 557.08669,
+  "sampleStandardDeviation": 309.22680942670064,
+  "min": 95.85161,
+  "max": 1595.68608,
+  "zeroCount": 0,
+  "negativeCount": 0,
+  "percentiles": {
+    "P1": 103.0238268,
+    "P5": 133.55562650000005,
+    "P25": 329.00716,
+    "P50": 557.08669,
+    "P75": 806.12993,
+    "P95": 1062.23606,
+    "P99": 1285.58946
+  },
+  "IQR": 477.12276999999995,
+  "snapshotFilename": "preciobolsnaci-2023-08-01_2024-07-30.csv",
+  "snapshotSha256": "07fdc38fa15929ff2bf8a6aefe0a3f2aa292276c5f18c8dbb0919be8537e0506",
+  "snapshotBytes": 207615,
+  "csvEncoding": "UTF-8 without BOM",
+  "csvLineEnding": "LF",
+  "csvTrailingNewline": true,
+  "csvColumns": [
+    "fecha_xm",
+    "periodo",
+    "precio_cop_kwh"
+  ],
+  "energyDatasetIds": [
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66
+  ],
+  "preparedDatasetIds": [
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47
+  ],
+  "ruleset": "xm_preciobolsnaci_base@1.0.0",
+  "profile": "xm_preciobolsnaci_preparacion_base@1.0.0",
+  "partitions": [
+    {
+      "name": "train",
+      "startDate": "2023-08-01",
+      "endDate": "2024-04-11",
+      "numberOfDays": 255,
+      "recordCount": 6120
+    },
+    {
+      "name": "validation",
+      "startDate": "2024-04-12",
+      "endDate": "2024-06-05",
+      "numberOfDays": 55,
+      "recordCount": 1320
+    },
+    {
+      "name": "test",
+      "startDate": "2024-06-06",
+      "endDate": "2024-07-30",
+      "numberOfDays": 55,
+      "recordCount": 1320
+    }
+  ],
+  "characterization": {
+    "byPeriod": [
+      {
+        "periodo": 1,
+        "n": 365,
+        "mean": 533.5842417260274,
+        "median": 501.60752,
+        "sampleStandardDeviation": 328.60698269126635,
+        "min": 96.36406,
+        "max": 1497.24108
+      },
+      {
+        "periodo": 2,
+        "n": 365,
+        "mean": 526.9456663835616,
+        "median": 501.32247,
+        "sampleStandardDeviation": 318.54060642099773,
+        "min": 97.39022,
+        "max": 1284.63441
+      },
+      {
+        "periodo": 3,
+        "n": 365,
+        "mean": 517.0847403561644,
+        "median": 492.55717,
+        "sampleStandardDeviation": 312.40402212624184,
+        "min": 97.39022,
+        "max": 1284.63441
+      },
+      {
+        "periodo": 4,
+        "n": 365,
+        "mean": 504.43832117808216,
+        "median": 480.24,
+        "sampleStandardDeviation": 309.7532630754407,
+        "min": 97.34622,
+        "max": 1284.63441
+      },
+      {
+        "periodo": 5,
+        "n": 365,
+        "mean": 517.1841293972602,
+        "median": 483.98271,
+        "sampleStandardDeviation": 311.50426184110347,
+        "min": 97.39022,
+        "max": 1497.24108
+      },
+      {
+        "periodo": 6,
+        "n": 365,
+        "mean": 538.3117239178083,
+        "median": 506.11729,
+        "sampleStandardDeviation": 308.49098879478424,
+        "min": 97.39022,
+        "max": 1497.24108
+      },
+      {
+        "periodo": 7,
+        "n": 365,
+        "mean": 535.3576554246575,
+        "median": 504.10987,
+        "sampleStandardDeviation": 307.5776362174803,
+        "min": 97.39022,
+        "max": 1497.24108
+      },
+      {
+        "periodo": 8,
+        "n": 365,
+        "mean": 550.3220198082191,
+        "median": 512.50098,
+        "sampleStandardDeviation": 303.4023663109007,
+        "min": 95.85161,
+        "max": 1497.24108
+      },
+      {
+        "periodo": 9,
+        "n": 365,
+        "mean": 567.309600630137,
+        "median": 529.70139,
+        "sampleStandardDeviation": 306.4030919708559,
+        "min": 95.85161,
+        "max": 1505.76534
+      },
+      {
+        "periodo": 10,
+        "n": 365,
+        "mean": 573.052195150685,
+        "median": 532.1693,
+        "sampleStandardDeviation": 309.0374505255346,
+        "min": 95.85161,
+        "max": 1526.32034
+      },
+      {
+        "periodo": 11,
+        "n": 365,
+        "mean": 589.0553129589041,
+        "median": 557.17116,
+        "sampleStandardDeviation": 308.9423149101442,
+        "min": 95.85161,
+        "max": 1526.32034
+      },
+      {
+        "periodo": 12,
+        "n": 365,
+        "mean": 604.9202417260275,
+        "median": 568.98722,
+        "sampleStandardDeviation": 306.0848774222133,
+        "min": 104.0472,
+        "max": 1534.68608
+      },
+      {
+        "periodo": 13,
+        "n": 365,
+        "mean": 603.7161924109589,
+        "median": 570.00601,
+        "sampleStandardDeviation": 307.15103532833785,
+        "min": 105.00905,
+        "max": 1534.68608
+      },
+      {
+        "periodo": 14,
+        "n": 365,
+        "mean": 609.7232225479452,
+        "median": 584.2536,
+        "sampleStandardDeviation": 307.1987013129864,
+        "min": 100.19454,
+        "max": 1534.68608
+      },
+      {
+        "periodo": 15,
+        "n": 365,
+        "mean": 622.4689239178083,
+        "median": 599.11622,
+        "sampleStandardDeviation": 304.5299423393389,
+        "min": 100.19454,
+        "max": 1534.68608
+      },
+      {
+        "periodo": 16,
+        "n": 365,
+        "mean": 631.9856170684932,
+        "median": 601.00513,
+        "sampleStandardDeviation": 299.66168363450555,
+        "min": 100.19454,
+        "max": 1565.58806
+      },
+      {
+        "periodo": 17,
+        "n": 365,
+        "mean": 633.464797890411,
+        "median": 600.94333,
+        "sampleStandardDeviation": 299.27425382375844,
+        "min": 105.97005,
+        "max": 1534.68608
+      },
+      {
+        "periodo": 18,
+        "n": 365,
+        "mean": 636.169891041096,
+        "median": 605.44408,
+        "sampleStandardDeviation": 298.75352693327505,
+        "min": 105.97105,
+        "max": 1534.68608
+      },
+      {
+        "periodo": 19,
+        "n": 365,
+        "mean": 676.7325704931507,
+        "median": 638.23229,
+        "sampleStandardDeviation": 295.6834978256064,
+        "min": 114.0472,
+        "max": 1595.68608
+      },
+      {
+        "periodo": 20,
+        "n": 365,
+        "mean": 699.7954170684932,
+        "median": 674.03097,
+        "sampleStandardDeviation": 282.62369495614286,
+        "min": 114.0472,
+        "max": 1581.22458
+      },
+      {
+        "periodo": 21,
+        "n": 365,
+        "mean": 670.9813102191781,
+        "median": 632.19812,
+        "sampleStandardDeviation": 286.7806943456356,
+        "min": 114.0472,
+        "max": 1534.68608
+      },
+      {
+        "periodo": 22,
+        "n": 365,
+        "mean": 637.6949841917808,
+        "median": 599.47076,
+        "sampleStandardDeviation": 293.62087389775803,
+        "min": 113.01944,
+        "max": 1526.32034
+      },
+      {
+        "periodo": 23,
+        "n": 365,
+        "mean": 600.934606109589,
+        "median": 558.10151,
+        "sampleStandardDeviation": 302.62472996055305,
+        "min": 103.2971,
+        "max": 1497.24108
+      },
+      {
+        "periodo": 24,
+        "n": 365,
+        "mean": 576.4112855616439,
+        "median": 535.53106,
+        "sampleStandardDeviation": 305.7652336129756,
+        "min": 103.2971,
+        "max": 1497.24108
+      }
+    ],
+    "byWeekday": [
+      {
+        "weekday": 0,
+        "name": "lunes",
+        "n": 1248,
+        "mean": 581.6562242628205,
+        "median": 556.35126,
+        "sampleStandardDeviation": 313.55115363848296
+      },
+      {
+        "weekday": 1,
+        "name": "martes",
+        "n": 1272,
+        "mean": 609.1129418867924,
+        "median": 593.12981,
+        "sampleStandardDeviation": 318.268282248849
+      },
+      {
+        "weekday": 2,
+        "name": "miércoles",
+        "n": 1248,
+        "mean": 605.3331844871794,
+        "median": 577.789955,
+        "sampleStandardDeviation": 309.99840229620173
+      },
+      {
+        "weekday": 3,
+        "name": "jueves",
+        "n": 1248,
+        "mean": 603.4538079487179,
+        "median": 558.10151,
+        "sampleStandardDeviation": 301.29374251279285
+      },
+      {
+        "weekday": 4,
+        "name": "viernes",
+        "n": 1248,
+        "mean": 601.3493796794872,
+        "median": 552.19812,
+        "sampleStandardDeviation": 302.1059959953862
+      },
+      {
+        "weekday": 5,
+        "name": "sábado",
+        "n": 1248,
+        "mean": 586.5253540064102,
+        "median": 548.16925,
+        "sampleStandardDeviation": 309.5911396288078
+      },
+      {
+        "weekday": 6,
+        "name": "domingo",
+        "n": 1248,
+        "mean": 541.5126917948718,
+        "median": 524.73121,
+        "sampleStandardDeviation": 304.54259316383013
+      }
+    ],
+    "byMonth": [
+      {
+        "month": "2023-08",
+        "n": 744,
+        "mean": 529.8244637634409,
+        "median": 556.35126,
+        "sampleStandardDeviation": 221.7527421920717,
+        "min": 100.5861,
+        "max": 833.12719
+      },
+      {
+        "month": "2023-09",
+        "n": 720,
+        "mean": 1014.9860972222222,
+        "median": 1056.98325,
+        "sampleStandardDeviation": 74.51584778340732,
+        "min": 639.08013,
+        "max": 1063.19379
+      },
+      {
+        "month": "2023-10",
+        "n": 744,
+        "mean": 1015.4398694623657,
+        "median": 1062.19806,
+        "sampleStandardDeviation": 290.84759897324255,
+        "min": 105.41225,
+        "max": 1595.68608
+      },
+      {
+        "month": "2023-11",
+        "n": 720,
+        "mean": 504.5499100555556,
+        "median": 532.10547,
+        "sampleStandardDeviation": 233.05503019007665,
+        "min": 100.7856,
+        "max": 1068.93066
+      },
+      {
+        "month": "2023-12",
+        "n": 744,
+        "mean": 656.1912600537635,
+        "median": 751.87591,
+        "sampleStandardDeviation": 231.95771939848598,
+        "min": 99.41605,
+        "max": 973.05084
+      },
+      {
+        "month": "2024-01",
+        "n": 744,
+        "mean": 558.7221962365592,
+        "median": 569.15334,
+        "sampleStandardDeviation": 103.559201765606,
+        "min": 95.85161,
+        "max": 721.15667
+      },
+      {
+        "month": "2024-02",
+        "n": 696,
+        "mean": 568.7060877586207,
+        "median": 563.0036749999999,
+        "sampleStandardDeviation": 84.57046442367255,
+        "min": 99.80455,
+        "max": 712.65071
+      },
+      {
+        "month": "2024-03",
+        "n": 744,
+        "mean": 622.7735682258065,
+        "median": 574.80601,
+        "sampleStandardDeviation": 126.26729223524437,
+        "min": 225.8872,
+        "max": 1015.73481
+      },
+      {
+        "month": "2024-04",
+        "n": 720,
+        "mean": 748.6567620555555,
+        "median": 970.13274,
+        "sampleStandardDeviation": 380.5156612756066,
+        "min": 96.36406,
+        "max": 1267.59336
+      },
+      {
+        "month": "2024-05",
+        "n": 744,
+        "mean": 291.5498530107527,
+        "median": 287.01462,
+        "sampleStandardDeviation": 119.33261631927584,
+        "min": 97.34622,
+        "max": 694.71839
+      },
+      {
+        "month": "2024-06",
+        "n": 720,
+        "mean": 280.69736188888885,
+        "median": 266.13088,
+        "sampleStandardDeviation": 98.42921768213974,
+        "min": 106.93005,
+        "max": 945.62322
+      },
+      {
+        "month": "2024-07",
+        "n": 720,
+        "mean": 281.5153766111111,
+        "median": 292.49497,
+        "sampleStandardDeviation": 112.80433600702099,
+        "min": 104.51862,
+        "max": 910.02057
+      }
+    ]
+  },
+  "calculationMethod": {
+    "arithmetic": "IEEE-754 double, compensated summation; no intermediate rounding",
+    "standardDeviation": "sample: sqrt(sum((x-mean)^2)/(n-1))",
+    "percentiles": "linear interpolation at (n-1)*p, sorted ascending",
+    "weekday": "calendar date; Monday=0, Sunday=6; no XM timezone interpretation",
+    "priceSerialization": "shortest decimal that round-trips the stored numeric value; no toFixed"
+  },
+  "priorTestExposure": {
+    "startDate": "2024-07-01",
+    "endDate": "2024-07-30",
+    "type": "descriptive_exploration",
+    "predictorEvaluated": false,
+    "completelyUnseen": false
+  },
+  "acquisition": {
+    "stage": "acquisitionComplete",
+    "before": {
+      "EnergyDataset": 24,
+      "PreparedDataset": 24
+    },
+    "after": {
+      "EnergyDataset": 37,
+      "PreparedDataset": 37
+    },
+    "allPriorRowsUnchanged": true,
+    "blocks": [
+      {
+        "block": 1,
+        "startDate": "2023-08-01",
+        "endDate": "2023-08-30",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 2.2211064,
+            "energyDatasetId": 54
+          }
+        ],
+        "energyDatasetId": 54,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 54,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:12.991Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 35,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2023-08-01;endDate=2023-08-30;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2023-08-01",
+          "precio_cop_kwh": 322.00712,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2023-08-30",
+          "precio_cop_kwh": 747.26538,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true,
+        "idempotence": {
+          "http": 200,
+          "preparedDatasetId": 35,
+          "reused": true,
+          "compoundKeyRows": 1,
+          "samePreparedAt": true
+        }
+      },
+      {
+        "block": 2,
+        "startDate": "2023-08-31",
+        "endDate": "2023-09-29",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.45452610000000004,
+            "energyDatasetId": 55
+          }
+        ],
+        "energyDatasetId": 55,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 55,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:14.804Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 36,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2023-08-31;endDate=2023-09-29;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2023-08-31",
+          "precio_cop_kwh": 797.55071,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2023-09-29",
+          "precio_cop_kwh": 1018.25479,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 3,
+        "startDate": "2023-09-30",
+        "endDate": "2023-10-29",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 1.2407498000000015,
+            "energyDatasetId": 56
+          }
+        ],
+        "energyDatasetId": 56,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 56,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:17.242Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 37,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2023-09-30;endDate=2023-10-29;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2023-09-30",
+          "precio_cop_kwh": 1016.02604,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2023-10-29",
+          "precio_cop_kwh": 292.55684,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 4,
+        "startDate": "2023-10-30",
+        "endDate": "2023-11-28",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.4506226000000006,
+            "energyDatasetId": 57
+          }
+        ],
+        "energyDatasetId": 57,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 57,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:18.654Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 38,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2023-10-30;endDate=2023-11-28;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2023-10-30",
+          "precio_cop_kwh": 274.12049,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2023-11-28",
+          "precio_cop_kwh": 453.53005,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 5,
+        "startDate": "2023-11-29",
+        "endDate": "2023-12-28",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.6347855,
+            "energyDatasetId": 58
+          }
+        ],
+        "energyDatasetId": 58,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 58,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:20.340Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 39,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2023-11-29;endDate=2023-12-28;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2023-11-29",
+          "precio_cop_kwh": 452.10547,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2023-12-28",
+          "precio_cop_kwh": 384.80591,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 6,
+        "startDate": "2023-12-29",
+        "endDate": "2024-01-27",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.37966589999999995,
+            "energyDatasetId": 59
+          }
+        ],
+        "energyDatasetId": 59,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 59,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:21.730Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 40,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2023-12-29;endDate=2024-01-27;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2023-12-29",
+          "precio_cop_kwh": 344.2566,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2024-01-27",
+          "precio_cop_kwh": 450.30074,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 7,
+        "startDate": "2024-01-28",
+        "endDate": "2024-02-26",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.38954429999999957,
+            "energyDatasetId": 60
+          }
+        ],
+        "energyDatasetId": 60,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 60,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:23.065Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 41,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-01-28;endDate=2024-02-26;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2024-01-28",
+          "precio_cop_kwh": 509.54063,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2024-02-26",
+          "precio_cop_kwh": 559.44333,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true,
+        "idempotence": {
+          "http": 200,
+          "preparedDatasetId": 41,
+          "reused": true,
+          "compoundKeyRows": 1,
+          "samePreparedAt": true
+        }
+      },
+      {
+        "block": 8,
+        "startDate": "2024-02-27",
+        "endDate": "2024-03-27",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 1.9397865999999995,
+            "energyDatasetId": 61
+          }
+        ],
+        "energyDatasetId": 61,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 61,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:26.403Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 42,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-02-27;endDate=2024-03-27;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2024-02-27",
+          "precio_cop_kwh": 547.63553,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2024-03-27",
+          "precio_cop_kwh": 858.74024,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 9,
+        "startDate": "2024-03-28",
+        "endDate": "2024-04-26",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.4105709999999999,
+            "energyDatasetId": 62
+          }
+        ],
+        "energyDatasetId": 62,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 62,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:27.726Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 43,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-03-28;endDate=2024-04-26;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2024-03-28",
+          "precio_cop_kwh": 1004.61181,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2024-04-26",
+          "precio_cop_kwh": 199.1058,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 10,
+        "startDate": "2024-04-27",
+        "endDate": "2024-05-26",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.3994451999999983,
+            "energyDatasetId": 63
+          }
+        ],
+        "energyDatasetId": 63,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 63,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:29.035Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 44,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-04-27;endDate=2024-05-26;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2024-04-27",
+          "precio_cop_kwh": 101.17844,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2024-05-26",
+          "precio_cop_kwh": 587.01462,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 11,
+        "startDate": "2024-05-27",
+        "endDate": "2024-06-25",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.38902599999999804,
+            "energyDatasetId": 64
+          }
+        ],
+        "energyDatasetId": 64,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 64,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:30.350Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 45,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-05-27;endDate=2024-06-25;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2024-05-27",
+          "precio_cop_kwh": 304.21175,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2024-06-25",
+          "precio_cop_kwh": 252.39023,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 12,
+        "startDate": "2024-06-26",
+        "endDate": "2024-07-25",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.374420900000001,
+            "energyDatasetId": 65
+          }
+        ],
+        "energyDatasetId": 65,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 65,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:31.623Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 720,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 46,
+        "recordCount": 720,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-06-26;endDate=2024-07-25;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2024-06-26",
+          "precio_cop_kwh": 204.43352,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2024-07-25",
+          "precio_cop_kwh": 306.76032,
+          "sourceRecordIndex": 719
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true
+      },
+      {
+        "block": 13,
+        "startDate": "2024-07-26",
+        "endDate": "2024-07-30",
+        "attempts": [
+          {
+            "attempt": 1,
+            "http": 201,
+            "durationSeconds": 0.2887528999999995,
+            "energyDatasetId": 66
+          }
+        ],
+        "energyDatasetId": 66,
+        "httpImport": 201,
+        "httpValidate": 200,
+        "validation": {
+          "datasetId": 66,
+          "status": "aprobado",
+          "validatedAt": "2026-09-16T01:46:32.812Z",
+          "rulesetId": "xm_preciobolsnaci_base",
+          "rulesetVersion": "1.0.0",
+          "recordCount": 120,
+          "errorCount": 0,
+          "warningCount": 0,
+          "issues": [],
+          "canProceed": true
+        },
+        "httpPrepare": 200,
+        "preparedDatasetId": 47,
+        "recordCount": 120,
+        "profileId": "xm_preciobolsnaci_preparacion_base",
+        "profileVersion": "1.0.0",
+        "sourceRulesetId": "xm_preciobolsnaci_base",
+        "sourceRulesetVersion": "1.0.0",
+        "reused": false,
+        "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-07-26;endDate=2024-07-30;mapping=xm-preciobolsnaci-v1",
+        "first": {
+          "periodo": 1,
+          "fecha_xm": "2024-07-26",
+          "precio_cop_kwh": 296.00508,
+          "sourceRecordIndex": 0
+        },
+        "last": {
+          "periodo": 24,
+          "fecha_xm": "2024-07-30",
+          "precio_cop_kwh": 398.02391,
+          "sourceRecordIndex": 119
+        },
+        "sqlMatchesHttp": true,
+        "sourceUnchanged": true,
+        "idempotence": {
+          "http": 200,
+          "preparedDatasetId": 47,
+          "reused": true,
+          "compoundKeyRows": 1,
+          "samePreparedAt": true
+        }
+      }
+    ]
+  },
+  "formalValidation": "pending",
+  "modelingPerformed": false
+}
