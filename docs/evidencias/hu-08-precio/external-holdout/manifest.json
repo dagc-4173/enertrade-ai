@@ -1,0 +1,96 @@
+{
+  "source": "XM/SINERGOX",
+  "dataset": "PrecBolsNaci",
+  "unit": "COP/kWh",
+  "granularity": "hourly",
+  "startDate": "2024-07-31",
+  "endDate": "2024-09-28",
+  "numberOfDays": 60,
+  "recordCount": 1440,
+  "integrity": {
+    "periodsPerDay": 24,
+    "duplicateKeys": 0,
+    "conflicts": 0,
+    "missingDates": [],
+    "nonFiniteValues": 0,
+    "pricePreserved": true
+  },
+  "energyDatasetIds": [
+    67,
+    68
+  ],
+  "preparedDatasetIds": [
+    48,
+    49
+  ],
+  "snapshotFilename": "preciobolsnaci-2024-07-31_2024-09-28.csv",
+  "snapshotSha256": "80f0732509f547e1a7766cd211c728aa7b636017ec0b0d8a5b34123e02910c6a",
+  "snapshotBytes": 33860,
+  "encoding": "UTF-8 without BOM; LF; final newline",
+  "blocks": [
+    {
+      "energyDatasetId": 67,
+      "preparedDatasetId": 48,
+      "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-07-31;endDate=2024-08-29;mapping=xm-preciobolsnaci-v1",
+      "recordCount": 720,
+      "status": "aprobado",
+      "errorCount": 0,
+      "warningCount": 0,
+      "ruleset": "xm_preciobolsnaci_base@1.0.0",
+      "profile": "xm_preciobolsnaci_preparacion_base@1.0.0",
+      "httpImport": 201,
+      "httpValidate": 200,
+      "httpPrepare": 200,
+      "reused": false,
+      "attempts": 1,
+      "first": {
+        "fecha_xm": "2024-07-31",
+        "periodo": 1,
+        "precio_cop_kwh": 404.79085
+      },
+      "last": {
+        "fecha_xm": "2024-08-29",
+        "periodo": 24,
+        "precio_cop_kwh": 519.95226
+      }
+    },
+    {
+      "energyDatasetId": 68,
+      "preparedDatasetId": 49,
+      "source": "XM/SINERGOX;metric=PrecBolsNaci;unit=COP/kWh;startDate=2024-08-30;endDate=2024-09-28;mapping=xm-preciobolsnaci-v1",
+      "recordCount": 720,
+      "status": "aprobado",
+      "errorCount": 0,
+      "warningCount": 0,
+      "ruleset": "xm_preciobolsnaci_base@1.0.0",
+      "profile": "xm_preciobolsnaci_preparacion_base@1.0.0",
+      "httpImport": 201,
+      "httpValidate": 200,
+      "httpPrepare": 200,
+      "reused": false,
+      "attempts": 1,
+      "first": {
+        "fecha_xm": "2024-08-30",
+        "periodo": 1,
+        "precio_cop_kwh": 444.51898
+      },
+      "last": {
+        "fecha_xm": "2024-09-28",
+        "periodo": 24,
+        "precio_cop_kwh": 934.62274
+      }
+    }
+  ],
+  "postgresqlCounts": {
+    "before": {
+      "EnergyDataset": 37,
+      "PreparedDataset": 37
+    },
+    "after": {
+      "EnergyDataset": 39,
+      "PreparedDataset": 39
+    },
+    "previousRowsUnchanged": true
+  },
+  "retries": 0
+}
