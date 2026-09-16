@@ -7,17 +7,30 @@ type PreparedPrice = {
   sourceRulesetId: string; sourceRulesetVersion: string; content: unknown;
 };
 
+export type PriceForecastContext = {
+  targetDate?: string;
+  preparedDatasetId?: number;
+  rule?: { id: string; version: string; type: string };
+  inputSnapshot?: {
+    sourceDatasetId: number; preparedDatasetId: number; referenceDate: string;
+    values: { sourceRecordIndex: number; periodo: number; precio_cop_kwh: number }[];
+  };
+};
+
 export function createPriceForecastService(
   read: (id: number) => Promise<PreparedPrice | null>, rule: () => PriceRule = loadRule,
 ) {
-  return async (input: unknown) => {
+  return async (input: unknown, context?: PriceForecastContext) => {
     if (!object(input) || Object.keys(input).length !== 2 || !Object.hasOwn(input, 'preparedDatasetId') ||
       !Object.hasOwn(input, 'targetDate') || !Number.isSafeInteger(input.preparedDatasetId) ||
       input.preparedDatasetId <= 0 || input.preparedDatasetId > 2147483647) throw new ForecastError(400, 'INVALID_FORECAST_REQUEST');
     if (!calendarDate(input.targetDate)) throw new ForecastError(422, 'INVALID_FORECAST_DATE');
+    if (context) context.targetDate = input.targetDate;
     const r = rule();
+    if (context) context.rule = { id: r.ruleId, version: r.ruleVersion, type: r.type };
     const p = await read(input.preparedDatasetId);
     if (!p) throw new ForecastError(404, 'PREPARED_DATASET_NOT_FOUND');
+    if (context) context.preparedDatasetId = p.id;
     if (p.profileId !== r.sourceProfileId || p.profileVersion !== r.sourceProfileVersion ||
       p.sourceRulesetId !== r.sourceRulesetId || p.sourceRulesetVersion !== r.sourceRulesetVersion) throw new ForecastError(422, 'FORECAST_PROFILE_NOT_APPLICABLE');
     const bad = (): never => { throw new ForecastError(409, 'PREPARED_DATASET_INCONSISTENT'); };
@@ -32,6 +45,7 @@ export function createPriceForecastService(
       object(x) && Object.entries(v).every(([k, value]) => x[k] === value)).length !== 1)) return bad();
     const previous = previousDate(input.targetDate, 1);
     const prices = new Map<number, number>();
+    const values: NonNullable<PriceForecastContext['inputSnapshot']>['values'] = [];
     for (const row of c.records) {
       if (!object(row) || !calendarDate(row.fecha_xm)) return bad();
       // Only D-1 prices are inspected or projected. Other dates cannot supply a fallback.
@@ -40,8 +54,13 @@ export function createPriceForecastService(
         typeof row.precio_cop_kwh !== 'number' || !Number.isFinite(row.precio_cop_kwh) ||
         !Number.isSafeInteger(row.sourceRecordIndex) || row.sourceRecordIndex < 0 || prices.has(row.periodo)) return bad();
       prices.set(row.periodo, row.precio_cop_kwh);
+      values.push({ sourceRecordIndex: row.sourceRecordIndex, periodo: row.periodo, precio_cop_kwh: row.precio_cop_kwh });
     }
     if (prices.size !== 24) throw new ForecastError(422, 'FORECAST_DATA_INSUFFICIENT');
+    if (context) context.inputSnapshot = {
+      sourceDatasetId: p.sourceDatasetId, preparedDatasetId: p.id, referenceDate: previous,
+      values: values.sort((a, b) => a.periodo - b.periodo),
+    };
     return {
       status: 'available' as const, preparedDatasetId: p.id, sourceDatasetId: p.sourceDatasetId,
       forecastType: r.forecastType, target: r.target, unit: r.unit, granularity: r.granularity,

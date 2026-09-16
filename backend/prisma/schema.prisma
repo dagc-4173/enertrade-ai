@@ -42,16 +42,54 @@ model EnergyDataset {
 }
 
 model PreparedDataset {
-  id                   Int           @id @default(autoincrement())
+  id                   Int                      @id @default(autoincrement())
   sourceDatasetId      Int
   profileId            String
   profileVersion       String
-  preparedAt           DateTime      @default(now()) @db.Timestamptz(3)
+  preparedAt           DateTime                 @default(now()) @db.Timestamptz(3)
   sourceRulesetId      String
   sourceRulesetVersion String
   content              Json
   transformations      Json
-  sourceDataset        EnergyDataset @relation(fields: [sourceDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  sourceDataset        EnergyDataset            @relation(fields: [sourceDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  priceExecutions      PriceForecastExecution[]
 
   @@unique([sourceDatasetId, profileId, profileVersion])
+}
+
+enum PriceForecastExecutionStatus {
+  pending
+  succeeded
+  failed
+}
+
+enum PriceForecastConditionsCompleteness {
+  complete
+  partial
+}
+
+model PriceForecastExecution {
+  id                     String                               @id @default(uuid()) @db.Uuid
+  forecastType           String
+  targetDate             DateTime?                            @db.Date
+  preparedDatasetId      Int?
+  ruleId                 String?
+  ruleVersion            String?
+  ruleType               String?
+  requestPayload         Json
+  inputSnapshot          Json?
+  resultPayload          Json?
+  status                 PriceForecastExecutionStatus         @default(pending)
+  conditionsCompleteness PriceForecastConditionsCompleteness?
+  partialReasons         Json?
+  httpStatus             Int?
+  errorCode              String?
+  createdAt              DateTime                             @default(now()) @db.Timestamptz(3)
+  completedAt            DateTime?                            @db.Timestamptz(3)
+  preparedDataset        PreparedDataset?                     @relation(fields: [preparedDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([targetDate])
+  @@index([preparedDatasetId])
 }

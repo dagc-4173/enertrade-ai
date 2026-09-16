@@ -5,6 +5,7 @@ import artifact from '@/models/xm-preciobolsnaci-b1/1.0.0/rule.json';
 import { loadRule, validateRule, createRuleLoader } from '@/models/xm-preciobolsnaci-b1/rule-loader';
 import { createPriceForecastService } from '@/services/price-forecast.service';
 import { createForecastRouter } from '@/controllers/forecast.controller';
+import { createPriceForecastTraceService } from '@/services/price-forecast-trace.service';
 import { messages } from '@/services/forecast.contract';
 
 function fixture(date = '2024-09-28') {
@@ -20,13 +21,14 @@ function fixture(date = '2024-09-28') {
     } };
 }
 const request = { preparedDatasetId: 49, targetDate: '2024-09-29' };
+const trace = createPriceForecastTraceService({ create: async () => ({}), update: async () => ({}) });
 const app = express();
 app.use('/forecasts', createForecastRouter(undefined, undefined, undefined, undefined,
-  createPriceForecastService(async id => id === 49 ? fixture() : null)));
+  createPriceForecastService(async id => id === 49 ? fixture() : null), trace));
 app.use('/failure', createForecastRouter(undefined, undefined, undefined, undefined,
-  createPriceForecastService(async () => { throw new Error('private database details'); })));
+  createPriceForecastService(async () => { throw new Error('private database details'); }), trace));
 app.use('/bad-rule', createForecastRouter(undefined, undefined, undefined, undefined,
-  createPriceForecastService(async () => fixture(), createRuleLoader(() => '{'))));
+  createPriceForecastService(async () => fixture(), createRuleLoader(() => '{')), trace));
 const server = app.listen(0, '127.0.0.1');
 await new Promise<void>(r => server.listening ? r() : server.once('listening', r));
 const address = server.address(); if (!address || typeof address === 'string') throw Error('listener');
@@ -38,7 +40,9 @@ const post = (body: unknown, path = '/forecasts/price') => fetch(base + path, {
 
 test('HU08 exact HTTP response with 24 precise prices and honest scope', async () => {
   const response = await post(request); expect(response.status).toBe(200);
-  expect(await response.json()).toEqual({ status: 'available', preparedDatasetId: 49, sourceDatasetId: 68,
+  const { trace: saved, ...technical } = await response.json() as any;
+  expect(saved.persistence).toBe('persisted');
+  expect(technical).toEqual({ status: 'available', preparedDatasetId: 49, sourceDatasetId: 68,
     forecastType: 'market_reference_price', target: 'precio_cop_kwh', unit: 'COP/kWh', granularity: 'hourly', horizonDays: 1,
     rule: { id: artifact.ruleId, version: '1.0.0', type: 'deterministic_baseline', description: 'same period previous day' },
     targetDate: request.targetDate, predictions: fixture().content.records.map(r => ({ periodo: r.periodo, precio_cop_kwh: r.precio_cop_kwh })),
@@ -79,7 +83,20 @@ test.each(['missing', 'incomplete'])('insufficient D-1 %s', async kind => {
   const p = fixture(); if (kind === 'missing') p.content.records = []; else p.content.records.pop();
   await expect(createPriceForecastService(async () => p)(request)).rejects.toMatchObject({ status: 422, code: 'FORECAST_DATA_INSUFFICIENT' });
 });
-test('HTTP unavailable envelope', async () => { const r = await post({ ...request, targetDate: '2024-10-01' }); expect(r.status).toBe(422); expect(await r.json()).toEqual({ status: 'unavailable', error: 'FORECAST_DATA_INSUFFICIENT', message: messages.FORECAST_DATA_INSUFFICIENT }); });
+async function expectTracedError(response: Response, status: number, envelope: Record<string, string>) {
+  expect(response.status).toBe(status);
+  const body: unknown = await response.json();
+  if (body === null || typeof body !== 'object' || Array.isArray(body) || !('trace' in body)) {
+    throw new Error('Expected a JSON object with trace metadata');
+  }
+  const { trace, ...technical } = body;
+  expect(technical).toEqual(envelope);
+  expect(trace).toEqual({ executionId: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/), persistence: 'persisted' });
+}
+test('HTTP unavailable envelope', async () => {
+  await expectTracedError(await post({ ...request, targetDate: '2024-10-01' }), 422,
+    { status: 'unavailable', error: 'FORECAST_DATA_INSUFFICIENT', message: messages.FORECAST_DATA_INSUFFICIENT });
+});
 test('duplicate D-1 period is corrupt, no silent replacement', async () => { const p = fixture(); p.content.records.push({ ...p.content.records[0]! }); await expect(createPriceForecastService(async () => p)(request)).rejects.toMatchObject({ status: 409, code: 'PREPARED_DATASET_INCONSISTENT' }); });
 test.each([NaN, Infinity, '934', null])('corrupt price %j', async value => {
   const p: any = fixture(); p.content.records[0].precio_cop_kwh = value;
@@ -91,12 +108,24 @@ test.each([0, 25, 1.5, '1'])('corrupt period %j', async value => {
 });
 test('incompatible variable unit', async () => { const p = fixture(); p.content.variables.minimum[2]!.unit = 'kWh'; await expect(createPriceForecastService(async () => p)(request)).rejects.toMatchObject({ status: 409 }); });
 test('parser, query, content type and safe internal failure', async () => {
-  expect((await fetch(base + '/forecasts/price', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{' })).status).toBe(400);
-  expect((await post(request, '/forecasts/price?ruleVersion=2')).status).toBe(400);
-  expect((await fetch(base + '/forecasts/price', { method: 'POST', body: '{}' })).status).toBe(415);
-  const r = await post(request, '/failure/price'); expect(r.status).toBe(500); expect(await r.json()).toEqual({ error: 'FORECAST_FAILED', message: messages.FORECAST_FAILED });
-  const bad = await post(request, '/bad-rule/price'); expect(bad.status).toBe(409); expect(await bad.json()).toEqual({ error: 'FORECAST_RULE_INCOMPATIBLE', message: messages.FORECAST_RULE_INCOMPATIBLE });
+  await expectTracedError(await fetch(base + '/forecasts/price', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{' }),
+    400, { error: 'INVALID_FORECAST_REQUEST', message: messages.INVALID_FORECAST_REQUEST });
+  await expectTracedError(await post(request, '/forecasts/price?ruleVersion=2'),
+    400, { error: 'INVALID_FORECAST_REQUEST', message: messages.INVALID_FORECAST_REQUEST });
+  await expectTracedError(await fetch(base + '/forecasts/price', { method: 'POST', body: '{}' }),
+    415, { error: 'UNSUPPORTED_MEDIA_TYPE', message: 'Se requiere Content-Type application/json.' });
+  await expectTracedError(await post(request, '/failure/price'),
+    500, { error: 'FORECAST_FAILED', message: messages.FORECAST_FAILED });
+  await expectTracedError(await post(request, '/bad-rule/price'),
+    409, { error: 'FORECAST_RULE_INCOMPATIBLE', message: messages.FORECAST_RULE_INCOMPATIBLE });
 });
+
+test('unsupported content encoding keeps the distinct HEAD parser envelope', async () => {
+  await expectTracedError(await fetch(base + '/forecasts/price', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'unsupported' }, body: '{}',
+  }), 415, { error: 'UNSUPPORTED_MEDIA_TYPE', message: 'La codificación del contenido no está admitida.' });
+});
+
 test('strict valid rule, cache, detached deep freeze', () => {
   const r = validateRule(artifact); expect(r).toEqual(artifact); expect(r).not.toBe(artifact);
   expect(Object.isFrozen(r.evaluation.externalHoldout.metrics)).toBe(true); expect(Object.isFrozen(r.factors.used)).toBe(true);
