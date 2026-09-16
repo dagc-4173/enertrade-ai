@@ -1,0 +1,11 @@
+.auth-page { min-height: 100dvh; display: grid; place-content: center; padding: 24px; }
+.auth-card { width: min(440px, calc(100vw - 48px)); background: var(--surface, #fff); border: 1px solid #dfe6df; border-radius: 20px; padding: 32px; box-sizing: border-box; }
+.auth-card h1 { margin-top: 28px; }
+.auth-card form, .auth-card label { display: grid; gap: 10px; }
+.auth-card form { gap: 18px; }
+.auth-card input { min-width: 0; padding: 12px; border: 1px solid #b9c8bc; border-radius: 8px; font: inherit; }
+.auth-card button { min-height: 44px; cursor: pointer; }
+.auth-card button:disabled { opacity: .65; cursor: wait; }
+.auth-card [role=alert], .auth-session-error { color: #9c2525; }
+.auth-switch { margin-top: 18px; background: transparent; border: 0; color: inherit; text-decoration: underline; }
+.auth-session { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }

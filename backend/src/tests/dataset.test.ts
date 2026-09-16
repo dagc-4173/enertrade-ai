@@ -126,10 +126,10 @@ describe('HU-01: registro HTTP con persistencia sustituida', () => {
     expect((await post({ ...valid(), records: [{ energia: 'x'.repeat(110 * 1024) }] })).status).toBe(201);
   });
 
-  test('HU01-11: /auth conserva validación previa al SDK', async () => {
+  test('HU01-11: /auth rechaza datos inválidos sin registrar datasets', async () => {
     const response = await fetch(`${url}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ error: 'All fields are required' });
+    expect(await response.json()).toEqual({ error: 'INVALID_EMAIL', message: 'Introduce un correo electrónico válido.' });
     expect(create).not.toHaveBeenCalled();
   });
 });

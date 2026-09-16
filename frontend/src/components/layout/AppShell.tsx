@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react'
+import { useState, useSyncExternalStore, type ReactNode } from 'react'
+import { authStore } from '../../auth/authStore'
+import { authErrorMessage } from '../../services/authService'
 import { navigationItems } from '../../data/mockData'
 import type { PageKey } from '../../types/domain'
 
@@ -9,6 +11,14 @@ interface AppShellProps {
 }
 
 export function AppShell({ activePage, onNavigate, children }: AppShellProps) {
+  const { user } = useSyncExternalStore(authStore.subscribe, authStore.getSnapshot)
+  const [logoutError, setLogoutError] = useState<string | null>(null)
+  const [loggingOut, setLoggingOut] = useState(false)
+  async function logout() {
+    setLoggingOut(true); setLogoutError(null)
+    try { await authStore.logout() } catch (error) { setLogoutError(authErrorMessage(error)) }
+    finally { setLoggingOut(false) }
+  }
   const activeItem = navigationItems.find((item) => item.key === activePage)
 
   return (
@@ -49,9 +59,10 @@ export function AppShell({ activePage, onNavigate, children }: AppShellProps) {
             <p className="eyebrow">Operacion en tiempo real</p>
             <h1>{activeItem?.title ?? activeItem?.label ?? 'Inicio'}</h1>
           </div>
-          <div className="topbar-status">
-            <span>Zona: Antioquia</span>
-            <strong>Mercado activo</strong>
+          <div className="auth-session">
+            <span>{user?.name}</span>
+            <button type="button" disabled={loggingOut} onClick={() => { void logout() }}>{loggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}</button>
+            {logoutError && <span className="auth-session-error" role="alert">{logoutError}</span>}
           </div>
         </header>
         <main>{children}</main>

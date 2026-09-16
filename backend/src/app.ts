@@ -8,12 +8,13 @@ import { router as forecastRouter } from '@/controllers/forecast.controller';
 const app = express()
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim()
 
-// CORS de desarrollo: únicamente el origen configurado, sin credenciales.
+// CORS de desarrollo: únicamente el origen configurado, con cookies de sesión.
 app.use((req, res, next) => {
     res.vary('Origin')
     if (frontendOrigin && req.get('Origin') === frontendOrigin) {
         res.set('Access-Control-Allow-Origin', frontendOrigin)
-        res.set('Access-Control-Allow-Methods', 'POST')
+        res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        res.set('Access-Control-Allow-Credentials', 'true')
         res.set('Access-Control-Allow-Headers', 'Content-Type, Accept')
         if (req.method === 'OPTIONS') {
             res.sendStatus(204)
@@ -50,7 +51,6 @@ app.use('/datasets', datasetJsonError)
 
 app.use('/external-data', externalDataRouter)
 app.use('/forecasts', forecastRouter)
-app.use(express.json())
 app.use('/auth', authRouter)
 
 export { app }
