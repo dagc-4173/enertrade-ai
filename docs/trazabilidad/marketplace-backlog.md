@@ -23,15 +23,40 @@ Durante TG-II se implementó esa capacidad. Por trazabilidad, se formaliza como 
 
 El backlog original conserva HU-01 a HU-20 sin renumeración. La lectura del documento original confirma HU-10 y HU-20, pero no HU-21 ni HU-22.
 
+### Asignación al Sprint 2
+
+El plan original define S2 en las semanas 5–8. El seguimiento oficial de semana 8 tiene corte el 26 de septiembre de 2026.
+
+El incremento Marketplace fue implementado, probado, documentado y versionado antes de dicho corte. Aunque funcionalmente el Marketplace se relaciona con las capacidades transaccionales previstas para S3, su desarrollo fue adelantado durante S2.
+
+Se registra por tanto como un ajuste/refinamiento de backlog incorporado en S2. Esta decisión preserva la cronología real en lugar de reasignar retrospectivamente el trabajo a S3.
+
+HU-21 y HU-22 quedan como antecedentes funcionales de HU-10. HU-10 permanece pendiente.
+
+### Estimación relativa
+
+Se asignan 5 story points a HU-21 y 5 story points a HU-22. La estimación refleja una complejidad intermedia que incluye:
+
+- modelo persistente;
+- API autenticada;
+- aislamiento por usuario;
+- integración frontend;
+- validaciones;
+- pruebas automatizadas;
+- prueba de integración real;
+- prueba funcional en navegador.
+
+Los story points son una estimación relativa de complejidad. No equivalen a horas ni constituyen una reconstrucción del tiempo trabajado.
+
 ## 3. HU-21 — Registrar oferta energética
 
 - **ID:** HU-21
 - **Épica/Módulo:** Gestión transaccional simulada
 - **Título:** Registrar oferta energética
 - **Prioridad:** Alta
-- **Sprint:** Pendiente de asignación documental
-- **Story points:** Pendiente de estimación/documentación
-- **Estado técnico:** Implementada y probada técnicamente
+- **Sprint:** S2
+- **Story points:** 5
+- **Estado técnico:** Completado técnicamente con evidencia
 - **Validación académica/formal:** Pendiente
 
 ### Historia
@@ -85,9 +110,9 @@ HU-21 es un antecedente funcional de HU-10.
 - **Épica/Módulo:** Gestión transaccional simulada
 - **Título:** Registrar demanda energética
 - **Prioridad:** Alta
-- **Sprint:** Pendiente de asignación documental
-- **Story points:** Pendiente de estimación/documentación
-- **Estado técnico:** Implementada y probada técnicamente
+- **Sprint:** S2
+- **Story points:** 5
+- **Estado técnico:** Completado técnicamente con evidencia
 - **Validación académica/formal:** Pendiente
 
 ### Historia
@@ -154,7 +179,11 @@ HU-22 es un antecedente funcional de HU-10.
 | Evidencia | `docs/evidencias/marketplace/README.md` |
 | Commit funcional | `7426228417a2db0b20004d0239eb0747bb7b79fd` |
 | Commit evidencia | `4d9c6a5` |
-| Estado | Implementada y probada técnicamente |
+| Sprint | S2 |
+| Story points | 5 |
+| Estado técnico | Completado técnicamente con evidencia |
+| Validación académica | Pendiente |
+| Producción | No |
 
 ## 6. Trazabilidad HU-22
 
@@ -175,7 +204,11 @@ HU-22 es un antecedente funcional de HU-10.
 | Evidencia | `docs/evidencias/marketplace/README.md` |
 | Commit funcional | `7426228417a2db0b20004d0239eb0747bb7b79fd` |
 | Commit evidencia | `4d9c6a5` |
-| Estado | Implementada y probada técnicamente |
+| Sprint | S2 |
+| Story points | 5 |
+| Estado técnico | Completado técnicamente con evidencia |
+| Validación académica | Pendiente |
+| Producción | No |
 
 ## 7. Relación con HU-10
 
@@ -195,28 +228,31 @@ No se confunden las siguientes capacidades:
 
 | Historia | Planeada/refinada | Diseñada | Implementada | Probada automatizadamente | Integración real | Navegador real | Validación académica | Producción |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| HU-21 | Sí | Sí | Sí | Sí | Sí | Sí | Pendiente | No |
-| HU-22 | Sí | Sí | Sí | Sí | Sí | Sí | Pendiente | No |
+| HU-21 | Sí | Sí | Completado técnicamente | Sí | Sí | Sí | Pendiente | No |
+| HU-22 | Sí | Sí | Completado técnicamente | Sí | Sí | Sí | Pendiente | No |
 | HU-10 | No modificado aquí | No modificado aquí | No se afirma | No se afirma | No se afirma | No se afirma | No se afirma | No |
 
 ## 9. Cambios de backlog
 
-- **Tipo:** Refinamiento/adición de backlog durante TG-II.
+- **Tipo:** Refinamiento/adición de backlog durante Sprint 2 de TG-II.
 - **Motivo:** Formalizar una funcionalidad transaccional necesaria para disponer de ofertas y demandas persistentes antes del emparejamiento.
 - **Impacto:**
   - se agregan HU-21 y HU-22;
+  - se incorporan +10 story points al backlog de S2: HU-21 = 5 y HU-22 = 5;
+  - ambas historias quedan completadas técnicamente con evidencia;
   - HU-01 a HU-20 permanecen sin renumeración;
   - HU-10 conserva su objetivo original;
   - se añade dependencia conceptual HU-21/HU-22 -> HU-10;
   - no cambia el objetivo general del proyecto;
   - no cambia el alcance de EnerTrade AI hacia transacciones energéticas reales.
 
+No se recalcula la velocidad completa de S2 porque para ello deben revisarse todas las HU realmente completadas durante el sprint.
+
 ## 10. Pendientes documentales
 
-- Definir el sprint al revisar el diario real de sprints.
-- Definir o confirmar story points.
 - Incorporar HU-21 y HU-22 al Product Backlog de TG-II.
-- Incorporar las historias al sprint correspondiente.
+- Incorporar HU-21 y HU-22 en la sección Sprint 2.
+- Registrar el ajuste en la retrospectiva de S2.
 - Actualizar la trazabilidad del informe.
 - Mantener la validación académica como pendiente.
 
