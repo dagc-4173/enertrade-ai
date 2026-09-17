@@ -11,6 +11,13 @@ function safeMessage(error: unknown) {
     ? error.serverMessage : 'No fue posible completar la consulta. Intenta nuevamente.'
 }
 
+const energyNumber = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const priceNumber = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 5 })
+
+function formatExternalValue(value: number, dataset: string) {
+  return dataset === 'PrecBolsNaci' ? `$${priceNumber.format(value)}` : energyNumber.format(value)
+}
+
 export function ExternalDataSources() {
   const [catalog, setCatalog] = useState<ExternalProvider[]>([])
   const [catalogLoading, setCatalogLoading] = useState(true)
@@ -110,7 +117,7 @@ export function ExternalDataSources() {
         columns={[
           { header: 'Fecha', render: row => row.date },
           { header: 'Hora (periodo XM)', render: row => row.hour ?? 'Diario' },
-          { header: `Valor (${result.unit})`, render: row => String(row.value) },
+          { header: result.dataset === 'PrecBolsNaci' ? 'VALOR (COP/KWH)' : 'VALOR (KWH)', render: row => formatExternalValue(row.value, result.dataset) },
         ]}
         rows={result.records}
         getRowKey={row => `${row.date}/${row.hour}`}

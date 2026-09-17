@@ -1,13 +1,9 @@
 import express, { Router, type ErrorRequestHandler, type Request } from 'express';
-import { AuthError, createAuthService, sessionLifetimeMs } from '@/services/auth.service';
-const cookieName = 'enertrade_session';
-function token(req: Request) {
- return req.headers.cookie?.split(';').map(part => part.trim()).find(part => part.startsWith(`${cookieName}=`))?.slice(cookieName.length + 1);
-}
+import { AuthError, authCookieName, createAuthService, sessionLifetimeMs, sessionTokenFromCookieHeader } from '@/services/auth.service';
 export function createAuthRouter(service = createAuthService()) {
  const router = Router();
  const attempts = new Map<string, { count: number; until: number }>();
- const cookieOptions = { httpOnly: true, sameSite: 'lax' as const, secure: process.env.NODE_ENV === 'production', path: '/auth' };
+ const cookieOptions = { httpOnly: true, sameSite: 'lax' as const, secure: process.env.NODE_ENV === 'production', path: '/' };
  router.use((req, res, next) => {
   res.set('Cache-Control', 'no-store');
   if (req.method === 'POST') {
@@ -33,14 +29,14 @@ export function createAuthRouter(service = createAuthService()) {
  router.use(express.json({ limit: '8kb' }));
  router.post('/register', async (req, res) => { res.status(201).json({ user: await service.register(req.body) }); });
  router.post('/login', async (req, res) => {
-  const session = await service.login(req.body, token(req));
-  res.cookie(cookieName, session.token, { ...cookieOptions, maxAge: sessionLifetimeMs });
+    const session = await service.login(req.body, sessionTokenFromCookieHeader(req.headers.cookie));
+    res.cookie(authCookieName, session.token, { ...cookieOptions, maxAge: sessionLifetimeMs });
   res.json({ user: session.user });
  });
- router.get('/me', async (req, res) => { res.json({ user: await service.me(token(req)) }); });
+ router.get('/me', async (req, res) => { res.json({ user: await service.me(sessionTokenFromCookieHeader(req.headers.cookie)) }); });
  router.post('/logout', async (req, res) => {
-  await service.logout(token(req));
-  res.clearCookie(cookieName, cookieOptions).status(204).end();
+    await service.logout(sessionTokenFromCookieHeader(req.headers.cookie));
+    res.clearCookie(authCookieName, cookieOptions).status(204).end();
  });
  const errors: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
   if (error instanceof AuthError) { res.status(error.status).json({ error: error.code, message: error.message }); return; }

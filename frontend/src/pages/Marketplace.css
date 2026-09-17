@@ -1,0 +1,78 @@
+.marketplace-intro {
+  padding: 22px;
+}
+
+.marketplace-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.marketplace-section {
+  min-width: 0;
+  padding: 22px;
+}
+
+.marketplace-form {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.marketplace-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--color-teal);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.marketplace-form input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: var(--color-text);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.marketplace-form input:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 2px;
+}
+
+.marketplace-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.marketplace-error {
+  margin-top: 10px;
+  color: #9a4d10;
+  line-height: 1.45;
+}
+
+.marketplace-status {
+  margin: -6px 0 16px;
+  color: var(--color-forest);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.marketplace-empty {
+  padding: 24px 0 4px;
+  color: var(--color-muted);
+}
+
+.marketplace-section .data-table {
+  min-width: 520px;
+}
+
+@media (max-width: 900px) {
+  .marketplace-columns {
+    grid-template-columns: 1fr;
+  }
+}

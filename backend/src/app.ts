@@ -5,6 +5,8 @@ import { validateDatasetRequest } from '@/controllers/dataset-validation.control
 import { prepareDatasetRequest } from '@/controllers/dataset-preparation.controller';
 import { router as externalDataRouter } from '@/controllers/external-data.controller';
 import { router as forecastRouter } from '@/controllers/forecast.controller';
+import { router as offerRouter } from '@/controllers/offer.controller';
+import { router as demandRouter } from '@/controllers/demand.controller';
 const app = express()
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim()
 
@@ -51,6 +53,8 @@ app.use('/datasets', datasetJsonError)
 
 app.use('/external-data', externalDataRouter)
 app.use('/forecasts', forecastRouter)
+app.use('/offers', offerRouter)
+app.use('/demands', demandRouter)
 app.use('/auth', authRouter)
 
 export { app }

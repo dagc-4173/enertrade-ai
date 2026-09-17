@@ -102,6 +102,8 @@ model User {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   sessions AuthSession[]
+  offers EnergyOffer[]
+  demands EnergyDemand[]
 }
 model AuthSession {
   tokenHash String @id @db.Char(64)
@@ -111,4 +113,40 @@ model AuthSession {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   @@index([userId])
   @@index([expiresAt])
+}
+
+enum EnergyMarketStatus {
+  ACTIVE
+}
+
+model EnergyOffer {
+  id           String            @id @default(uuid()) @db.Uuid
+  userId       String            @db.Uuid
+  quantityKwh  Decimal           @db.Decimal(20, 2)
+  pricePerKwh  Decimal           @db.Decimal(18, 5)
+  deliveryDate DateTime          @db.Date
+  status       EnergyMarketStatus @default(ACTIVE)
+  createdAt    DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime          @updatedAt @db.Timestamptz(3)
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([deliveryDate])
+}
+
+model EnergyDemand {
+  id             String            @id @default(uuid()) @db.Uuid
+  userId         String            @db.Uuid
+  quantityKwh    Decimal           @db.Decimal(20, 2)
+  maxPricePerKwh Decimal           @db.Decimal(18, 5)
+  deliveryDate   DateTime          @db.Date
+  status         EnergyMarketStatus @default(ACTIVE)
+  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @db.Timestamptz(3)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([deliveryDate])
 }

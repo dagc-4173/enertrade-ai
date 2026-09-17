@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 export const sessionLifetimeMs = 8 * 60 * 60 * 1000;
+export const authCookieName = 'enertrade_session';
 export type AuthUser = { id: string; email: string; name: string; createdAt: Date };
 type StoredUser = AuthUser & { passwordHash: string };
 export interface AuthRepository {
@@ -37,6 +38,9 @@ function credentials(body: unknown, register: boolean) {
 }
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const validToken = (token?: string): token is string => typeof token === 'string' && /^[A-Za-z0-9_-]{43}$/.test(token);
+export function sessionTokenFromCookieHeader(cookieHeader?: string) {
+ return cookieHeader?.split(';').map(part => part.trim()).find(part => part.startsWith(`${authCookieName}=`))?.slice(authCookieName.length + 1);
+}
 const hashPassword = (password: string) => Bun.password.hash(password, { algorithm: 'argon2id', memoryCost: 65536, timeCost: 2 });
 let dummyHash: Promise<string> | undefined;
 export function createAuthService(repo: AuthRepository = repository, now: () => Date = () => new Date()) {

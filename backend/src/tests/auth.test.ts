@@ -55,11 +55,11 @@ test.each([{ ...input, email: 'bad' }, { ...input, password: 'short' }, { ...inp
 test('login cookie, me and logout revoke the session', async () => {
  const response = await login(); expect(response.status).toBe(200);
  const cookie = response.headers.get('set-cookie')!;
- expect(cookie).toContain('HttpOnly'); expect(cookie).toContain('SameSite=Lax'); expect(cookie).toContain('Path=/auth');
+ expect(cookie).toContain('HttpOnly'); expect(cookie).toContain('SameSite=Lax'); expect(cookie).toContain('Path=/');
  const token = cookie.split(';')[0]!;
  expect([...sessions.keys()][0]).not.toBe(token.split('=')[1]);
  expect((await request('/me', undefined, token)).status).toBe(200);
- const logout = await request('/logout', {}, token); expect(logout.status).toBe(204); expect(logout.headers.get('set-cookie')).toContain('Expires=Thu, 01 Jan 1970');
+ const logout = await request('/logout', {}, token); expect(logout.status).toBe(204); expect(logout.headers.get('set-cookie')).toContain('Expires=Thu, 01 Jan 1970'); expect(logout.headers.get('set-cookie')).toContain('Path=/');
  expect((await request('/me', undefined, token)).status).toBe(401); expect(sessions.size).toBe(0);
 });
 test('invalid credentials have identical envelopes for unknown email and wrong password', async () => {
