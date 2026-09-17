@@ -32,4 +32,4 @@ npm run build
 npm run lint
 ```
 
-Los datos actuales son mockeados en `src/data/mockData.ts` y pueden reemplazarse por servicios reales cuando exista backend.
+Predictions consume los endpoints reales del backend mediante `src/services/forecastService.ts` y ExternalDataSources consulta el backend mediante `src/services/externalDataService.ts`. Otras páginas aún pueden conservar datos mockeados en `src/data/mockData.ts`.
