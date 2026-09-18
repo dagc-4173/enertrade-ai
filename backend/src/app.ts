@@ -10,6 +10,8 @@ import { router as demandRouter } from '@/controllers/demand.controller';
 import { createMatchingRouter } from '@/controllers/matching.controller';
 import { router as modelCatalogRouter } from '@/controllers/model-catalog.controller';
 import { router as patternsRouter } from '@/controllers/patterns.controller';
+import { router as healthRouter } from '@/controllers/health.controller';
+import { requestIdMiddleware } from '@/middlewares/request-id.middleware';
 import { prisma } from '@/lib/prisma';
 import type { MatchingReadRepository } from '@/services/matching.service';
 import { createTracedMatchingService, matchingTrace } from '@/services/matching-trace.service';
@@ -21,6 +23,8 @@ const matchingRepository: MatchingReadRepository = {
     listActiveDemands: () => prisma.energyDemand.findMany({ where: { status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } }),
 }
 const matchingRouter = createMatchingRouter(createTracedMatchingService(matchingRepository, matchingTrace))
+
+app.use(requestIdMiddleware)
 
 // CORS de desarrollo: únicamente el origen configurado, con cookies de sesión.
 app.use((req, res, next) => {
@@ -71,5 +75,6 @@ app.use('/matches', matchingRouter)
 app.use('/models', modelCatalogRouter)
 app.use('/patterns', patternsRouter)
 app.use('/auth', authRouter)
+app.use('/health', healthRouter)
 
 export { app }

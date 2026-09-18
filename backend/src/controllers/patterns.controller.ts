@@ -2,6 +2,7 @@ import express, { type ErrorRequestHandler, type Request, type Response, type Ro
 import { requireAuth } from '@/middlewares/auth.middleware';
 import { PatternAnalysisError } from '@/services/pattern-analysis.service';
 import { createPatternsService, PatternsError, type PatternFilters } from '@/services/patterns.service';
+import { logUnexpectedError, safeLogger, type SafeLogger } from '@/lib/safe-logger';
 
 function object(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -25,7 +26,7 @@ function filters(query: Request['query']): PatternFilters {
   return { ...(typeof from === 'string' ? { from } : {}), ...(typeof to === 'string' ? { to } : {}), ...(typeof dataType === 'string' ? { dataType: dataType as PatternFilters['dataType'] } : {}), ...(typeof variable === 'string' ? { variable: variable as PatternFilters['variable'] } : {}) };
 }
 
-export function createPatternsRouter(service = createPatternsService(), authMiddleware = requireAuth()): Router {
+export function createPatternsRouter(service = createPatternsService(), authMiddleware = requireAuth(), logger: SafeLogger = safeLogger): Router {
   const router = express.Router();
   router.use(express.json({ limit: '8kb' }));
   router.use(authMiddleware);
@@ -42,7 +43,7 @@ export function createPatternsRouter(service = createPatternsService(), authMidd
     try { res.status(200).json(await service.list(filters(req.query))); }
     catch (error) { next(error); }
   });
-  const errors: ErrorRequestHandler = (error, _req, res, _next) => {
+  const errors: ErrorRequestHandler = (error, req, res, _next) => {
     if (error instanceof PatternsError || error instanceof PatternAnalysisError) {
       res.status(error.status).json({ error: error.code, message: error.message });
       return;
@@ -55,6 +56,7 @@ export function createPatternsRouter(service = createPatternsService(), authMidd
       res.status(413).json({ error: 'PATTERN_REQUEST_TOO_LARGE', message: 'La solicitud supera el tamaño permitido.' });
       return;
     }
+    logUnexpectedError(logger, req, error, 'PATTERN_OPERATION_FAILED');
     res.status(500).json({ error: 'PATTERN_OPERATION_FAILED', message: 'No fue posible procesar los patrones.' });
   };
   router.use(errors);
