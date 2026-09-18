@@ -2,6 +2,7 @@ import { expect, mock, test } from 'bun:test';
 import {
   createNasaPowerWeatherProvider,
   NasaPowerWeatherError,
+  normalizeNasaPowerResponse,
   type NasaPowerWeatherProvider,
 } from '@/integrations/providers/nasa-power.provider';
 import type { WeatherProviderQuery } from '@/integrations/types/weather-data';
@@ -103,6 +104,31 @@ test('returns canonical units and controlled provenance', async () => {
   });
   expect(Number.isNaN(Date.parse(result.provenance.retrievedAt))).toBe(false);
   expect(result.responseMetadata).toEqual({ format: 'JSON', sourceResolution: 'hourly' });
+});
+
+test('normalizes the same raw body deterministically without fetch', () => {
+  const rawBody = ` \n${JSON.stringify(powerResponse())}\n `;
+  const metadata = { retrievedAt: '2026-01-02T04:00:00.000Z' };
+  const first = normalizeNasaPowerResponse(rawBody, query, metadata);
+  const second = normalizeNasaPowerResponse(rawBody, query, metadata);
+  expect(first).toEqual(second);
+  expect(first.provenance.retrievedAt).toBe(metadata.retrievedAt);
+});
+
+test('normalization rejects invalid JSON directly and does not need a fetch implementation', () => {
+  expect(() => normalizeNasaPowerResponse('{', query, { retrievedAt: '2026-01-02T04:00:00.000Z' }))
+    .toThrowError(new NasaPowerWeatherError(502, 'NASA_POWER_RESPONSE_INVALID', 'La respuesta de NASA POWER no cumple el contrato esperado.'));
+});
+
+test('acquisition reads the exact textual response through text()', async () => {
+  const rawBody = ` \n${JSON.stringify(powerResponse())}\n `;
+  const text = mock(async () => rawBody);
+  const json = mock(async () => { throw new Error('json must not be called'); });
+  const fetchImpl = mock(async () => ({ ok: true, body: null, text, json }) as unknown as Response);
+  const result = await createNasaPowerWeatherProvider({ fetchImpl }).query(query);
+  expect(text).toHaveBeenCalledTimes(1);
+  expect(json).not.toHaveBeenCalled();
+  expect(result.observations).toHaveLength(3);
 });
 
 test('converts hourly precipitation rates to interval accumulation and preserves source units', async () => {

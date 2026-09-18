@@ -32,6 +32,8 @@ const parameterByVariable: Record<WeatherVariable, string | undefined> = {
 type NasaPowerFetch = (input: URL, init?: RequestInit) => Promise<Response>;
 type NasaPowerOptions = { fetchImpl?: NasaPowerFetch; timeoutMs?: number };
 type SourceUnits = Partial<Record<WeatherVariable, string>>;
+export type NasaPowerAcquisitionMetadata = { retrievedAt: string };
+type NasaPowerAcquisition = { rawBody: string; retrievedAt: string };
 
 type NasaPowerResponse = {
   properties?: {
@@ -141,12 +143,7 @@ function normalizedUnit(variable: WeatherVariable, sourceUnit: string): { unit: 
   throw new NasaPowerWeatherError(502, 'NASA_POWER_UNITS_INCOMPATIBLE', 'La respuesta contiene unidades no compatibles.');
 }
 
-function parseResponse(raw: unknown, query: WeatherProviderQuery, parameters: Record<WeatherVariable, string>): {
-  observations: WeatherObservation[];
-  units: Partial<Record<WeatherVariable, WeatherUnit>>;
-  sourceUnits: SourceUnits;
-  responseMetadata: { format: string; sourceResolution: string };
-} {
+function normalizeParsedResponse(raw: unknown, query: WeatherProviderQuery, parameters: Record<WeatherVariable, string>, retrievedAt: string): WeatherDataResult {
   if (!isObject(raw)) throw invalidResponse();
   const response = raw as NasaPowerResponse;
   const series = response.properties?.parameter;
@@ -181,7 +178,65 @@ function parseResponse(raw: unknown, query: WeatherProviderQuery, parameters: Re
     }
     return { timestampUtc, providerTimestamp: timestamp, values };
   }).sort((a, b) => a.timestampUtc.localeCompare(b.timestampUtc));
-  return { observations, units, sourceUnits, responseMetadata: { format: 'JSON', sourceResolution: 'hourly' } };
+  return {
+    provider: { id: 'nasa-power', version: adapterVersion },
+    query,
+    observations,
+    units,
+    provenance: {
+      providerId: 'nasa-power',
+      providerVersion: adapterVersion,
+      logicalEndpoint: 'temporal/hourly/point',
+      retrievedAt,
+      sourceTimeStandard: 'UTC',
+      normalizerId,
+      normalizerVersion,
+      sourceUnits,
+    },
+    responseMetadata: { format: 'JSON', sourceResolution: 'hourly' },
+  };
+}
+
+function buildRequestUrl(query: WeatherProviderQuery, parameters: Record<WeatherVariable, string>) {
+  const requestUrl = new URL(endpoint);
+  requestUrl.searchParams.set('parameters', Object.values(parameters).join(','));
+  requestUrl.searchParams.set('community', community);
+  requestUrl.searchParams.set('longitude', String(query.coordinates.longitude));
+  requestUrl.searchParams.set('latitude', String(query.coordinates.latitude));
+  requestUrl.searchParams.set('start', dateForPower(query.range.start));
+  requestUrl.searchParams.set('end', dateForPower(query.range.end));
+  requestUrl.searchParams.set('format', 'JSON');
+  requestUrl.searchParams.set('time-standard', 'UTC');
+  if (query.coordinates.elevationM !== undefined) requestUrl.searchParams.set('site-elevation', String(query.coordinates.elevationM));
+  return requestUrl;
+}
+
+async function acquireNasaPowerResponse(query: WeatherProviderQuery, fetchImpl: NasaPowerFetch, requestTimeoutMs: number): Promise<NasaPowerAcquisition> {
+  const parameters = validateQuery(query);
+  const requestUrl = buildRequestUrl(query, parameters);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+  try {
+    const response = await fetchImpl(requestUrl, { method: 'GET', redirect: 'error', signal: controller.signal });
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new NasaPowerWeatherError(502, 'NASA_POWER_HTTP_ERROR', 'NASA POWER devolvió una respuesta HTTP no exitosa.');
+    }
+    return { rawBody: await response.text(), retrievedAt: new Date().toISOString() };
+  } catch (error) {
+    if (controller.signal.aborted) throw new NasaPowerWeatherError(504, 'NASA_POWER_TIMEOUT', 'NASA POWER no respondió dentro del tiempo permitido.');
+    if (error instanceof NasaPowerWeatherError) throw error;
+    throw new NasaPowerWeatherError(502, 'NASA_POWER_NETWORK_ERROR', 'No fue posible consultar NASA POWER.');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export function normalizeNasaPowerResponse(rawBody: string, query: WeatherProviderQuery, acquisitionMetadata: NasaPowerAcquisitionMetadata): WeatherDataResult {
+  let raw: unknown;
+  try { raw = JSON.parse(rawBody); } catch { throw invalidResponse(); }
+  const parameters = validateQuery(query);
+  return normalizeParsedResponse(raw, query, parameters, acquisitionMetadata.retrievedAt);
 }
 
 export class NasaPowerWeatherProvider implements WeatherDataProvider {
@@ -191,52 +246,8 @@ export class NasaPowerWeatherProvider implements WeatherDataProvider {
   constructor(private readonly fetchImpl: NasaPowerFetch = fetch, private readonly requestTimeoutMs = timeoutMs) {}
 
   async query(query: WeatherProviderQuery): Promise<WeatherDataResult> {
-    const parameters = validateQuery(query);
-    const requestUrl = new URL(endpoint);
-    requestUrl.searchParams.set('parameters', Object.values(parameters).join(','));
-    requestUrl.searchParams.set('community', community);
-    requestUrl.searchParams.set('longitude', String(query.coordinates.longitude));
-    requestUrl.searchParams.set('latitude', String(query.coordinates.latitude));
-    requestUrl.searchParams.set('start', dateForPower(query.range.start));
-    requestUrl.searchParams.set('end', dateForPower(query.range.end));
-    requestUrl.searchParams.set('format', 'JSON');
-    requestUrl.searchParams.set('time-standard', 'UTC');
-    if (query.coordinates.elevationM !== undefined) requestUrl.searchParams.set('site-elevation', String(query.coordinates.elevationM));
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.requestTimeoutMs);
-    try {
-      const response = await this.fetchImpl(requestUrl, { method: 'GET', redirect: 'error', signal: controller.signal });
-      if (!response.ok) {
-        await response.body?.cancel();
-        throw new NasaPowerWeatherError(502, 'NASA_POWER_HTTP_ERROR', 'NASA POWER devolvió una respuesta HTTP no exitosa.');
-      }
-      let raw: unknown;
-      try { raw = await response.json(); } catch { throw invalidResponse(); }
-      const parsed = parseResponse(raw, query, parameters);
-      return {
-        provider: { id: this.id, version: this.version },
-        query,
-        observations: parsed.observations,
-        units: parsed.units,
-        provenance: {
-          providerId: this.id,
-          providerVersion: this.version,
-          logicalEndpoint: 'temporal/hourly/point',
-          retrievedAt: new Date().toISOString(),
-          sourceTimeStandard: 'UTC',
-          normalizerId,
-          normalizerVersion,
-          sourceUnits: parsed.sourceUnits,
-        },
-        responseMetadata: parsed.responseMetadata,
-      };
-    } catch (error) {
-      if (controller.signal.aborted) throw new NasaPowerWeatherError(504, 'NASA_POWER_TIMEOUT', 'NASA POWER no respondió dentro del tiempo permitido.');
-      if (error instanceof NasaPowerWeatherError) throw error;
-      throw new NasaPowerWeatherError(502, 'NASA_POWER_NETWORK_ERROR', 'No fue posible consultar NASA POWER.');
-    } finally {
-      clearTimeout(timer);
-    }
+    const acquisition = await acquireNasaPowerResponse(query, this.fetchImpl, this.requestTimeoutMs);
+    return normalizeNasaPowerResponse(acquisition.rawBody, query, { retrievedAt: acquisition.retrievedAt });
   }
 }
 
