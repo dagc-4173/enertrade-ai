@@ -33,7 +33,7 @@ type NasaPowerFetch = (input: URL, init?: RequestInit) => Promise<Response>;
 type NasaPowerOptions = { fetchImpl?: NasaPowerFetch; timeoutMs?: number };
 type SourceUnits = Partial<Record<WeatherVariable, string>>;
 export type NasaPowerAcquisitionMetadata = { retrievedAt: string };
-type NasaPowerAcquisition = { rawBody: string; retrievedAt: string };
+export type NasaPowerAcquisition = { rawBody: string; retrievedAt: string };
 
 type NasaPowerResponse = {
   properties?: {
@@ -211,7 +211,7 @@ function buildRequestUrl(query: WeatherProviderQuery, parameters: Record<Weather
   return requestUrl;
 }
 
-async function acquireNasaPowerResponse(query: WeatherProviderQuery, fetchImpl: NasaPowerFetch, requestTimeoutMs: number): Promise<NasaPowerAcquisition> {
+export async function acquireNasaPowerResponse(query: WeatherProviderQuery, fetchImpl: NasaPowerFetch = fetch, requestTimeoutMs = timeoutMs): Promise<NasaPowerAcquisition> {
   const parameters = validateQuery(query);
   const requestUrl = buildRequestUrl(query, parameters);
   const controller = new AbortController();
