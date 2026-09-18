@@ -21,6 +21,10 @@ No se implementan filtros `zone` o `user`. Los perfiles XM/SIN disponibles no co
 
 `patterns.test.ts` cubre rango, tipo, variable, combinacion, vacio, ausencia de autenticacion, filtros invalidos, orden e higiene del contrato publico. Resultado focalizado: 11 aprobadas, 0 fallidas.
 
-La integracion manual PostgreSQL/HTTP queda pendiente de una ejecucion temporal verificable; no se afirma como realizada.
+## Integracion PostgreSQL y HTTP
+
+Con la sesion temporal autenticada y el analisis persistido `9a8ca1b0-d119-420e-8829-a2a1346d140e`, `GET /patterns?dataType=demanda&variable=demanda_kwh` respondio HTTP 200, devolvio un arreglo e incluyo el analisis. La consulta temporal con `from=2024-04-01&to=2024-04-07` tambien lo incluyo.
+
+Se verifico la higiene del contrato publico: la respuesta no expuso `preparedDatasetId`, contenido crudo, `userId`, tokens ni campos internos de Prisma. Tras cerrar el servidor se eliminaron exclusivamente la fila temporal y la sesion temporal; los conteos PostgreSQL retornaron a `PatternAnalysis=0` y `PreparedDataset=39`.
 
 Ver [ADR-18](../../adr/ADR-18-analisis-deterministico-patrones.md).

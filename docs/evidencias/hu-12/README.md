@@ -27,6 +27,12 @@ Con cero registros se persiste `no_results`; con componentes no calculables se r
 
 `bun test src/tests/pattern-analysis.test.ts src/tests/patterns.test.ts`: 19 aprobadas, 0 fallidas, 40 aserciones. Cubre Gene, DemaSIN, Precio, suficiencia, `no_results`, perfil incompatible, reproducibilidad, inmutabilidad, precision observable, descripciones, snapshot y persistencia.
 
-La integracion manual PostgreSQL/HTTP queda pendiente: una ejecucion temporal autenticada fue interrumpida antes de emitir resultado verificable. No se declara como evidencia aprobada.
+## Integracion PostgreSQL y HTTP
+
+Se verifico una ejecucion temporal autenticada contra PostgreSQL real usando `PreparedDataset` 18: perfil `xm_demandasin_preparacion_base@1.0.0` y ruleset `xm_demandasin_base@1.0.0`. Los conteos iniciales fueron `PatternAnalysis=0` y `PreparedDataset=39`.
+
+`POST /patterns/analyze` respondio HTTP 200 con `analysisId=9a8ca1b0-d119-420e-8829-a2a1346d140e`, estado `partial`, metodo `energy-pattern-descriptive@1.0.0` y `persistence=persisted`. PostgreSQL confirmo la fila con `preparedDatasetId=18`, `sampleSize=7`, periodo `2024-04-01..2024-04-07`, `createdAt` y `resultSnapshot`. La comparacion fue estructural, no textual, para contemplar el reordenamiento de claves JSONB; el snapshot fue equivalente a la respuesta tecnica HTTP sin metadata de persistencia.
+
+El contenido de `PreparedDataset` fue identico antes y despues. La limpieza elimino exclusivamente el `PatternAnalysis` temporal y la sesion temporal. Los conteos finales regresaron a `PatternAnalysis=0` y `PreparedDataset=39`.
 
 Ver [ADR-18](../../adr/ADR-18-analisis-deterministico-patrones.md).
