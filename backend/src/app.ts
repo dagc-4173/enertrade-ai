@@ -7,9 +7,18 @@ import { router as externalDataRouter } from '@/controllers/external-data.contro
 import { router as forecastRouter } from '@/controllers/forecast.controller';
 import { router as offerRouter } from '@/controllers/offer.controller';
 import { router as demandRouter } from '@/controllers/demand.controller';
+import { createMatchingRouter } from '@/controllers/matching.controller';
 import { router as modelCatalogRouter } from '@/controllers/model-catalog.controller';
+import { prisma } from '@/lib/prisma';
+import { createMatchingService, type MatchingReadRepository } from '@/services/matching.service';
 const app = express()
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim()
+
+const matchingRepository: MatchingReadRepository = {
+    listActiveOffers: () => prisma.energyOffer.findMany({ where: { status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } }),
+    listActiveDemands: () => prisma.energyDemand.findMany({ where: { status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } }),
+}
+const matchingRouter = createMatchingRouter(createMatchingService(matchingRepository))
 
 // CORS de desarrollo: únicamente el origen configurado, con cookies de sesión.
 app.use((req, res, next) => {
@@ -56,6 +65,7 @@ app.use('/external-data', externalDataRouter)
 app.use('/forecasts', forecastRouter)
 app.use('/offers', offerRouter)
 app.use('/demands', demandRouter)
+app.use('/matches', matchingRouter)
 app.use('/models', modelCatalogRouter)
 app.use('/auth', authRouter)
 
