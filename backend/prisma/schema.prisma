@@ -65,6 +65,45 @@ enum PatternAnalysisStatus {
   failed
 }
 
+enum AiQueryExecutionStatus {
+  succeeded
+  empty
+  failed
+}
+
+enum AiQueryRequesterType {
+  authenticated_user
+  system
+}
+
+model AiQueryTrace {
+  id              String                 @id @default(uuid()) @db.Uuid
+  requestId       String                 @db.Uuid
+  startedAt       DateTime               @db.Timestamptz(3)
+  completedAt     DateTime               @db.Timestamptz(3)
+  durationMs      Int
+  requesterType   AiQueryRequesterType
+  requesterId     String?                @db.Uuid
+  httpMethod      String
+  endpoint        String
+  capability      String
+  parametersSnapshot Json
+  modelId         String?
+  modelVersion    String?
+  methodId        String?
+  methodVersion   String?
+  executionStatus AiQueryExecutionStatus
+  resultStatus    String?
+  errorCode       String?
+  resourceType    String?
+  resourceId      String?
+  createdAt       DateTime               @default(now()) @db.Timestamptz(3)
+
+  @@index([requestId])
+  @@index([createdAt])
+  @@index([endpoint])
+}
+
 model PatternAnalysis {
   id                String                @id @db.Uuid
   preparedDatasetId Int
