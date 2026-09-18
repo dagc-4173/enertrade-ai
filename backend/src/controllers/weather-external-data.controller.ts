@@ -1,11 +1,15 @@
 import express, { Router, type ErrorRequestHandler } from 'express';
-import { NasaPowerWeatherError, NasaPowerWeatherProvider, nasaPowerSupportedTimeStandards, nasaPowerWeatherVariables } from '@/integrations/providers/nasa-power.provider';
+import { acquireNasaPowerResponse, NasaPowerWeatherError, NasaPowerWeatherProvider, nasaPowerSupportedTimeStandards, nasaPowerWeatherVariables, normalizeNasaPowerResponse } from '@/integrations/providers/nasa-power.provider';
 import { WeatherExternalDataError, WeatherExternalDataService, type WeatherProviderRegistration } from '@/integrations/weather-external-data.service';
+import { WeatherEvidenceError } from '@/integrations/weather-evidence';
+import { WeatherEvidenceStoreError } from '@/integrations/weather-evidence-store';
 
 const defaultRegistrations: readonly WeatherProviderRegistration[] = [{
   provider: new NasaPowerWeatherProvider(),
   variables: nasaPowerWeatherVariables,
   supportedTimeStandards: nasaPowerSupportedTimeStandards,
+  acquire: acquireNasaPowerResponse,
+  normalize: normalizeNasaPowerResponse,
 }];
 
 function providerError(error: NasaPowerWeatherError) {
@@ -37,14 +41,31 @@ function providerError(error: NasaPowerWeatherError) {
 export function createWeatherExternalDataRouter(service = new WeatherExternalDataService(defaultRegistrations)) {
   const router = Router();
   router.get('/providers', (_req, res) => { res.json({ providers: service.listProviders() }); });
-  router.post('/query', (req, res, next) => {
+  const jsonBody = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (!req.is('application/json')) {
       res.status(415).json({ error: 'UNSUPPORTED_MEDIA_TYPE', message: 'Se requiere Content-Type application/json.' });
       return;
     }
     next();
-  }, express.json({ limit: '16kb' }), async (req, res, next) => {
+  };
+  const jsonParser = express.json({ limit: '16kb' });
+  router.post('/query', jsonBody, jsonParser, async (req, res, next) => {
     try { res.json(await service.query(req.body)); } catch (error) { next(error); }
+  });
+  router.post('/acquire', jsonBody, jsonParser, async (req, res, next) => {
+    try {
+      const acquired = await service.acquire(req.body);
+      const envelope = acquired.envelope;
+      res.status(201).json({ acquisition: {
+        id: envelope.manifest.acquisitionId,
+        providerId: envelope.manifest.providerId,
+        providerVersion: envelope.manifest.providerVersion,
+        retrievedAt: envelope.manifest.retrievedAt,
+        rawSha256: envelope.manifest.rawSha256,
+        normalizedSha256: envelope.manifest.normalizedSha256,
+        recordCount: envelope.manifest.recordCount,
+      }, data: acquired.data });
+    } catch (error) { next(error); }
   });
   const handleError: ErrorRequestHandler = (error, _req, res, _next) => {
     if (error instanceof WeatherExternalDataError) {
@@ -54,6 +75,15 @@ export function createWeatherExternalDataRouter(service = new WeatherExternalDat
     if (error instanceof NasaPowerWeatherError) {
       const mapped = providerError(error);
       res.status(mapped.status).json({ error: mapped.error, message: mapped.message });
+      return;
+    }
+    if (error instanceof WeatherEvidenceStoreError) {
+      const status = error.code === 'WEATHER_EVIDENCE_ALREADY_EXISTS' ? 409 : error.code === 'WEATHER_EVIDENCE_TOO_LARGE' ? 413 : 500;
+      res.status(status).json({ error: error.code, message: status === 409 ? 'La adquisición meteorológica ya existe.' : 'No fue posible guardar la evidencia meteorológica.' });
+      return;
+    }
+    if (error instanceof WeatherEvidenceError) {
+      res.status(500).json({ error: error.code, message: 'No fue posible crear la evidencia meteorológica.' });
       return;
     }
     if (error?.type === 'entity.parse.failed') {

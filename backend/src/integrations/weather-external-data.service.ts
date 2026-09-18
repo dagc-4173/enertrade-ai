@@ -5,11 +5,15 @@ import type {
   WeatherTimeStandard,
   WeatherVariable,
 } from './types/weather-data';
+import { createWeatherAcquisitionEnvelope, type WeatherAcquisitionEnvelope } from './weather-evidence';
+import { saveWeatherAcquisition } from './weather-evidence-store';
 
 export type WeatherProviderRegistration = {
   provider: WeatherDataProvider;
   variables: readonly WeatherVariable[];
   supportedTimeStandards: readonly WeatherTimeStandard[];
+  acquire?: (query: WeatherProviderQuery) => Promise<{ rawBody: string; retrievedAt: string }>;
+  normalize?: (rawBody: string, query: WeatherProviderQuery, metadata: { retrievedAt: string }) => WeatherDataResult;
 };
 
 export class WeatherExternalDataError extends Error {
@@ -26,7 +30,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 const invalidQuery = (message: string) => new WeatherExternalDataError(400, 'INVALID_WEATHER_QUERY', message);
 
 export class WeatherExternalDataService {
-  constructor(private readonly registrations: readonly WeatherProviderRegistration[]) {}
+  constructor(private readonly registrations: readonly WeatherProviderRegistration[], private readonly saveEvidence: typeof saveWeatherAcquisition = saveWeatherAcquisition) {}
 
   listProviders() {
     return this.registrations.map(({ provider, variables, supportedTimeStandards }) => ({
@@ -37,7 +41,7 @@ export class WeatherExternalDataService {
     }));
   }
 
-  async query(input: unknown): Promise<WeatherDataResult> {
+  private buildQuery(input: unknown): { registration: WeatherProviderRegistration; query: WeatherProviderQuery } {
     if (!isObject(input) || Object.keys(input).some(key => !['provider', 'coordinates', 'range', 'variables', 'requestedTimeStandard'].includes(key))) {
       throw invalidQuery('La consulta meteorológica contiene propiedades no admitidas.');
     }
@@ -56,6 +60,23 @@ export class WeatherExternalDataService {
       variables: input.variables as WeatherVariable[],
       ...(input.requestedTimeStandard === undefined ? {} : { requestedTimeStandard: input.requestedTimeStandard as WeatherTimeStandard }),
     };
+    return { registration, query };
+  }
+
+  async query(input: unknown): Promise<WeatherDataResult> {
+    const { registration, query } = this.buildQuery(input);
     return registration.provider.query(query);
+  }
+
+  async acquire(input: unknown): Promise<{ envelope: WeatherAcquisitionEnvelope; data: WeatherDataResult }> {
+    const { registration, query } = this.buildQuery(input);
+    if (!registration.acquire || !registration.normalize) {
+      throw new WeatherExternalDataError(500, 'WEATHER_ACQUISITION_UNAVAILABLE', 'La adquisición meteorológica no está disponible para este proveedor.');
+    }
+    const acquisition = await registration.acquire(query);
+    const normalized = registration.normalize(acquisition.rawBody, query, { retrievedAt: acquisition.retrievedAt });
+    const envelope = createWeatherAcquisitionEnvelope({ rawBody: acquisition.rawBody, normalized });
+    await this.saveEvidence(envelope);
+    return { envelope, data: normalized };
   }
 }
