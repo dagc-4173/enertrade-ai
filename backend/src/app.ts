@@ -7,6 +7,7 @@ import { router as externalDataRouter } from '@/controllers/external-data.contro
 import { router as forecastRouter } from '@/controllers/forecast.controller';
 import { router as offerRouter } from '@/controllers/offer.controller';
 import { router as demandRouter } from '@/controllers/demand.controller';
+import { router as modelCatalogRouter } from '@/controllers/model-catalog.controller';
 const app = express()
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim()
 
@@ -55,6 +56,7 @@ app.use('/external-data', externalDataRouter)
 app.use('/forecasts', forecastRouter)
 app.use('/offers', offerRouter)
 app.use('/demands', demandRouter)
+app.use('/models', modelCatalogRouter)
 app.use('/auth', authRouter)
 
 export { app }
