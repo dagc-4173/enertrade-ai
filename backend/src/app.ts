@@ -9,6 +9,7 @@ import { router as offerRouter } from '@/controllers/offer.controller';
 import { router as demandRouter } from '@/controllers/demand.controller';
 import { createMatchingRouter } from '@/controllers/matching.controller';
 import { router as modelCatalogRouter } from '@/controllers/model-catalog.controller';
+import { router as patternsRouter } from '@/controllers/patterns.controller';
 import { prisma } from '@/lib/prisma';
 import type { MatchingReadRepository } from '@/services/matching.service';
 import { createTracedMatchingService, matchingTrace } from '@/services/matching-trace.service';
@@ -68,6 +69,7 @@ app.use('/offers', offerRouter)
 app.use('/demands', demandRouter)
 app.use('/matches', matchingRouter)
 app.use('/models', modelCatalogRouter)
+app.use('/patterns', patternsRouter)
 app.use('/auth', authRouter)
 
 export { app }

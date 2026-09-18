@@ -53,8 +53,38 @@ model PreparedDataset {
   transformations      Json
   sourceDataset        EnergyDataset            @relation(fields: [sourceDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   priceExecutions      PriceForecastExecution[]
+  patternAnalyses      PatternAnalysis[]
 
   @@unique([sourceDatasetId, profileId, profileVersion])
+}
+
+enum PatternAnalysisStatus {
+  completed
+  partial
+  no_results
+  failed
+}
+
+model PatternAnalysis {
+  id                String                @id @db.Uuid
+  preparedDatasetId Int
+  status            PatternAnalysisStatus
+  dataType          EnergyDatasetType
+  variable          String
+  periodStart       DateTime?             @db.Date
+  periodEnd         DateTime?             @db.Date
+  methodId          String
+  methodVersion     String
+  sampleSize        Int
+  resultSnapshot    Json
+  warnings          Json
+  createdAt         DateTime              @default(now()) @db.Timestamptz(3)
+  preparedDataset   PreparedDataset       @relation(fields: [preparedDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([preparedDatasetId])
+  @@index([createdAt])
+  @@index([dataType, variable])
+  @@index([periodStart, periodEnd])
 }
 
 enum PriceForecastExecutionStatus {
