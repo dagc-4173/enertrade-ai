@@ -3,6 +3,7 @@ import type {
   WeatherDataResult,
   WeatherObservation,
   WeatherProviderQuery,
+  WeatherTimeStandard,
   WeatherUnit,
   WeatherVariable,
 } from '../types/weather-data';
@@ -15,6 +16,12 @@ const timeoutMs = 15_000;
 const maxParameters = 15;
 const community = 're';
 const HOURLY_INTERVAL_HOURS = 1;
+
+export const nasaPowerWeatherVariables: readonly WeatherVariable[] = [
+  'ghi', 'dni', 'dhi', 'temperature', 'wind_speed', 'wind_direction',
+  'relative_humidity', 'pressure', 'precipitation',
+];
+export const nasaPowerSupportedTimeStandards: readonly WeatherTimeStandard[] = ['UTC'];
 
 const parameterByVariable: Record<WeatherVariable, string | undefined> = {
   ghi: 'ALLSKY_SFC_SW_DWN',

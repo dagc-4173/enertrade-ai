@@ -3,10 +3,12 @@ import { ExternalDataService } from '@/integrations/external-data.service';
 import { XmProvider } from '@/integrations/providers/xm.provider';
 import { ExternalDataError } from '@/integrations/types/external-data';
 import { importExternalData } from '@/integrations/external-data-import.service';
+import { createWeatherExternalDataRouter } from './weather-external-data.controller';
 
-export function createExternalDataRouter(service = new ExternalDataService([new XmProvider()])) {
+export function createExternalDataRouter(service = new ExternalDataService([new XmProvider()]), weatherRouter = createWeatherExternalDataRouter()) {
   const router = Router();
   router.get('/providers', (_req, res) => { res.json({ providers: service.listProviders() }); });
+  router.use('/weather', weatherRouter);
   router.post(['/query', '/import'], (req, res, next) => {
     if (!req.is('application/json')) {
       res.status(415).json({ error: 'UNSUPPORTED_MEDIA_TYPE', message: 'Se requiere Content-Type application/json.' });
