@@ -4,18 +4,13 @@ La página usa exclusivamente EnerTrade API mediante forecastService y apiClient
 (`VITE_API_BASE_URL`). No consulta XM directamente ni importa mockData.
 Se mantienen paneles, botones y tabla de la UI existente. No modifica backend.
 
-## Entradas iniciales verificadas
+## Selección de datasets preparados
 
-| Sección | PreparedDataset | Fuente | Fecha objetivo | Referencias verificadas en PostgreSQL |
-| --- | ---: | ---: | --- | --- |
-| Oferta, XM Gene | 17 | 36 | 2024-04-08 | 24 periodos de 2024-04-07 y 2024-04-01 |
-| Demanda, XM DemaSIN | 33 | 52 | 2024-09-29 | 2024-09-28, 09-22, 09-15 y 09-01 |
-| Precio, XM PrecBolsNaci | 49 | 68 | 2024-09-29 | 24 periodos de 2024-09-28 |
-
-Los perfiles/rulesets 1.0.0 correspondientes se verificaron en lectura. Son IDs
-de demostración de esta base, no identificadores portables entre entornos. ID
-y fecha son editables; no se hardcodean resultados ni métricas. Cambiar entradas
-retira el resultado anterior; el backend decide suficiencia/compatibilidad.
+Cada panel consulta `GET /prepared-datasets` y presenta únicamente los perfiles
+y rulesets compatibles con su capacidad. No se usan IDs preparados fijos. Si no
+hay elementos compatibles, la interfaz indica preparar un dataset antes de
+solicitar el pronóstico. Cambiar la selección retira el resultado anterior; el
+backend conserva la decisión final de suficiencia y compatibilidad.
 
 ## Endpoints y flujo
 
@@ -79,6 +74,6 @@ demo, abrir Predictions con backend accesible, verificar VITE_API_BASE_URL y
 FRONTEND_ORIGIN para el origen Vite utilizado y ejecutar los tres formularios.
 Conservar la traza de precio si se captura evidencia; no repetir sin necesidad.
 
-No se alteraron otras páginas: sus mocks existentes permanecen fuera de este
-incremento. No hay gráficas nuevas, recomendaciones IA ni historial de trazas.
+No hay gráficas nuevas, recomendaciones IA ni historial de trazas en esta
+integración de pronósticos.
 Validación académica/formal pendiente. Sin commit automático.

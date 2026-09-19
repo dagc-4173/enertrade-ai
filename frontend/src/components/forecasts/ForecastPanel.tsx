@@ -5,15 +5,21 @@ import type { ForecastResult, ModelMetrics } from '../../types/forecast'
 import { SectionHeader } from '../ui/SectionHeader'
 import { StatusBadge } from '../ui/StatusBadge'
 import { DataTable } from '../tables/DataTable'
+import { PreparedDatasetSelect } from '../datasets/PreparedDatasetSelect'
+import type { PreparedDatasetCompatibility } from '../../types/preparedDatasets'
 import './ForecastPanel.css'
 
-// Verified prepared datasets: editable demonstration inputs, never results.
-const demos = {
-  supply: { title: 'Oferta energética', source: 'XM Gene', id: 17, date: '2024-04-08', description: 'Generación como proxy de disponibilidad energética. No equivale a oferta transaccional.', run: forecastSupply, metrics: getSupplyMetrics },
-  demand: { title: 'Demanda energética', source: 'XM DemaSIN', id: 33, date: '2024-09-29', description: 'Demanda diaria agregada del SIN. No representa consumo individual ni por zona.', run: forecastDemand, metrics: getDemandMetrics },
-  price: { title: 'Precio de referencia', source: 'XM PrecBolsNaci', id: 49, date: '2024-09-29', description: 'Regla determinista B1, no modelo ML. No realiza negociación ni liquidación financiera.', run: forecastPrice, metrics: null },
+const profiles: Record<'supply' | 'demand' | 'price', PreparedDatasetCompatibility> = {
+  supply: { profileId: 'xm_gene_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_gene_base', sourceRulesetVersion: '1.0.0' },
+  demand: { profileId: 'xm_demandasin_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_demandasin_base', sourceRulesetVersion: '1.0.0' },
+  price: { profileId: 'xm_preciobolsnaci_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_preciobolsnaci_base', sourceRulesetVersion: '1.0.0' },
 }
-type ForecastKind = keyof typeof demos
+const forecasts = {
+  supply: { title: 'Oferta energética', source: 'XM Gene', description: 'Generación como proxy de disponibilidad energética. No equivale a oferta transaccional.', run: forecastSupply, metrics: getSupplyMetrics },
+  demand: { title: 'Demanda energética', source: 'XM DemaSIN', description: 'Demanda diaria agregada del SIN. No representa consumo individual ni por zona.', run: forecastDemand, metrics: getDemandMetrics },
+  price: { title: 'Precio de referencia', source: 'XM PrecBolsNaci', description: 'Regla determinista B1, no modelo ML. No realiza negociación ni liquidación financiera.', run: forecastPrice, metrics: null },
+}
+type ForecastKind = keyof typeof forecasts
 function errorMessage(error: unknown) {
   if (error instanceof ApiError) return error.serverMessage ?? error.message
   return 'No fue posible completar la solicitud. Intenta nuevamente.'
@@ -76,9 +82,9 @@ function ResultView({ result }: { result: ForecastResult }) {
 }
 
 export function ForecastPanel({ kind }: { kind: ForecastKind }) {
-  const config = demos[kind]
-  const [preparedId, setPreparedId] = useState(String(config.id))
-  const [targetDate, setTargetDate] = useState(config.date)
+  const config = forecasts[kind]
+  const [preparedId, setPreparedId] = useState('')
+  const [targetDate, setTargetDate] = useState('')
   const [result, setResult] = useState<ForecastResult | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -104,7 +110,7 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
     const id = Number(preparedId)
     setError(''); setResult(null)
     if (!Number.isSafeInteger(id) || id < 1 || id > 2147483647 || !targetDate) {
-      setError('Ingresa un ID de preparado positivo y una fecha objetivo.'); return
+      setError('Selecciona un dataset preparado y una fecha objetivo válidos.'); return
     }
     const controller = new AbortController()
     request.current = controller; setLoading(true)
@@ -123,11 +129,11 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
     <SectionHeader eyebrow={config.source} title={config.title} description={config.description}>
       <StatusBadge>{kind === 'price' ? 'Regla determinista · B1' : 'Modelo experimental · Ridge'}</StatusBadge>
     </SectionHeader>
-    <p className="section-description">Datos de demostración: preparado {config.id}, fecha {config.date}. Puedes cambiar ambos campos. Los pronósticos no se consultan automáticamente.</p>
+    <p className="section-description">Elige un dataset preparado compatible y una fecha objetivo. Los pronósticos no se consultan automáticamente.</p>
     <form onSubmit={submit}>
       <fieldset disabled={loading}>
         <legend>Solicitud al backend</legend>
-        <label>ID del dataset preparado<input type="number" required min="1" max="2147483647" step="1" value={preparedId} onChange={e => { setPreparedId(e.target.value); clear() }} /></label>
+        <PreparedDatasetSelect value={preparedId} onChange={value => { setPreparedId(value); clear() }} requirements={[profiles[kind]]} />
         <label>Fecha objetivo<input type="date" required value={targetDate} onChange={e => { setTargetDate(e.target.value); clear() }} /></label>
       </fieldset>
       <button className="primary-button" disabled={loading} type="submit">{loading ? 'Consultando…' : error ? 'Reintentar consulta' : 'Generar pronóstico'}</button>

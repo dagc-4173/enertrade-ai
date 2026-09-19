@@ -4,12 +4,13 @@ Aplicacion React + TypeScript + Vite para una plataforma de intercambio energeti
 
 ## Alcance actual
 
-- Dashboard operativo del mercado.
-- Publicacion y consulta de ofertas/demandas.
-- Predicciones de generacion, consumo y precio dinamico.
-- Seguimiento de transacciones y validaciones.
-- Deteccion de anomalias y acciones recomendadas.
-- Perfil con vista ejecutiva y trazabilidad tecnica.
+- Dashboard con indicadores y capacidades reportadas por el backend.
+- Registro y validación de datasets; consulta de fuentes externas.
+- Publicación y consulta de ofertas y demandas propias, con sugerencias de emparejamiento.
+- Pronósticos de generación y demanda, y estimación de precio de referencia mediante regla determinista.
+- Análisis y consulta de patrones sobre datasets preparados.
+- Perfil con la información pública de la sesión.
+- Transacciones, cierres comerciales, anomalías y recomendaciones no están disponibles en el prototipo.
 
 ## Estructura
 
@@ -32,4 +33,4 @@ npm run build
 npm run lint
 ```
 
-Predictions consume los endpoints reales del backend mediante `src/services/forecastService.ts` y ExternalDataSources consulta el backend mediante `src/services/externalDataService.ts`. Otras páginas aún pueden conservar datos mockeados en `src/data/mockData.ts`.
+Las páginas funcionales consumen los endpoints reales mediante los servicios de `src/services/`. Los ejemplos editables de registro están en `src/data/datasetExamples.ts`; no representan resultados ni datos persistidos.

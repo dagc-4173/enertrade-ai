@@ -47,3 +47,15 @@ export interface DatasetValidationResult {
   rulesetVersion: string
   issues: DatasetValidationIssue[]
 }
+
+export interface PreparedDatasetResult {
+  datasetId: number
+  preparedDatasetId: number
+  profileId: string
+  profileVersion: string
+  preparedAt: string
+  sourceRulesetId: string
+  sourceRulesetVersion: string
+  recordCount: number
+  reused: boolean
+}

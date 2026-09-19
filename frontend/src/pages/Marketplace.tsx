@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError } from '../services/apiClient'
 import { createDemand, createOffer, getMyDemands, getMyOffers } from '../services/marketplaceService'
+import { suggestMatches } from '../services/matchingService'
 import type { EnergyDemandDto, EnergyOfferDto } from '../types/marketplace'
+import type { MatchingResult } from '../types/matching'
 import { formatCopPerKwh, formatDeliveryDate, formatEnergy } from '../utils/numberFormat'
 import { DataTable } from '../components/tables/DataTable'
 import { SectionHeader } from '../components/ui/SectionHeader'
@@ -143,12 +145,30 @@ const demandColumns = [
   { header: 'Estado', render: () => <StatusBadge tone="success">Activa</StatusBadge> },
 ]
 
+const compatibilityTone = (value: string) => value === 'FULL' ? 'success' : value === 'PARTIAL' ? 'warning' : 'neutral'
+
+export function MatchingContent({ state, onSuggest }: { state: { kind: 'idle' | 'loading' } | { kind: 'error'; message: string } | { kind: 'success'; result: MatchingResult }; onSuggest: () => void }) {
+  return <section className="panel marketplace-section" aria-label="Emparejamientos sugeridos">
+    <SectionHeader eyebrow="Emparejamiento" title="Emparejamientos sugeridos" description="Los emparejamientos se generan sobre las publicaciones activas disponibles." />
+    <button type="button" className="secondary-button" onClick={onSuggest} disabled={state.kind === 'loading'}>{state.kind === 'loading' ? 'Generando sugerencias…' : 'Sugerir emparejamientos'}</button>
+    {state.kind === 'idle' && <p className="marketplace-empty">Solicita sugerencias para consultar las publicaciones activas disponibles.</p>}
+    {state.kind === 'error' && <p className="marketplace-error" role="alert">{state.message}</p>}
+    {state.kind === 'success' && <div className="stack-list">
+      <p className="marketplace-status">Estado: {state.result.status}. Coincidencias sugeridas: {state.result.summary.suggestedMatches}.</p>
+      {state.result.status === 'no_matches' && <p className="marketplace-empty">No se encontraron emparejamientos compatibles.</p>}
+      {state.result.demands.map(demand => <article key={demand.demandId}><div className="row-between"><strong>Demanda {demand.demandId}</strong><StatusBadge tone={compatibilityTone(demand.compatibility)}>{demand.compatibility}</StatusBadge></div><p>Cantidad sugerida: {demand.suggestedQuantityKwh} kWh. Pendiente: {demand.unmatchedQuantityKwh} kWh.</p></article>)}
+      {state.result.trace.persistence === 'failed' && <p className="marketplace-error" role="alert">Las sugerencias se generaron, pero no fue posible conservar su trazabilidad.</p>}
+    </div>}
+  </section>
+}
+
 export function Marketplace() {
   const [offers, setOffers] = useState<EnergyOfferDto[]>([])
   const [demands, setDemands] = useState<EnergyDemandDto[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [reload, setReload] = useState(0)
+  const [matching, setMatching] = useState<{ kind: 'idle' | 'loading' } | { kind: 'error'; message: string } | { kind: 'success'; result: MatchingResult }>({ kind: 'idle' })
 
   useEffect(() => {
     const controller = new AbortController()
@@ -167,6 +187,13 @@ export function Marketplace() {
     return () => controller.abort()
   }, [reload])
 
+  async function suggest() {
+    if (matching.kind === 'loading') return
+    setMatching({ kind: 'loading' })
+    try { setMatching({ kind: 'success', result: await suggestMatches() }) }
+    catch (reason) { setMatching({ kind: 'error', message: errorMessage(reason) }) }
+  }
+
   return <div className="page-grid marketplace-page">
     <section className="panel marketplace-intro">
       <SectionHeader
@@ -175,6 +202,8 @@ export function Marketplace() {
         description="Registro y consulta de ofertas y demandas asociadas al usuario autenticado."
       />
     </section>
+
+    <MatchingContent state={matching} onSuggest={() => { void suggest() }} />
 
     {loading && <p role="status">Cargando tus publicaciones…</p>}
     {loadError && <div className="panel" role="alert">

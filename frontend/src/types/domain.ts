@@ -87,13 +87,6 @@ export interface PatternResult {
   description: string
 }
 
-export interface ForecastPoint {
-  label: string
-  generation: number
-  consumption: number
-  price: number
-}
-
 export interface ServiceStatus {
   name: string
   status: string

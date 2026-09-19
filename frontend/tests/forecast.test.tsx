@@ -83,13 +83,13 @@ test('non-JSON and network failures are typed safely', async () => {
   fetch.mockRejectedValueOnce(new Error('internal host'))
   await expect(getDemandMetrics()).rejects.toMatchObject({ kind: 'network', serverMessage: null })
 })
-test('Predictions initially renders editable demo inputs and no mock results/recommendations', () => {
+test('Predictions initially renders compatible dataset selectors and no mock results/recommendations', () => {
   const fetch = spyOn(globalThis, 'fetch')
   const html = renderToStaticMarkup(<Predictions />)
   expect(html).toContain('Oferta energética'); expect(html).toContain('Demanda energética'); expect(html).toContain('Precio de referencia')
   expect(html.match(/Sin pronóstico solicitado/g)).toHaveLength(3)
-  expect(html).toContain('value="17"'); expect(html).toContain('value="33"'); expect(html).toContain('value="49"')
-  expect(html).not.toMatch(/Recomendaciones|Produccion|v1\.8\.2|DS-2026|915\.15174/)
+  expect(html.match(/Selecciona un dataset preparado/g)).toHaveLength(3)
+  expect(html).not.toMatch(/Recomendaciones|Produccion|v1\.8\.2|DS-2026|915\.15174|value="17"|value="33"|value="49"/)
   expect(fetch).not.toHaveBeenCalled()
   for (const file of ['../src/pages/Predictions.tsx', '../src/components/forecasts/ForecastPanel.tsx']) {
     expect(readFileSync(new URL(file, import.meta.url), 'utf8')).not.toMatch(/mockData|resolveMock|aiRecommendations|forecastPoints|techStats|techTrace/)

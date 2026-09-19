@@ -50,7 +50,7 @@ test('formatos numéricos es-CO cumplen precisión de energía y precio', () => 
   expect(formatCopPerKwh(960.71104)).toBe('$960,71104 COP/kWh')
 })
 
-test('la página no ejecuta POST automáticamente y no muestra mocks ni matching', () => {
+test('la página no ejecuta POST automáticamente y no muestra resultados mock de matching', () => {
   const fetch = spyOn(globalThis, 'fetch')
   const html = renderToStaticMarkup(<Marketplace />)
   expect(fetch).not.toHaveBeenCalled()
@@ -63,7 +63,8 @@ test('la página no ejecuta POST automáticamente y no muestra mocks ni matching
   expect(source).toContain('setDemands(current => [demand, ...current])')
   expect(source).toContain('No tienes ofertas registradas.')
   expect(source).toContain('No tienes demandas registradas.')
-  expect(html).not.toContain('Coincidencias sugeridas')
+  expect(html).toContain('Emparejamientos sugeridos')
+  expect(html).toContain('Solicita sugerencias')
   expect(source).not.toMatch(/marketOffers|userEnergyCards|smartMatches/)
 })
 

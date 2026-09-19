@@ -1,7 +1,7 @@
 import { useState, useSyncExternalStore, type ReactNode } from 'react'
 import { authStore } from '../../auth/authStore'
 import { authErrorMessage } from '../../services/authService'
-import { navigationItems } from '../../data/mockData'
+import { navigationItems } from '../../data/navigation'
 import type { PageKey } from '../../types/domain'
 
 interface AppShellProps {
@@ -47,16 +47,16 @@ export function AppShell({ activePage, onNavigate, children }: AppShellProps) {
         </nav>
 
         <div className="sidebar-panel">
-          <p>Motor IA</p>
-          <strong>Prediccion estable</strong>
-          <span>Precision esperada 91.4%</span>
+          <p>Motor analítico</p>
+          <strong>Capacidades versionadas</strong>
+          <span>Consulta indicadores en Inicio</span>
         </div>
       </aside>
 
       <div className="content-shell">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Operacion en tiempo real</p>
+            <p className="eyebrow">Entorno de prototipo</p>
             <h1>{activeItem?.title ?? activeItem?.label ?? 'Inicio'}</h1>
           </div>
           <div className="auth-session">

@@ -1,5 +1,5 @@
 import { ApiError, postJson } from './apiClient'
-import type { DatasetValidationResult, RegisteredDataset } from '../types/dataset'
+import type { DatasetValidationResult, PreparedDatasetResult, RegisteredDataset } from '../types/dataset'
 
 // Input remains unknown deliberately: structural/business validation belongs to Express.
 export async function registerDataset(input: unknown): Promise<RegisteredDataset> {
@@ -32,4 +32,28 @@ export async function validateDataset(datasetId: number): Promise<DatasetValidat
     throw new ApiError('response', 'No se pudo interpretar el informe de calidad.', status)
   }
   return data
+}
+
+export async function prepareDataset(datasetId: number): Promise<PreparedDatasetResult> {
+  const { status, data } = await postJson<unknown>(`/datasets/${datasetId}/prepare`)
+  const result = data !== null && typeof data === 'object' && !Array.isArray(data) ? data as Record<string, unknown> : null
+  if (status !== 200 || !result ||
+      result.datasetId !== datasetId || typeof result.preparedDatasetId !== 'number' || !Number.isSafeInteger(result.preparedDatasetId) || result.preparedDatasetId < 1 ||
+      typeof result.profileId !== 'string' || !result.profileId || typeof result.profileVersion !== 'string' || !result.profileVersion ||
+      typeof result.sourceRulesetId !== 'string' || !result.sourceRulesetId || typeof result.sourceRulesetVersion !== 'string' || !result.sourceRulesetVersion ||
+      typeof result.preparedAt !== 'string' || !Number.isFinite(Date.parse(result.preparedAt)) ||
+      typeof result.recordCount !== 'number' || !Number.isSafeInteger(result.recordCount) || result.recordCount < 0 || typeof result.reused !== 'boolean') {
+    throw new ApiError('response', 'No se pudo interpretar la confirmación de preparación.', status)
+  }
+  return {
+    datasetId: result.datasetId,
+    preparedDatasetId: result.preparedDatasetId,
+    profileId: result.profileId,
+    profileVersion: result.profileVersion,
+    preparedAt: result.preparedAt,
+    sourceRulesetId: result.sourceRulesetId,
+    sourceRulesetVersion: result.sourceRulesetVersion,
+    recordCount: result.recordCount,
+    reused: result.reused,
+  }
 }

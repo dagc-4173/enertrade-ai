@@ -13,6 +13,7 @@ import { router as patternsRouter } from '@/controllers/patterns.controller';
 import { router as healthRouter } from '@/controllers/health.controller';
 import { router as capabilityVersionsRouter } from '@/controllers/capability-versions.controller';
 import { router as indicatorsRouter } from '@/controllers/indicators.controller';
+import { router as preparedDatasetCatalogRouter } from '@/controllers/prepared-dataset-catalog.controller';
 import { requestIdMiddleware } from '@/middlewares/request-id.middleware';
 import { createAiQueryTraceMiddleware } from '@/middlewares/ai-query-trace.middleware';
 import { prisma } from '@/lib/prisma';
@@ -79,6 +80,7 @@ app.use('/matches', matchingRouter)
 app.use('/models', modelCatalogRouter)
 app.use('/capabilities', capabilityVersionsRouter)
 app.use('/indicators', indicatorsRouter)
+app.use('/prepared-datasets', preparedDatasetCatalogRouter)
 app.use('/patterns', patternsRouter)
 app.use('/auth', authRouter)
 app.use('/health', healthRouter)

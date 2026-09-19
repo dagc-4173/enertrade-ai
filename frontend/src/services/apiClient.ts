@@ -106,8 +106,3 @@ export async function apiRequest<T = unknown>(path: string, options: ApiRequestO
 export function postJson<T = unknown>(path: string, json?: unknown, options: Omit<ApiRequestOptions, 'method' | 'json'> = {}) {
   return apiRequest<T>(path, { ...options, method: 'POST', json })
 }
-
-// Compatibility helper while modules still depend on mock data.
-export async function resolveMock<T>(data: T): Promise<T> {
-  return Promise.resolve(data)
-}
