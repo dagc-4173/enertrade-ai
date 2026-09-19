@@ -54,8 +54,8 @@ Los perfiles XM validan y preparan un `EnergyDataset` individual. `PreparedDatas
 
 La continuidad virtual ya satisface la forma de los rezagos, siempre que el rango consolidado los contenga: Gene requiere D-1 y D-7 por periodo; DemaSIN requiere D-1, D-7, D-14 y D-28; Precio requiere D-1 con 24 periodos. No se ejecutó ningún modelo.
 
-La opción recomendada es un `EnergyDataset` consolidado inmutable acompañado de una entidad de procedencia que relacione múltiples `XmIngestionWindow`, conserve rango, métrica y hash consolidado. No se eligió persistir solo un JSON ni concatenar `source`, porque no preserva una relación estructurada ni verificable con las ventanas fuente. Esto requiere una migración Prisma nueva y autorización antes de implementarse.
+La opción recomendada fue implementada en C18b-1.6: un `EnergyDataset` consolidado inmutable acompañado de `XmConsolidatedDataset` y su relación estructurada a múltiples `XmIngestionWindow`. No se eligió persistir solo un JSON ni concatenar `source`, porque no preserva una relación estructurada ni verificable con las ventanas fuente.
 
 ## Estado
 
-No hay migración nueva en C18b-1.5. El estado es **NO-GO** para C18b-2 si implica ingesta histórica completa destinada a preparación o forecast: primero debe aprobarse el modelo Prisma del artefacto consolidado y su trazabilidad multiventana. Es **GO** para revisar/commitear el código y evidencia C18b-1.5 una vez se acepte ese límite arquitectónico.
+No hubo migración en C18b-1.5. C18b-1.6 aplicó el modelo y habilitó preparación multiventana trazable. La decisión de descargar histórico completo sigue separada y requiere autorización explícita, controles operativos de lotes y evidencia de cobertura.

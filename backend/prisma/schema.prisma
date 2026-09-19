@@ -46,6 +46,7 @@ model EnergyDataset {
   validationReport      Json?
   preparedDatasets      PreparedDataset[]
   xmIngestionWindow     XmIngestionWindow?
+  xmConsolidatedDataset XmConsolidatedDataset?
 }
 
 model XmIngestionWindow {
@@ -66,9 +67,35 @@ model XmIngestionWindow {
   createdAt     DateTime               @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime               @updatedAt @db.Timestamptz(3)
   energyDataset EnergyDataset?         @relation(fields: [energyDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  consolidatedSources XmConsolidatedDatasetSource[]
 
   @@unique([provider, metric, requestedFrom, requestedTo])
   @@index([metric, status])
+}
+
+model XmConsolidatedDataset {
+  id              Int                            @id @default(autoincrement())
+  metric          String
+  requestedFrom   DateTime                       @db.Date
+  requestedTo     DateTime                       @db.Date
+  contentHash     String
+  energyDatasetId Int                            @unique
+  createdAt       DateTime                       @default(now()) @db.Timestamptz(3)
+  energyDataset   EnergyDataset                  @relation(fields: [energyDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  sources         XmConsolidatedDatasetSource[]
+
+  @@unique([metric, requestedFrom, requestedTo, contentHash])
+  @@index([metric, requestedFrom, requestedTo])
+}
+
+model XmConsolidatedDatasetSource {
+  consolidatedDatasetId Int
+  xmIngestionWindowId  Int
+  consolidatedDataset  XmConsolidatedDataset @relation(fields: [consolidatedDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  xmIngestionWindow    XmIngestionWindow     @relation(fields: [xmIngestionWindowId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@id([consolidatedDatasetId, xmIngestionWindowId])
+  @@index([xmIngestionWindowId])
 }
 
 model PreparedDataset {

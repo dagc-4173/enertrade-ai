@@ -1,6 +1,6 @@
 # ADR-23 - Ingesta historica XM por ventanas inmutables y manifiesto de cobertura
 
-**Estado:** Aceptado; C18b-1 y C18b-1.5 implementados parcialmente.
+**Estado:** Aceptado; C18b-1, C18b-1.5 y C18b-1.6 implementados.
 
 ## Contexto
 
@@ -90,9 +90,10 @@ Cada bloque debe validar contrato XM, unidad, identidad, valores finitos, rango 
 - Aumenta filas de `EnergyDataset` y JSONB; los PreparedDataset tambien duplican contenido preparado por cada ventana.
 - Los forecasts actuales leen un solo PreparedDataset. Una serie multianual particionada no permite por si sola resolver rezagos entre ventanas; C18b debe definir un artefacto consolidado inmutable o una estrategia de seleccion para C19 antes de inferencia multibloque.
 - C18b-1.5 agrega consolidacion virtual de solo lectura: consulta solo manifiestos `completed`, deduplica por identidad temporal, exige cobertura completa y devuelve hash, fuentes y corpus ordenado. No persiste un nuevo EnergyDataset.
+- C18b-1.6 materializa el corpus virtual en un `EnergyDataset` inmutable y lo registra en `XmConsolidatedDataset`. La tabla puente `XmConsolidatedDatasetSource` conserva cada ventana fuente; desde esta se obtiene su `EnergyDataset` original por la FK ya existente de `XmIngestionWindow`, sin duplicar esa referencia.
 - Mantiene la procedencia de cada respuesta, permite reintento y evita tratar una fecha solicitada como disponible.
 - No modifica modelos, reglas, frontend ni la frontera meteorologica de ADR-15.
 
 ## Condiciones para implementacion
 
-La capa de manifiesto, hash canonico, transaccion, recuperacion de pendientes y consolidacion virtual ya estan implementadas. Antes de C18b-2 debe aprobarse una migracion para un artefacto consolidado inmutable y trazable a multiples ventanas, o una alternativa que cambie explicitamente el contrato de `PreparedDataset`. No se debe iniciar descarga masiva fuera de una fase expresamente autorizada.
+La capa de manifiesto, hash canonico, transaccion, recuperacion de pendientes, consolidacion virtual y artefacto consolidado trazable ya estan implementadas. `XmConsolidatedDataset` usa la identidad unica `(metric, requestedFrom, requestedTo, contentHash)` y una FK unica a `EnergyDataset`; el servicio valida dentro de transaccion que todas las fuentes siguen `completed` y corresponden a los datasets usados por el corpus antes de crear los enlaces. Los preparadores existentes pueden consumir el dataset consolidado como `sourceDatasetId` unico. No se debe iniciar descarga masiva fuera de una fase expresamente autorizada.
