@@ -28,6 +28,12 @@ enum EnergyDatasetStatus {
   rechazado
 }
 
+enum XmIngestionWindowStatus {
+  pending
+  completed
+  failed
+}
+
 model EnergyDataset {
   id                    Int                 @id @default(autoincrement())
   source                String
@@ -39,6 +45,30 @@ model EnergyDataset {
   validatedAt           DateTime?           @db.Timestamptz(3)
   validationReport      Json?
   preparedDatasets      PreparedDataset[]
+  xmIngestionWindow     XmIngestionWindow?
+}
+
+model XmIngestionWindow {
+  id           Int                     @id @default(autoincrement())
+  provider     String
+  metric       String
+  source       String?
+  requestedFrom DateTime               @db.Date
+  requestedTo   DateTime               @db.Date
+  receivedFrom  DateTime?              @db.Date
+  receivedTo    DateTime?              @db.Date
+  rowCount      Int?
+  contentHash   String?
+  status        XmIngestionWindowStatus
+  fetchedAt     DateTime?              @db.Timestamptz(3)
+  errorCode     String?
+  energyDatasetId Int?                 @unique
+  createdAt     DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime               @updatedAt @db.Timestamptz(3)
+  energyDataset EnergyDataset?         @relation(fields: [energyDatasetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([provider, metric, requestedFrom, requestedTo])
+  @@index([metric, status])
 }
 
 model PreparedDataset {
