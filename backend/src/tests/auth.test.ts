@@ -56,6 +56,7 @@ test('login cookie, me and logout revoke the session', async () => {
  const response = await login(); expect(response.status).toBe(200);
  const cookie = response.headers.get('set-cookie')!;
  expect(cookie).toContain('HttpOnly'); expect(cookie).toContain('SameSite=Lax'); expect(cookie).toContain('Path=/');
+ if (process.env.NODE_ENV === 'production') expect(cookie).toContain('Secure');
  const token = cookie.split(';')[0]!;
  expect([...sessions.keys()][0]).not.toBe(token.split('=')[1]);
  expect((await request('/me', undefined, token)).status).toBe(200);

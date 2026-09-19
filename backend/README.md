@@ -58,7 +58,7 @@ Email normalizado con trim/lowercase y restriccion unica. Nombre de 1 a 100
 caracteres. Registro requiere contrasena de 12 a 128 caracteres, sin reglas de
 composicion arbitrarias. Argon2id nativo de Bun (64 MiB, timeCost=2). No se guarda
 texto plano. Token aleatorio de 32 bytes, solo SHA-256 en AuthSession, duracion
-absoluta de 8 horas. Cookie HttpOnly, SameSite=Lax, Path=/auth, Secure en production.
+absoluta de 8 horas. Cookie HttpOnly, SameSite=Lax, Path=/, Secure en production.
 Logout elimina la sesion; /me comprueba expiracion. Las sesiones expiradas no
 conceden acceso; su limpieza periodica queda pendiente.
 
