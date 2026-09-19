@@ -62,8 +62,8 @@ test('Dashboard renders loading without prior values', () => {
 test('Dashboard renders backend indicators and capability taxonomy on success', () => {
   const html = renderToStaticMarkup(<DashboardContent state={{ kind: 'success', indicators, capabilities }} onRetry={() => {}} />)
   expect(html).toContain('Pronósticos registrados')
-  expect(html).toContain('>5<')
-  expect(html).toContain('18.25 ms')
+  expect(html).toContain('>5,00<')
+  expect(html).toContain('18,25 ms')
   expect(html).toContain('Modelo de ML')
   expect(html).toContain('Regla determinista')
   expect(html).toContain('Método determinista')

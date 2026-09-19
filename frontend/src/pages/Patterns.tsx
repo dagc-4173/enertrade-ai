@@ -6,6 +6,7 @@ import { PreparedDatasetSelect } from '../components/datasets/PreparedDatasetSel
 import { ApiError } from '../services/apiClient'
 import { analyzePatterns, getPatterns } from '../services/patternsService'
 import type { PatternAnalysis, PatternAnalysisResponse, PatternDataType, PatternFilters, PatternVariable } from '../types/patterns'
+import { formatEnergyKWh, formatNumberCO, formatPriceCOPPerKWh } from '../utils/numberFormat'
 
 function errorMessage(error: unknown) { return error instanceof ApiError ? error.serverMessage ?? error.message : 'No fue posible completar la solicitud.' }
 const statusTone = (status: PatternAnalysis['status']) => status === 'completed' ? 'success' : status === 'partial' ? 'warning' : 'neutral'
@@ -17,11 +18,13 @@ const historyColumns: DataTableColumn<PatternAnalysis>[] = [
   { header: 'Muestra', render: row => String(row.sampleSize) },
 ]
 
+const formatPatternValue = (value: number, variable: PatternVariable) => variable === 'precio_cop_kwh' ? formatPriceCOPPerKWh(value) : formatEnergyKWh(value)
+
 export function PatternResults({ analysis }: { analysis: PatternAnalysisResponse | PatternAnalysis }) {
   return <section className="panel"><SectionHeader eyebrow="Resultado" title="Análisis de patrones" description={`Método: ${analysis.method.id} ${analysis.method.version}.`} />
     <div className="stack-list">
-      <article><div className="row-between"><strong>Estado</strong><StatusBadge tone={statusTone(analysis.status)}>{analysis.status}</StatusBadge></div><p>Muestra: {analysis.sampleSize}. Periodo: {analysis.period.from ?? 'No disponible'} a {analysis.period.to ?? 'No disponible'}.</p></article>
-      {analysis.patterns.map(pattern => <article key={pattern.type}><strong>{pattern.type}</strong><p>{pattern.description}</p>{pattern.type === 'distribution' && <p>Mínimo: {pattern.metrics.min}. Máximo: {pattern.metrics.max}. Media: {pattern.metrics.mean}. Mediana: {pattern.metrics.median}.</p>}{pattern.type === 'trend' && <p>Dirección: {pattern.metrics.direction}. Pendiente: {pattern.metrics.slope}.</p>}{pattern.type === 'recurrence' && <p>Agrupación: {pattern.metrics.grouping}. Grupos: {pattern.metrics.periods.length}.</p>}</article>)}
+      <article><div className="row-between"><strong>Estado</strong><StatusBadge tone={statusTone(analysis.status)}>{analysis.status}</StatusBadge></div><p>Muestra: {formatNumberCO(analysis.sampleSize)}. Periodo: {analysis.period.from ?? 'No disponible'} a {analysis.period.to ?? 'No disponible'}.</p></article>
+      {analysis.patterns.map(pattern => <article key={pattern.type}><strong>{pattern.type}</strong><p>{pattern.description}</p>{pattern.type === 'distribution' && <p>Mínimo: {formatPatternValue(pattern.metrics.min, analysis.variable)}. Máximo: {formatPatternValue(pattern.metrics.max, analysis.variable)}. Media: {formatPatternValue(pattern.metrics.mean, analysis.variable)}. Mediana: {formatPatternValue(pattern.metrics.median, analysis.variable)}. Desviación: {formatPatternValue(pattern.metrics.standardDeviation, analysis.variable)}.</p>}{pattern.type === 'trend' && <p>Dirección: {pattern.metrics.direction}. Pendiente: {formatPatternValue(pattern.metrics.slope, analysis.variable)}.</p>}{pattern.type === 'recurrence' && <p>Agrupación: {pattern.metrics.grouping}. Grupos: {formatNumberCO(pattern.metrics.periods.length)}.</p>}</article>)}
       {analysis.warnings.map(warning => <p key={warning} className="marketplace-empty">{warning}</p>)}
     </div>
   </section>
@@ -39,7 +42,6 @@ export function Patterns() {
 
   useEffect(() => {
     const controller = new AbortController()
-    setHistoryState('loading'); setError('')
     getPatterns(filters, controller.signal).then(value => { if (!controller.signal.aborted) { setHistory(value); setHistoryState('success') } }).catch(reason => { if (!controller.signal.aborted) { setError(errorMessage(reason)); setHistoryState('error') } })
     return () => controller.abort()
   }, [filters, refresh])
@@ -49,7 +51,7 @@ export function Patterns() {
     const preparedDatasetId = Number(preparedId)
     if (!Number.isSafeInteger(preparedDatasetId) || preparedDatasetId < 1) { setError('Ingresa un identificador de dataset preparado válido.'); return }
     setAnalyzing(true); setError(''); setResult(null)
-    try { setResult(await analyzePatterns(preparedDatasetId)); setRefresh(value => value + 1) }
+    try { setResult(await analyzePatterns(preparedDatasetId)); setHistoryState('loading'); setError(''); setRefresh(value => value + 1) }
     catch (reason) { setError(errorMessage(reason)) }
     finally { setAnalyzing(false) }
   }
@@ -67,7 +69,7 @@ export function Patterns() {
       {error && <section className="panel" role="alert"><p className="marketplace-error">{error}</p></section>}
       {result && <PatternResults analysis={result} />}
       <section className="panel"><SectionHeader eyebrow="Histórico" title="Análisis registrados" description="Consulta los análisis persistidos; puedes filtrar por periodo, tipo de dato o variable." />
-        <div className="filter-row"><input aria-label="Desde" type="date" value={filters.from ?? ''} onChange={event => setFilters(value => ({ ...value, from: event.target.value || undefined }))} /><input aria-label="Hasta" type="date" value={filters.to ?? ''} onChange={event => setFilters(value => ({ ...value, to: event.target.value || undefined }))} /><select aria-label="Tipo de datos" value={filters.dataType ?? ''} onChange={event => setFilters(value => ({ ...value, dataType: (event.target.value || undefined) as PatternDataType | undefined }))}><option value="">Todos los tipos</option><option value="generacion">Generación</option><option value="demanda">Demanda</option><option value="precios">Precios</option></select><select aria-label="Variable" value={filters.variable ?? ''} onChange={event => setFilters(value => ({ ...value, variable: (event.target.value || undefined) as PatternVariable | undefined }))}><option value="">Todas las variables</option><option value="energia_kwh">energía kWh</option><option value="demanda_kwh">demanda kWh</option><option value="precio_cop_kwh">precio COP/kWh</option></select></div>
+        <div className="filter-row"><input aria-label="Desde" type="date" value={filters.from ?? ''} onChange={event => { setHistoryState('loading'); setError(''); setFilters(value => ({ ...value, from: event.target.value || undefined })) }} /><input aria-label="Hasta" type="date" value={filters.to ?? ''} onChange={event => { setHistoryState('loading'); setError(''); setFilters(value => ({ ...value, to: event.target.value || undefined })) }} /><select aria-label="Tipo de datos" value={filters.dataType ?? ''} onChange={event => { setHistoryState('loading'); setError(''); setFilters(value => ({ ...value, dataType: (event.target.value || undefined) as PatternDataType | undefined })) }}><option value="">Todos los tipos</option><option value="generacion">Generación</option><option value="demanda">Demanda</option><option value="precios">Precios</option></select><select aria-label="Variable" value={filters.variable ?? ''} onChange={event => { setHistoryState('loading'); setError(''); setFilters(value => ({ ...value, variable: (event.target.value || undefined) as PatternVariable | undefined })) }}><option value="">Todas las variables</option><option value="energia_kwh">energía kWh</option><option value="demanda_kwh">demanda kWh</option><option value="precio_cop_kwh">precio COP/kWh</option></select></div>
         {historyState === 'loading' && <p role="status">Cargando análisis registrados…</p>}{historyState === 'error' && <p className="marketplace-error" role="alert">{error}</p>}{historyState === 'success' && (history.length === 0 ? <p className="marketplace-empty">No hay análisis registrados.</p> : <DataTable columns={historyColumns} rows={history} getRowKey={row => row.analysisId} />)}
       </section>
     </div>

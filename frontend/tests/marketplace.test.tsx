@@ -47,7 +47,7 @@ test('formularios envían números y nunca userId', async () => {
 
 test('formatos numéricos es-CO cumplen precisión de energía y precio', () => {
   expect(formatEnergy(9851831.89)).toBe('9.851.831,89 kWh')
-  expect(formatCopPerKwh(960.71104)).toBe('$960,71104 COP/kWh')
+  expect(formatCopPerKwh(960.71104)).toBe('960,71104 COP/kWh')
 })
 
 test('la página no ejecuta POST automáticamente y no muestra resultados mock de matching', () => {

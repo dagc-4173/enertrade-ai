@@ -6,7 +6,9 @@ import { SectionHeader } from '../ui/SectionHeader'
 import { StatusBadge } from '../ui/StatusBadge'
 import { DataTable } from '../tables/DataTable'
 import { PreparedDatasetSelect } from '../datasets/PreparedDatasetSelect'
+import { ForecastHistoryChart } from '../charts/ForecastHistoryCharts'
 import type { PreparedDatasetCompatibility } from '../../types/preparedDatasets'
+import { formatDateCO, formatEnergyKWh, formatNumberCO, formatPercentCO, formatPriceCOPPerKWh } from '../../utils/numberFormat'
 import './ForecastPanel.css'
 
 const profiles: Record<'supply' | 'demand' | 'price', PreparedDatasetCompatibility> = {
@@ -24,8 +26,6 @@ function errorMessage(error: unknown) {
   if (error instanceof ApiError) return error.serverMessage ?? error.message
   return 'No fue posible completar la solicitud. Intenta nuevamente.'
 }
-const number = (value: number) => value.toLocaleString('es-CO', { maximumFractionDigits: 6 })
-
 function MetricsView({ metrics, result }: { metrics: ModelMetrics; result: ForecastResult | null }) {
   const e = metrics.evaluation
   const mismatch = result && 'modelId' in result && (result.modelId !== metrics.modelId || result.modelVersion !== metrics.modelVersion)
@@ -33,14 +33,14 @@ function MetricsView({ metrics, result }: { metrics: ModelMetrics; result: Forec
     <h3>Métricas del modelo activo</h3>
     <p>{metrics.modelId} · versión {metrics.modelVersion}</p>
     {mismatch && <p role="alert">Estas métricas corresponden a otra versión que el pronóstico mostrado.</p>}
-    <p className="section-description">Holdout temporal: {e.range.start} — {e.range.end}. Describe ese periodo; no es una garantía futura.</p>
+    <p className="section-description">Holdout temporal: {formatDateCO(e.range.start)} — {formatDateCO(e.range.end)}. Describe ese periodo; no es una garantía futura.</p>
     <dl className="forecast-metadata">
-      <div><dt>MAE</dt><dd>{number(e.MAE.value)} {e.MAE.unit}</dd></div>
-      <div><dt>RMSE</dt><dd>{number(e.RMSE.value)} {e.RMSE.unit}</dd></div>
-      <div><dt>Sesgo medio</dt><dd>{number(e.bias.value)} {e.bias.unit}</dd></div>
-      <div><dt>WAPE</dt><dd>{number(e.percentageError.value)} %</dd></div>
-      <div><dt>Observaciones evaluables / no disponibles</dt><dd>{e.evaluable} / {e.unavailable}</dd></div>
-      <div><dt>Datos de entrenamiento</dt><dd>{metrics.training.sourceRange.start} — {metrics.training.sourceRange.end}</dd></div>
+      <div><dt>MAE</dt><dd>{formatEnergyKWh(e.MAE.value)}</dd></div>
+      <div><dt>RMSE</dt><dd>{formatEnergyKWh(e.RMSE.value)}</dd></div>
+      <div><dt>Sesgo medio</dt><dd>{formatEnergyKWh(e.bias.value)}</dd></div>
+      <div><dt>WAPE</dt><dd>{formatPercentCO(e.percentageError.value)}</dd></div>
+      <div><dt>Observaciones evaluables / no disponibles</dt><dd>{formatNumberCO(e.evaluable)} / {formatNumberCO(e.unavailable)}</dd></div>
+      <div><dt>Datos de entrenamiento</dt><dd>{formatDateCO(metrics.training.sourceRange.start)} — {formatDateCO(metrics.training.sourceRange.end)}</dd></div>
       <div><dt>Fecha de entrenamiento</dt><dd>No registrada</dd></div>
     </dl>
   </div>
@@ -49,24 +49,25 @@ function MetricsView({ metrics, result }: { metrics: ModelMetrics; result: Forec
 function ResultView({ result }: { result: ForecastResult }) {
   const price = result.forecastType === 'market_reference_price'
   return <div>
-    <p role="status">Resultado disponible para {result.targetDate}.</p>
+    <p role="status">Resultado disponible para {formatDateCO(result.targetDate)}.</p>
     <dl className="forecast-metadata">
       <div><dt>{price ? 'Regla determinista' : 'Modelo'}</dt><dd>{price ? result.rule.id : result.modelId}</dd></div>
       <div><dt>Versión</dt><dd>{price ? result.rule.version : result.modelVersion}</dd></div>
       <div><dt>Preparado / dataset fuente</dt><dd>{result.preparedDatasetId} / {result.sourceDatasetId}</dd></div>
-      <div><dt>Fecha objetivo</dt><dd>{result.targetDate}</dd></div>
+      <div><dt>Fecha objetivo</dt><dd>{formatDateCO(result.targetDate)}</dd></div>
       <div><dt>Unidad</dt><dd>{result.unit}</dd></div>
       <div><dt>Horizonte</dt><dd>{result.forecastType === 'aggregate_demand_proxy' ? '1 día' : '24 periodos del día objetivo'}</dd></div>
     </dl>
     {result.forecastType === 'aggregate_demand_proxy' ? <>
-      <p className="forecast-value">{number(result.prediction.demanda_kwh)} <span>{result.unit}</span></p>
+      <p className="forecast-value">{formatEnergyKWh(result.prediction.demanda_kwh)}</p>
       <p>Demanda estimada del SIN. Nivel de confianza no definido.</p>
     </> : <DataTable columns={[
       { header: 'Periodo XM', render: (row: { period: number; value: number }) => row.period },
-      { header: `${price ? 'Precio de referencia' : 'Generación estimada'} (${result.unit})`, render: row => String(row.value) },
+      { header: `${price ? 'Precio de referencia' : 'Generación estimada'} (${result.unit})`, render: row => price ? formatPriceCOPPerKWh(row.value) : formatEnergyKWh(row.value) },
     ]} rows={result.forecastType === 'generation_availability_proxy'
       ? result.predictions.map(row => ({ period: row.hora_xm, value: row.energia_kwh }))
       : result.predictions.map(row => ({ period: row.periodo, value: row.precio_cop_kwh }))} getRowKey={row => String(row.period)} />}
+    <ForecastHistoryChart key={`${result.forecastType}:${result.preparedDatasetId}:${result.targetDate}`} result={result} />
     {price && <div className="forecast-trace">
       <h3>Trazabilidad de esta estimación</h3>
       <dl className="forecast-metadata">

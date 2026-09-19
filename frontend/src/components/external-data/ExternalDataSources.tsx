@@ -4,6 +4,7 @@ import { listExternalProviders, queryExternalData } from '../../services/externa
 import type { ExternalProvider, ExternalResult } from '../../types/externalData'
 import { SectionHeader } from '../ui/SectionHeader'
 import { DataTable } from '../tables/DataTable'
+import { formatEnergyKWh, formatPriceCOPPerKWh } from '../../utils/numberFormat'
 import './ExternalDataSources.css'
 
 function safeMessage(error: unknown) {
@@ -11,11 +12,8 @@ function safeMessage(error: unknown) {
     ? error.serverMessage : 'No fue posible completar la consulta. Intenta nuevamente.'
 }
 
-const energyNumber = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-const priceNumber = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 5 })
-
 function formatExternalValue(value: number, dataset: string) {
-  return dataset === 'PrecBolsNaci' ? `$${priceNumber.format(value)}` : energyNumber.format(value)
+  return dataset === 'PrecBolsNaci' ? formatPriceCOPPerKWh(value) : formatEnergyKWh(value)
 }
 
 export function ExternalDataSources() {

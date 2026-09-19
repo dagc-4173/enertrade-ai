@@ -11,6 +11,7 @@ import { ApiError } from '../services/apiClient'
 import type { CapabilityVersion } from '../types/capabilities'
 import type { IndicatorsResponse } from '../types/indicators'
 import type { MetricCardData } from '../types/domain'
+import { formatNumberCO } from '../utils/numberFormat'
 
 export type DashboardState =
   | { kind: 'loading' }
@@ -43,13 +44,13 @@ function errorMessage(error: unknown) {
 function metrics(data: IndicatorsResponse): MetricCardData[] {
   const { indicators } = data
   return [
-    { title: 'Pronósticos registrados', value: String(indicators.forecasts.total), helper: `Oferta: ${indicators.forecasts.supply}. Demanda: ${indicators.forecasts.demand}.`, tone: 'info' },
-    { title: 'Estimaciones de precio', value: String(indicators.priceEstimates), helper: 'Ejecuciones de precio registradas.', tone: 'info' },
-    { title: 'Sugerencias de matching', value: String(indicators.matchingSuggestions), helper: 'Coincidencias generadas por ejecuciones completadas.', tone: 'info' },
-    { title: 'Patrones identificados', value: String(indicators.patternsIdentified), helper: 'Patrones en análisis completados o parciales.', tone: 'info' },
-    { title: 'Errores registrados', value: String(indicators.errors.total), helper: 'Fallos de capacidades registrados.', tone: indicators.errors.total === 0 ? 'success' : 'warning' },
-    { title: 'Tiempo de respuesta promedio', value: indicators.averageResponseTimeMs === null ? 'No disponible' : `${indicators.averageResponseTimeMs} ms`, helper: indicators.averageResponseTimeMs === null ? 'No hay muestra de trazas.' : `Muestra: ${data.sample.traceCount} trazas.`, tone: 'neutral' },
-    { title: 'Capacidades activas', value: `${indicators.capabilities.active}/${indicators.capabilities.total}`, helper: `${indicators.capabilities.byArtifactType.mlModel} ML, ${indicators.capabilities.byArtifactType.deterministicRule} regla, ${indicators.capabilities.byArtifactType.deterministicMethod} método.`, tone: 'success' },
+    { title: 'Pronósticos registrados', value: formatNumberCO(indicators.forecasts.total), helper: `Oferta: ${formatNumberCO(indicators.forecasts.supply)}. Demanda: ${formatNumberCO(indicators.forecasts.demand)}.`, tone: 'info' },
+    { title: 'Estimaciones de precio', value: formatNumberCO(indicators.priceEstimates), helper: 'Ejecuciones de precio registradas.', tone: 'info' },
+    { title: 'Sugerencias de matching', value: formatNumberCO(indicators.matchingSuggestions), helper: 'Coincidencias generadas por ejecuciones completadas.', tone: 'info' },
+    { title: 'Patrones identificados', value: formatNumberCO(indicators.patternsIdentified), helper: 'Patrones en análisis completados o parciales.', tone: 'info' },
+    { title: 'Errores registrados', value: formatNumberCO(indicators.errors.total), helper: 'Fallos de capacidades registrados.', tone: indicators.errors.total === 0 ? 'success' : 'warning' },
+    { title: 'Tiempo de respuesta promedio', value: indicators.averageResponseTimeMs === null ? 'No disponible' : `${formatNumberCO(indicators.averageResponseTimeMs)} ms`, helper: indicators.averageResponseTimeMs === null ? 'No hay muestra de trazas.' : `Muestra: ${formatNumberCO(data.sample.traceCount)} trazas.`, tone: 'neutral' },
+    { title: 'Capacidades activas', value: `${formatNumberCO(indicators.capabilities.active)}/${formatNumberCO(indicators.capabilities.total)}`, helper: `${formatNumberCO(indicators.capabilities.byArtifactType.mlModel)} ML, ${formatNumberCO(indicators.capabilities.byArtifactType.deterministicRule)} regla, ${formatNumberCO(indicators.capabilities.byArtifactType.deterministicMethod)} método.`, tone: 'success' },
   ]
 }
 
@@ -59,14 +60,13 @@ export function Dashboard() {
 
   useEffect(() => {
     const controller = new AbortController()
-    setState({ kind: 'loading' })
     Promise.all([getIndicators(controller.signal), getCapabilityVersions(controller.signal)])
       .then(([indicators, capabilities]) => { if (!controller.signal.aborted) setState({ kind: 'success', indicators, capabilities }) })
       .catch(error => { if (!controller.signal.aborted) setState({ kind: 'error', message: errorMessage(error) }) })
     return () => controller.abort()
   }, [retry])
 
-  return <DashboardContent state={state} onRetry={() => setRetry(value => value + 1)} />
+  return <DashboardContent state={state} onRetry={() => { setState({ kind: 'loading' }); setRetry(value => value + 1) }} />
 }
 
 export function DashboardContent({ state, onRetry }: { state: DashboardState; onRetry: () => void }) {
