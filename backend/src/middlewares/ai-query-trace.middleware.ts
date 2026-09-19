@@ -10,9 +10,9 @@ const object = (value: unknown): value is JsonObject => value !== null && typeof
 type Route = { endpoint: string; capability: string; authenticated: boolean };
 function route(req: { method: string; path: string }): Route | null {
   const key = `${req.method} ${req.path}`;
-  if (['POST /forecasts/supply', 'POST /forecasts/demand', 'POST /forecasts/price', 'GET /forecasts/supply/metrics', 'GET /forecasts/demand/metrics', 'POST /matches/suggest', 'POST /patterns/analyze', 'GET /patterns', 'GET /models', 'GET /capabilities/versions'].includes(key)) {
+  if (['POST /forecasts/supply', 'POST /forecasts/demand', 'POST /forecasts/price', 'GET /forecasts/supply/metrics', 'GET /forecasts/demand/metrics', 'POST /matches/suggest', 'POST /patterns/analyze', 'GET /patterns', 'GET /models', 'GET /capabilities/versions', 'GET /indicators'].includes(key)) {
     const endpoint = key.slice(req.method.length + 1);
-    return { endpoint, capability: endpoint === '/capabilities/versions' ? 'capability_versions' : endpoint.replaceAll('/', '_').replace(/^_/, ''), authenticated: key.includes('/matches') || key.includes('/patterns') };
+    return { endpoint, capability: endpoint === '/capabilities/versions' ? 'capability_versions' : endpoint === '/indicators' ? 'engine_indicators' : endpoint.replaceAll('/', '_').replace(/^_/, ''), authenticated: key.includes('/matches') || key.includes('/patterns') };
   }
   if (req.method === 'GET' && /^\/models\/[^/]+\/metrics$/.test(req.path)) return { endpoint: '/models/:id/metrics', capability: 'model_catalog', authenticated: false };
   if (req.method === 'GET' && /^\/models\/[^/]+$/.test(req.path)) return { endpoint: '/models/:id', capability: 'model_catalog', authenticated: false };
