@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import { performance } from 'node:perf_hooks';
 import { Prisma } from '@/generated/prisma/client';
 import { aiQueryTraceStore, recordAiQueryTrace, type AiQueryTraceInput, type AiQueryTraceStore } from '@/services/ai-query-trace.service';
+import { matchingMethod } from '@/services/matching-method';
 
 type JsonObject = Record<string, unknown>;
 const object = (value: unknown): value is JsonObject => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -9,9 +10,9 @@ const object = (value: unknown): value is JsonObject => value !== null && typeof
 type Route = { endpoint: string; capability: string; authenticated: boolean };
 function route(req: { method: string; path: string }): Route | null {
   const key = `${req.method} ${req.path}`;
-  if (['POST /forecasts/supply', 'POST /forecasts/demand', 'POST /forecasts/price', 'GET /forecasts/supply/metrics', 'GET /forecasts/demand/metrics', 'POST /matches/suggest', 'POST /patterns/analyze', 'GET /patterns', 'GET /models'].includes(key)) {
+  if (['POST /forecasts/supply', 'POST /forecasts/demand', 'POST /forecasts/price', 'GET /forecasts/supply/metrics', 'GET /forecasts/demand/metrics', 'POST /matches/suggest', 'POST /patterns/analyze', 'GET /patterns', 'GET /models', 'GET /capabilities/versions'].includes(key)) {
     const endpoint = key.slice(req.method.length + 1);
-    return { endpoint, capability: endpoint.replaceAll('/', '_').replace(/^_/, ''), authenticated: key.includes('/matches') || key.includes('/patterns') };
+    return { endpoint, capability: endpoint === '/capabilities/versions' ? 'capability_versions' : endpoint.replaceAll('/', '_').replace(/^_/, ''), authenticated: key.includes('/matches') || key.includes('/patterns') };
   }
   if (req.method === 'GET' && /^\/models\/[^/]+\/metrics$/.test(req.path)) return { endpoint: '/models/:id/metrics', capability: 'model_catalog', authenticated: false };
   if (req.method === 'GET' && /^\/models\/[^/]+$/.test(req.path)) return { endpoint: '/models/:id', capability: 'model_catalog', authenticated: false };
@@ -28,7 +29,7 @@ function metadata(req: Parameters<RequestHandler>[0], target: Route, response: u
     : endpoint === '/patterns/analyze' ? allowed(req.body, ['preparedDatasetId'])
     : endpoint === '/patterns' ? allowed(req.query, ['from', 'to', 'dataType', 'variable'])
     : endpoint.startsWith('/models/:id') ? { modelId: req.path.split('/')[2] ?? '' }
-    : endpoint === '/matches/suggest' ? { criteriaVersion: 'matching-v1', offerCount: object(data.summary) && typeof data.summary.offersConsidered === 'number' ? data.summary.offersConsidered : 0, demandCount: object(data.summary) && typeof data.summary.demandsConsidered === 'number' ? data.summary.demandsConsidered : 0 }
+    : endpoint === '/matches/suggest' ? { criteriaVersion: matchingMethod.id, offerCount: object(data.summary) && typeof data.summary.offersConsidered === 'number' ? data.summary.offersConsidered : 0, demandCount: object(data.summary) && typeof data.summary.demandsConsidered === 'number' ? data.summary.demandsConsidered : 0 }
     : {};
   const resultStatus = typeof data.status === 'string' ? data.status : undefined;
   const empty = data.error === 'PREDICTIVE_ARTIFACT_NOT_FOUND' || resultStatus === 'unavailable' || resultStatus === 'no_matches' || resultStatus === 'no_results' || (Array.isArray(response) && response.length === 0);
@@ -42,7 +43,7 @@ function metadata(req: Parameters<RequestHandler>[0], target: Route, response: u
     ...(typeof data.modelId === 'string' ? { modelId: data.modelId } : endpoint.startsWith('/models/:id') && typeof data.id === 'string' ? { modelId: data.id } : {}),
     ...(typeof data.modelVersion === 'string' ? { modelVersion: data.modelVersion } : endpoint.startsWith('/models/:id') && typeof data.version === 'string' ? { modelVersion: data.version } : {}),
     ...(object(data.rule) && typeof data.rule.id === 'string' ? { modelId: data.rule.id, modelVersion: typeof data.rule.version === 'string' ? data.rule.version : undefined } : {}),
-    ...(endpoint === '/matches/suggest' ? { methodId: 'matching-v1' } : {}),
+    ...(endpoint === '/matches/suggest' ? { methodId: matchingMethod.id, methodVersion: matchingMethod.version } : {}),
     ...(object(data.method) && typeof data.method.id === 'string' ? { methodId: data.method.id, methodVersion: typeof data.method.version === 'string' ? data.method.version : undefined } : {}),
     executionStatus: empty ? 'empty' : status >= 400 ? 'failed' : 'succeeded', ...(resultStatus ? { resultStatus } : {}),
     ...(status >= 400 && typeof data.error === 'string' ? { errorCode: data.error } : {}),

@@ -8,6 +8,7 @@ import {
   type MatchingReadRepository,
   type MatchingResponse,
 } from '@/services/matching.service';
+import { matchingMethod } from '@/services/matching-method';
 
 type Store = {
   create(args: { data: Prisma.MatchingExecutionUncheckedCreateInput }): Promise<unknown>;
@@ -74,7 +75,7 @@ export function createMatchingTraceService(store: Store) {
         await store.create({ data: {
           id: executionId,
           executionStatus: 'pending',
-          criteriaVersion: 'matching-v1',
+          criteriaVersion: matchingMethod.id,
           criteriaSnapshot,
         } });
         return { executionId, started: true };

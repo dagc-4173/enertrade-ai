@@ -77,6 +77,9 @@ describe('HU17 AiQueryTrace', () => {
     const metrics = harness((_req, res) => res.json({ id: 'xm-gene-ridge', version: '1.0.0' }));
     await request(metrics.app, '/models/xm-gene-ridge/metrics');
     expect(metrics.rows[0]).toMatchObject({ endpoint: '/models/:id/metrics', modelId: 'xm-gene-ridge', modelVersion: '1.0.0' });
+    const capabilities = harness((_req, res) => res.json({ capabilities: [] }));
+    const capabilityResult = await request(capabilities.app, '/capabilities/versions');
+    expect(capabilities.rows[0]).toMatchObject({ requestId: capabilityResult.requestId, endpoint: '/capabilities/versions', httpMethod: 'GET', capability: 'capability_versions', requesterType: 'system', executionStatus: 'succeeded', parametersSnapshot: {} });
   });
 
   test('TRACE-08: 500 conserva envelope público y no persiste detalles privados', async () => {
