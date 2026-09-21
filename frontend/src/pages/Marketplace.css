@@ -75,6 +75,9 @@
 .marketplace-item { display: grid; gap: 7px; padding: 14px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface-alt); }
 .marketplace-item span { color: var(--color-muted); font-size: 14px; }
 .marketplace-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.marketplace-compatibility { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+.marketplace-incompatibility { color: #9a4d10 !important; font-weight: 700; }
+.marketplace-disabled-action:disabled { color: var(--color-muted); background: transparent; border-color: var(--color-border); opacity: 1; cursor: not-allowed; text-decoration: line-through; }
 
 @media (max-width: 900px) {
   .marketplace-columns {

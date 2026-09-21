@@ -11,10 +11,13 @@ import { SectionHeader } from '../components/ui/SectionHeader'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import './Marketplace.css'
 
-function errorMessage(error: unknown) {
+export function errorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 401) return 'La sesión es requerida o expiró. Inicia sesión nuevamente.'
-    return error.serverMessage ?? 'No fue posible completar la solicitud.'
+    if (error.serverMessage) return error.serverMessage
+    if (error.status !== null) return error.code ? `La API rechazó la solicitud (${error.code}, HTTP ${error.status}).` : `La API rechazó la solicitud (HTTP ${error.status}).`
+    if (error.kind === 'network') return 'No fue posible comunicarse con la API. Verifica que el backend esté disponible.'
+    return 'La API devolvió una respuesta que no pudo procesarse.'
   }
   return 'No fue posible completar la solicitud. Intenta nuevamente.'
 }
@@ -24,7 +27,7 @@ function parsePositiveValue(value: FormDataEntryValue | null) {
   return Number.isFinite(number) && number > 0 ? number : null
 }
 
-function CompatibilityAction({ ownOffer, ownDemand, externalOffer, externalDemand, onSelect }: { ownOffer?: EnergyOfferDto; ownDemand?: EnergyDemandDto; externalOffer?: MarketOffer; externalDemand?: MarketDemand; onSelect: () => void }) {
+export function CompatibilityAction({ ownOffer, ownDemand, externalOffer, externalDemand, onSelect }: { ownOffer?: EnergyOfferDto; ownDemand?: EnergyDemandDto; externalOffer?: MarketOffer; externalDemand?: MarketDemand; onSelect: () => void }) {
   const own = ownOffer ?? ownDemand!
   const external = externalOffer ?? externalDemand!
   const quantityCompatible = own.quantityKwh >= Number(external.availableQuantityKwh)
@@ -36,7 +39,12 @@ function CompatibilityAction({ ownOffer, ownDemand, externalOffer, externalDeman
   const priceMessage = ownOffer
     ? `Tu oferta es de ${formatCopPerKwh(ownOffer.pricePerKwh)} y la demanda acepta máximo ${formatCopPerKwh(Number(externalDemand!.maxPricePerKwh))}.`
     : `Tu demanda acepta máximo ${formatCopPerKwh(ownDemand!.maxPricePerKwh)} y la oferta cuesta ${formatCopPerKwh(Number(externalOffer!.pricePerKwh))}.`
-  return <div className="marketplace-compatibility"><strong>{ownOffer ? 'Tu oferta' : 'Tu demanda'}: {quantityCompatible ? 'cantidad compatible' : 'cantidad no compatible'}, {dateCompatible ? 'fecha compatible' : 'fecha no compatible'}, {priceCompatible ? 'precio compatible' : 'precio no compatible'}.</strong>{!priceCompatible && <span>{priceMessage}</span>}<button className="secondary-button" type="button" disabled={!compatible} title={compatible ? undefined : 'Corrige la cantidad, fecha o precio de tu publicación para crear una propuesta.'} onClick={onSelect}>{ownOffer ? 'Proponer con mi oferta' : 'Proponer con mi demanda'}</button></div>
+  const incompatibilityMessage = !compatible
+    ? !priceCompatible ? `Esta combinación no puede proponerse porque ${ownOffer ? 'el precio de tu oferta supera el máximo de la demanda.' : 'el precio de la oferta supera el máximo de tu demanda.'}`
+      : !dateCompatible ? 'Esta combinación no puede proponerse porque las fechas de entrega no coinciden.'
+        : 'Esta combinación no puede proponerse porque la cantidad disponible no cubre la publicación propia.'
+    : null
+  return <div className="marketplace-compatibility"><strong>{ownOffer ? 'Tu oferta' : 'Tu demanda'}: {quantityCompatible ? 'cantidad compatible' : 'cantidad no compatible'}, {dateCompatible ? 'fecha compatible' : 'fecha no compatible'}, {priceCompatible ? 'precio compatible' : 'precio no compatible'}.</strong>{!priceCompatible && <span>{priceMessage}</span>}{incompatibilityMessage && <span className="marketplace-incompatibility">{incompatibilityMessage}</span>}<button className={`secondary-button${compatible ? '' : ' marketplace-disabled-action'}`} type="button" disabled={!compatible} aria-disabled={!compatible} title={compatible ? undefined : incompatibilityMessage ?? undefined} onClick={onSelect}>{ownOffer ? 'Proponer con mi oferta' : 'Proponer con mi demanda'}</button></div>
 }
 
 function ActiveMarket({ offers, demands, ownOffers, ownDemands, onRefresh }: { offers: MarketOffer[]; demands: MarketDemand[]; ownOffers: EnergyOfferDto[]; ownDemands: EnergyDemandDto[]; onRefresh: () => void }) {

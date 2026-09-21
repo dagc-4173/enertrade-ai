@@ -2,15 +2,17 @@ import { afterEach, expect, spyOn, test } from 'bun:test'
 import process from 'node:process'
 import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { Marketplace } from '../src/pages/Marketplace'
+import { CompatibilityAction, errorMessage, Marketplace } from '../src/pages/Marketplace'
 import { ApiError } from '../src/services/apiClient'
-import { createDemand, createOffer, getMyDemands, getMyOffers } from '../src/services/marketplaceService'
+import { createDemand, createOffer, getMyDemands, getMyOffers, updateDemand } from '../src/services/marketplaceService'
+import { createTransaction } from '../src/services/transactionService'
 import { formatCopPerKwh, formatEnergy } from '../src/utils/numberFormat'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
 const date = '2026-09-18'
 const offer = { id: 'offer-1', quantityKwh: 9851831.89, pricePerKwh: 412.5, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
 const demand = { id: 'demand-1', quantityKwh: 252444558.83, maxPricePerKwh: 960.71104, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
+const transaction = { id: 'transaction-1', offerId: 'external-offer', demandId: 'own-demand', quantityKwh: '21000', pricePerKwh: '950', totalAmountCop: '19950000', deliveryDate: '2026-09-25', status: 'PENDING_ACCEPTANCE', role: 'BUYER', sellerAcceptedAt: null, buyerAcceptedAt: null, createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z', confirmedAt: null, cancelledAt: null, matchingExecutionId: null }
 const originalFetch = globalThis.fetch
 afterEach(() => { globalThis.fetch = originalFetch })
 function respond(body: unknown, status = 200) {
@@ -80,4 +82,39 @@ test('los errores 401 del backend se conservan como ApiError seguro', async () =
 test('rechaza DTOs inesperados del backend', async () => {
   respond({ offers: [{ ...offer, userId: 'secret' }] })
   await expect(getMyOffers()).rejects.toBeInstanceOf(ApiError)
+})
+
+test('demanda ACTIVE se actualiza por PATCH con el contrato esperado', async () => {
+  const updated = { ...demand, id: 'own-demand', quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' }
+  const fetch = respond({ demand: updated })
+  expect(await updateDemand('own-demand', { quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' })).toEqual(updated)
+  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/demands/own-demand')
+  expect(fetch.mock.calls[0]?.[1]).toMatchObject({ method: 'PATCH', credentials: 'include' })
+  expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({ quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' })
+})
+
+test('compatibilidad 900 frente a 950 deja el CTA visible, deshabilitado y sin POST', () => {
+  const fetch = spyOn(globalThis, 'fetch')
+  const html = renderToStaticMarkup(<CompatibilityAction ownDemand={{ ...demand, id: 'own-demand', quantityKwh: 21_000, maxPricePerKwh: 900, deliveryDate: '2026-09-25' }} externalOffer={{ id: 'external-offer', availableQuantityKwh: '21000', pricePerKwh: '950', deliveryDate: '2026-09-25', status: 'ACTIVE' }} onSelect={() => { throw new Error('No debe seleccionarse una combinación incompatible.') }} />)
+  expect(html).toContain('precio no compatible')
+  expect(html).toContain('Esta combinación no puede proponerse porque el precio de la oferta supera el máximo de tu demanda.')
+  expect(html).toMatch(/disabled=""[^>]*>Proponer con mi demanda/)
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+test('compatibilidad 1000 frente a 950 habilita el CTA y crea la propuesta con IDs y cantidad reales', async () => {
+  const html = renderToStaticMarkup(<CompatibilityAction ownDemand={{ ...demand, id: 'own-demand', quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' }} externalOffer={{ id: 'external-offer', availableQuantityKwh: '21000', pricePerKwh: '950', deliveryDate: '2026-09-25', status: 'ACTIVE' }} onSelect={() => {}} />)
+  expect(html).toContain('precio compatible')
+  expect(html).not.toMatch(/disabled=""[^>]*>Proponer con mi demanda/)
+  const fetch = respond({ transaction }, 201)
+  expect(await createTransaction({ offerId: 'external-offer', demandId: 'own-demand', quantityKwh: 21_000 })).toMatchObject({ status: 'PENDING_ACCEPTANCE', offerId: 'external-offer', demandId: 'own-demand' })
+  expect(fetch).toHaveBeenCalledTimes(1)
+  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions')
+  expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({ offerId: 'external-offer', demandId: 'own-demand', quantityKwh: 21_000 })
+})
+
+test('errores reales de edición o propuesta conservan mensaje, código y estado seguro', async () => {
+  respond({ error: 'PUBLICATION_TRANSACTION_LOCKED', message: 'La demanda tiene una reserva o transacción confirmada y no puede editarse.' }, 409)
+  await expect(updateDemand('own-demand', { quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' })).rejects.toMatchObject({ status: 409, code: 'PUBLICATION_TRANSACTION_LOCKED', serverMessage: 'La demanda tiene una reserva o transacción confirmada y no puede editarse.' })
+  expect(errorMessage(new ApiError('http', 'HTTP 409', 409, 'PRICE_NOT_COMPATIBLE', 'El precio de la oferta supera el máximo de la demanda.'))).toBe('El precio de la oferta supera el máximo de la demanda.')
 })
