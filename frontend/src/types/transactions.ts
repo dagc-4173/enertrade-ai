@@ -1,5 +1,6 @@
 export type TransactionStatus = 'PENDING_ACCEPTANCE' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED'
 export type TransactionRole = 'BUYER' | 'SELLER'
+export type ProposalOwnership = 'CREATED_BY_ME' | 'RECEIVED' | 'LEGACY_UNKNOWN'
 
 export interface EnergyTransaction {
   id: string
@@ -18,4 +19,5 @@ export interface EnergyTransaction {
   cancelledAt: string | null
   matchingExecutionId: string | null
   role: TransactionRole
+  proposalOwnership: ProposalOwnership
 }

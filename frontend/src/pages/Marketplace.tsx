@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ApiError } from '../services/apiClient'
 import { cancelDemand, cancelOffer, createDemand, createOffer, getMyDemands, getMyOffers, listMarketDemands, listMarketOffers, updateDemand, updateOffer } from '../services/marketplaceService'
 import { suggestMatches } from '../services/matchingService'
 import { createTransaction } from '../services/transactionService'
@@ -7,21 +6,11 @@ import type { EnergyDemandDto, EnergyOfferDto, MarketDemand, MarketOffer } from 
 import type { EnergyTransaction } from '../types/transactions'
 import type { MatchingResult } from '../types/matching'
 import { formatCopPerKwh, formatDeliveryDate, formatEnergy, formatEnergyKWh } from '../utils/numberFormat'
+import { errorMessage, selectProposal, type SelectedProposal } from '../utils/marketplaceActions'
 import { DataTable } from '../components/tables/DataTable'
 import { SectionHeader } from '../components/ui/SectionHeader'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import './Marketplace.css'
-
-export function errorMessage(error: unknown) {
-  if (error instanceof ApiError) {
-    if (error.status === 401) return 'La sesión es requerida o expiró. Inicia sesión nuevamente.'
-    if (error.serverMessage) return error.serverMessage
-    if (error.status !== null) return error.code ? `La API rechazó la solicitud (${error.code}, HTTP ${error.status}).` : `La API rechazó la solicitud (HTTP ${error.status}).`
-    if (error.kind === 'network') return 'No fue posible comunicarse con la API. Verifica que el backend esté disponible.'
-    return 'La API devolvió una respuesta que no pudo procesarse.'
-  }
-  return 'No fue posible completar la solicitud. Intenta nuevamente.'
-}
 
 function parsePositiveValue(value: FormDataEntryValue | null) {
   const number = Number(value)
@@ -46,11 +35,6 @@ export function CompatibilityAction({ ownOffer, ownDemand, externalOffer, extern
         : 'Esta combinación no puede proponerse porque la cantidad disponible no cubre la publicación propia.'
     : null
   return <div className="marketplace-compatibility"><strong>{ownOffer ? 'Tu oferta' : 'Tu demanda'}: {quantityCompatible ? 'cantidad compatible' : 'cantidad no compatible'}, {dateCompatible ? 'fecha compatible' : 'fecha no compatible'}, {priceCompatible ? 'precio compatible' : 'precio no compatible'}.</strong>{!priceCompatible && <span>{priceMessage}</span>}{incompatibilityMessage && <span className="marketplace-incompatibility">{incompatibilityMessage}</span>}<button className={`secondary-button${compatible ? '' : ' marketplace-disabled-action'}`} type="button" disabled={!compatible} aria-disabled={!compatible} title={compatible ? undefined : incompatibilityMessage ?? undefined} onClick={onSelect}>{ownOffer ? 'Proponer con mi oferta' : 'Proponer con mi demanda'}</button></div>
-}
-
-export type SelectedProposal = { offer: MarketOffer; demand: EnergyDemandDto; max: number }
-export function selectProposal(offer: MarketOffer, demand: EnergyDemandDto): SelectedProposal {
-  return { offer, demand, max: Math.min(Number(offer.availableQuantityKwh), demand.quantityKwh) }
 }
 
 export function ActiveMarket({ offers, demands, ownOffers, ownDemands, onRefresh, onNavigate }: { offers: MarketOffer[]; demands: MarketDemand[]; ownOffers: EnergyOfferDto[]; ownDemands: EnergyDemandDto[]; onRefresh: () => void; onNavigate?: () => void }) {

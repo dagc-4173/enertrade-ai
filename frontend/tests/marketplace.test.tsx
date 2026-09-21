@@ -2,17 +2,19 @@ import { afterEach, expect, spyOn, test } from 'bun:test'
 import process from 'node:process'
 import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { CompatibilityAction, errorMessage, Marketplace, selectProposal } from '../src/pages/Marketplace'
+import { CompatibilityAction, Marketplace } from '../src/pages/Marketplace'
+import { canAccept, canCancel, canEdit, canReject } from '../src/utils/transactionActions'
+import { errorMessage, selectProposal } from '../src/utils/marketplaceActions'
 import { ApiError } from '../src/services/apiClient'
 import { createDemand, createOffer, getMyDemands, getMyOffers, updateDemand } from '../src/services/marketplaceService'
-import { createTransaction, listMyTransactions } from '../src/services/transactionService'
+import { createTransaction, listMyTransactions, updateTransaction } from '../src/services/transactionService'
 import { formatCopPerKwh, formatEnergy } from '../src/utils/numberFormat'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
 const date = '2026-09-18'
 const offer = { id: 'offer-1', quantityKwh: 9851831.89, pricePerKwh: 412.5, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
 const demand = { id: 'demand-1', quantityKwh: 252444558.83, maxPricePerKwh: 960.71104, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
-const transaction = { id: 'transaction-1', offerId: 'external-offer', demandId: 'own-demand', quantityKwh: '21000', pricePerKwh: '950', totalAmountCop: '19950000', deliveryDate: '2026-09-25', status: 'PENDING_ACCEPTANCE', role: 'BUYER', sellerAcceptedAt: null, buyerAcceptedAt: null, createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z', confirmedAt: null, cancelledAt: null, matchingExecutionId: null }
+const transaction = { id: 'transaction-1', offerId: 'external-offer', demandId: 'own-demand', quantityKwh: '21000', pricePerKwh: '950', totalAmountCop: '19950000', deliveryDate: '2026-09-25', status: 'PENDING_ACCEPTANCE', role: 'BUYER', proposalOwnership: 'RECEIVED' as const, sellerAcceptedAt: null, buyerAcceptedAt: null, createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z', confirmedAt: null, cancelledAt: null, matchingExecutionId: null }
 const originalFetch = globalThis.fetch
 afterEach(() => { globalThis.fetch = originalFetch })
 function respond(body: unknown, status = 200) {
@@ -128,6 +130,52 @@ test('GET /transactions/mine incluye pendiente bajo Todas y Pendientes', async (
   fetch = respond({ transactions: [transaction] })
   expect(await listMyTransactions('PENDING_ACCEPTANCE')).toEqual([transaction])
   expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions/mine?status=PENDING_ACCEPTANCE')
+})
+
+test('contrato transaccional exige ownership permitido y no expone autor', async () => {
+  respond({ transactions: [{ ...transaction, proposalOwnership: 'UNKNOWN' }] })
+  await expect(listMyTransactions()).rejects.toBeInstanceOf(ApiError)
+  respond({ transactions: [{ ...transaction, proposedByUserId: 'secret' }] })
+  await expect(listMyTransactions()).rejects.toBeInstanceOf(ApiError)
+})
+
+test('PATCH /transactions sólo envía quantityKwh y acepta respuesta 200', async () => {
+  const updated = { ...transaction, proposalOwnership: 'CREATED_BY_ME' as const, quantityKwh: '12000', totalAmountCop: '10800000' }
+  const fetch = respond({ transaction: updated })
+  expect(await updateTransaction('transaction-1', { quantityKwh: 12_000 })).toEqual(updated)
+  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions/transaction-1')
+  expect(fetch.mock.calls[0]?.[1]).toMatchObject({ method: 'PATCH', credentials: 'include' })
+  expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({ quantityKwh: 12_000 })
+})
+
+test('PATCH rechazado conserva el mensaje del backend para el formulario', async () => {
+  respond({ error: 'TRANSACTION_ALREADY_ACCEPTED', message: 'La propuesta ya tiene una aceptación y no puede editarse.' }, 409)
+  await expect(updateTransaction('transaction-1', { quantityKwh: 12_000 })).rejects.toMatchObject({ code: 'TRANSACTION_ALREADY_ACCEPTED', serverMessage: 'La propuesta ya tiene una aceptación y no puede editarse.' })
+})
+
+test('permisos separan creador, receptor, bloqueo por aceptación y legado', () => {
+  const created = { ...transaction, role: 'SELLER' as const, proposalOwnership: 'CREATED_BY_ME' as const }
+  expect(canEdit(created)).toBe(true)
+  expect(canCancel(created)).toBe(true)
+  expect(canAccept(created)).toBe(true)
+  expect(canReject(created)).toBe(false)
+  const received = { ...transaction, proposalOwnership: 'RECEIVED' as const }
+  expect(canEdit(received)).toBe(false)
+  expect(canCancel(received)).toBe(false)
+  expect(canAccept(received)).toBe(true)
+  expect(canReject(received)).toBe(true)
+  const accepted = { ...created, sellerAcceptedAt: '2026-09-18T00:00:00.000Z' }
+  expect(canEdit(accepted)).toBe(false)
+  expect(canCancel(accepted)).toBe(false)
+  const confirmed = { ...created, status: 'CONFIRMED' as const, sellerAcceptedAt: '2026-09-18T00:00:00.000Z', buyerAcceptedAt: '2026-09-18T00:00:00.000Z' }
+  expect(canEdit(confirmed)).toBe(false)
+  expect(canCancel(confirmed)).toBe(false)
+  expect(canAccept(confirmed)).toBe(false)
+  expect(canReject(confirmed)).toBe(false)
+  const legacy = { ...transaction, proposalOwnership: 'LEGACY_UNKNOWN' as const }
+  expect(canEdit(legacy)).toBe(false)
+  expect(canCancel(legacy)).toBe(false)
+  expect(canReject(legacy)).toBe(true)
 })
 
 test('el éxito muestra los datos de la propuesta y el acceso a Transacciones', () => {
