@@ -47,15 +47,22 @@ un creador, por lo que se clasifican como `LEGACY_UNKNOWN` y no se pueden editar
 ni cancelar mediante la regla de creador.
 
 El creador puede editar solamente `quantityKwh` mientras la propuesta esté
-`PENDING_ACCEPTANCE` y ambas aceptaciones sean nulas. La edición se ejecuta en
-la misma transacción serializable que bloquea transacción, oferta y demanda;
-al validar saldo excluye la reserva actual y recalcula el total con aritmética
-decimal exacta. No modifica precio, fecha, participantes, estado ni procedencia.
+`PENDING_ACCEPTANCE`, aun cuando exista una aceptación individual. La edición
+se ejecuta en la misma transacción serializable que bloquea transacción, oferta
+y demanda; al validar saldo excluye la reserva actual y recalcula el total con
+aritmética decimal exacta. Como los términos cambian, reinicia ambas
+aceptaciones para requerir consentimiento de nuevo. No modifica precio, fecha,
+participantes, estado ni procedencia.
 
-El creador puede cancelar antes de cualquier aceptación. El receptor puede
-rechazar mientras siga pendiente, incluso después de la aceptación de la otra
-parte. En una propuesta nueva, el creador no puede rechazar y el receptor no
-puede cancelar. `CONFIRMED`, `REJECTED` y `CANCELLED` son inmutables.
+El creador puede cancelar mientras siga pendiente, incluso después de una
+aceptación individual. El receptor puede rechazar mientras siga pendiente,
+incluso después de la aceptación de la otra parte. En una propuesta nueva, el
+creador no puede rechazar y el receptor no puede cancelar. `CONFIRMED`,
+`REJECTED` y `CANCELLED` son inmutables.
+
+Todos los comandos mutables de transacción devuelven el DTO seguro de
+participante, con `role` y `proposalOwnership`, sin IDs internos. Esto mantiene
+un contrato uniforme con creación y consultas.
 
 Las pruebas unitarias conservan la simulación serializada heredada de C20a. La
 prueba de integración de concurrencia contra PostgreSQL real permanece

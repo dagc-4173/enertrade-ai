@@ -7,7 +7,7 @@ import { canAccept, canCancel, canEdit, canReject } from '../src/utils/transacti
 import { errorMessage, selectProposal } from '../src/utils/marketplaceActions'
 import { ApiError } from '../src/services/apiClient'
 import { createDemand, createOffer, getMyDemands, getMyOffers, updateDemand } from '../src/services/marketplaceService'
-import { createTransaction, listMyTransactions, updateTransaction } from '../src/services/transactionService'
+import { acceptTransaction, cancelTransaction, createTransaction, listMyTransactions, rejectTransaction, updateTransaction } from '../src/services/transactionService'
 import { formatCopPerKwh, formatEnergy } from '../src/utils/numberFormat'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
@@ -149,11 +149,25 @@ test('PATCH /transactions sólo envía quantityKwh y acepta respuesta 200', asyn
 })
 
 test('PATCH rechazado conserva el mensaje del backend para el formulario', async () => {
-  respond({ error: 'TRANSACTION_ALREADY_ACCEPTED', message: 'La propuesta ya tiene una aceptación y no puede editarse.' }, 409)
-  await expect(updateTransaction('transaction-1', { quantityKwh: 12_000 })).rejects.toMatchObject({ code: 'TRANSACTION_ALREADY_ACCEPTED', serverMessage: 'La propuesta ya tiene una aceptación y no puede editarse.' })
+  respond({ error: 'TRANSACTION_NOT_PENDING', message: 'La transacción ya no admite edición.' }, 409)
+  await expect(updateTransaction('transaction-1', { quantityKwh: 12_000 })).rejects.toMatchObject({ code: 'TRANSACTION_NOT_PENDING', serverMessage: 'La transacción ya no admite edición.' })
 })
 
-test('permisos separan creador, receptor, bloqueo por aceptación y legado', () => {
+test('respuestas válidas de editar, aceptar, rechazar y cancelar conservan el DTO participante', async () => {
+  let fetch = respond({ transaction: { ...transaction, proposalOwnership: 'CREATED_BY_ME' } })
+  expect(await updateTransaction('transaction-1', { quantityKwh: 12_000 })).toMatchObject({ role: 'BUYER', proposalOwnership: 'CREATED_BY_ME' })
+  fetch.mockRestore()
+  fetch = respond({ transaction })
+  expect(await acceptTransaction('transaction-1')).toMatchObject({ role: 'BUYER', proposalOwnership: 'RECEIVED' })
+  fetch.mockRestore()
+  fetch = respond({ transaction })
+  expect(await rejectTransaction('transaction-1')).toMatchObject({ role: 'BUYER', proposalOwnership: 'RECEIVED' })
+  fetch.mockRestore()
+  respond({ transaction: { ...transaction, proposalOwnership: 'CREATED_BY_ME' } })
+  expect(await cancelTransaction('transaction-1')).toMatchObject({ role: 'BUYER', proposalOwnership: 'CREATED_BY_ME' })
+})
+
+test('permisos separan creador, receptor, aceptación previa y legado', () => {
   const created = { ...transaction, role: 'SELLER' as const, proposalOwnership: 'CREATED_BY_ME' as const }
   expect(canEdit(created)).toBe(true)
   expect(canCancel(created)).toBe(true)
@@ -165,8 +179,8 @@ test('permisos separan creador, receptor, bloqueo por aceptación y legado', () 
   expect(canAccept(received)).toBe(true)
   expect(canReject(received)).toBe(true)
   const accepted = { ...created, sellerAcceptedAt: '2026-09-18T00:00:00.000Z' }
-  expect(canEdit(accepted)).toBe(false)
-  expect(canCancel(accepted)).toBe(false)
+  expect(canEdit(accepted)).toBe(true)
+  expect(canCancel(accepted)).toBe(true)
   const confirmed = { ...created, status: 'CONFIRMED' as const, sellerAcceptedAt: '2026-09-18T00:00:00.000Z', buyerAcceptedAt: '2026-09-18T00:00:00.000Z' }
   expect(canEdit(confirmed)).toBe(false)
   expect(canCancel(confirmed)).toBe(false)
@@ -175,7 +189,7 @@ test('permisos separan creador, receptor, bloqueo por aceptación y legado', () 
   const legacy = { ...transaction, proposalOwnership: 'LEGACY_UNKNOWN' as const }
   expect(canEdit(legacy)).toBe(false)
   expect(canCancel(legacy)).toBe(false)
-  expect(canReject(legacy)).toBe(true)
+  expect(canReject(legacy)).toBe(false)
 })
 
 test('el éxito muestra los datos de la propuesta y el acceso a Transacciones', () => {

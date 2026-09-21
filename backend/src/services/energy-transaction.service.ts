@@ -240,11 +240,10 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
     },
     async edit(userId: string, id: string, body: unknown) {
       const input = editInput(body);
-      return dto(await repo.withLockedTransaction(id, async store => {
+      return participantDto(await repo.withLockedTransaction(id, async store => {
         const current = await store.transaction();
         if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
         if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite edición.');
-        if (current.sellerAcceptedAt || current.buyerAcceptedAt) throw new EnergyTransactionError(409, 'TRANSACTION_ALREADY_ACCEPTED', 'La transacción ya tiene una aceptación y no puede editarse.');
         if (current.proposedByUserId === null) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta histórica no tiene creador verificable y no puede editarse.');
         if (current.proposedByUserId !== userId) throw new EnergyTransactionError(403, 'TRANSACTION_PROPOSER_REQUIRED', 'Solo quien creó la propuesta puede editarla.');
         const [offer, demand, reservedOffer, reservedDemand] = await Promise.all([store.offer(), store.demand(), store.reservedOfferQuantity(), store.reservedDemandQuantity()]);
@@ -254,11 +253,11 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
         const demandAvailable = subtract(subtract(decimalString(demand.quantityKwh), reservedDemand), `-${ownQuantity}`);
         if (compare(input.quantityKwh, offerAvailable) > 0) throw new EnergyTransactionError(409, 'OFFER_QUANTITY_UNAVAILABLE', 'La cantidad supera el saldo disponible de la oferta.');
         if (compare(input.quantityKwh, demandAvailable) > 0) throw new EnergyTransactionError(409, 'DEMAND_QUANTITY_UNAVAILABLE', 'La cantidad supera el saldo pendiente de la demanda.');
-        return store.update({ quantityKwh: input.quantityKwh, totalAmountCop: multiply(input.quantityKwh, decimalString(current.pricePerKwh)) });
-      }));
+        return store.update({ quantityKwh: input.quantityKwh, totalAmountCop: multiply(input.quantityKwh, decimalString(current.pricePerKwh)), sellerAcceptedAt: null, buyerAcceptedAt: null });
+      }), userId);
     },
     async accept(userId: string, id: string) {
-      return dto(await repo.withLockedTransaction(id, async store => {
+      return participantDto(await repo.withLockedTransaction(id, async store => {
         const current = await store.transaction();
         if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
         if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite aceptación.');
@@ -268,28 +267,27 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
         const confirmed = sellerAcceptedAt !== null && buyerAcceptedAt !== null;
         const updated = await store.update({ sellerAcceptedAt, buyerAcceptedAt, ...(confirmed ? { status: 'CONFIRMED', confirmedAt: now() } : {}) });
         return confirmed ? ensureConfirmedPublicationStatuses(store, updated) : updated;
-      }));
+      }), userId);
     },
     async reject(userId: string, id: string) {
-      return dto(await repo.withLockedTransaction(id, async store => {
+      return participantDto(await repo.withLockedTransaction(id, async store => {
         const current = await store.transaction();
         if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
         if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite rechazo.');
         if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede rechazar la transacción.');
         if (current.proposedByUserId !== null && current.proposedByUserId === userId) throw new EnergyTransactionError(403, 'TRANSACTION_RECIPIENT_REQUIRED', 'Quien creó la propuesta debe cancelarla, no rechazarla.');
         return store.update({ status: 'REJECTED' });
-      }));
+      }), userId);
     },
     async cancel(userId: string, id: string) {
-      return dto(await repo.withLockedTransaction(id, async store => {
+      return participantDto(await repo.withLockedTransaction(id, async store => {
         const current = await store.transaction();
         if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
         if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite cancelación.');
-        if (current.sellerAcceptedAt || current.buyerAcceptedAt) throw new EnergyTransactionError(409, 'TRANSACTION_ALREADY_ACCEPTED', 'La transacción ya tiene una aceptación y no puede cancelarse.');
         if (current.proposedByUserId === null) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta histórica no tiene creador verificable y no puede cancelarse.');
         if (current.proposedByUserId !== userId) throw new EnergyTransactionError(403, 'TRANSACTION_PROPOSER_REQUIRED', 'Solo quien creó la propuesta puede cancelarla.');
         return store.update({ status: 'CANCELLED', cancelledAt: now() });
-      }));
+      }), userId);
     },
     async findMine(userId: string, status?: string) {
       if (status && !Object.values(EnergyTransactionStatus).includes(status as EnergyTransactionStatus)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_STATUS', 'El estado de transacción no es válido.');

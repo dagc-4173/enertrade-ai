@@ -1,7 +1,7 @@
 import type { EnergyTransaction } from '../types/transactions'
 
 export function canEdit(transaction: EnergyTransaction) {
-  return transaction.status === 'PENDING_ACCEPTANCE' && transaction.proposalOwnership === 'CREATED_BY_ME' && transaction.sellerAcceptedAt === null && transaction.buyerAcceptedAt === null
+  return transaction.status === 'PENDING_ACCEPTANCE' && transaction.proposalOwnership === 'CREATED_BY_ME'
 }
 
 export function canCancel(transaction: EnergyTransaction) {
@@ -9,7 +9,7 @@ export function canCancel(transaction: EnergyTransaction) {
 }
 
 export function canReject(transaction: EnergyTransaction) {
-  return transaction.status === 'PENDING_ACCEPTANCE' && (transaction.proposalOwnership === 'RECEIVED' || transaction.proposalOwnership === 'LEGACY_UNKNOWN')
+  return transaction.status === 'PENDING_ACCEPTANCE' && transaction.proposalOwnership === 'RECEIVED'
 }
 
 export function canAccept(transaction: EnergyTransaction) {

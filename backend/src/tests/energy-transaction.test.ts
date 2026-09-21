@@ -190,13 +190,36 @@ describe('C20f gestión de propuestas transaccionales', () => {
     expect((await service.create(seller, { offerId: 'offer-1', demandId: 'demand-2', quantityKwh: 5000 })).status).toBe('PENDING_ACCEPTANCE');
   });
 
-  test('TXF-05: primera aceptación bloquea edición y cancelación, pero receptor aún puede rechazar', async () => {
-    const { service } = fixture();
+  test('TXF-05: editar pendiente invalida aceptaciones y cancelar sigue disponible hasta confirmar', async () => {
+    const { service, transactions } = fixture();
     const created = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 });
     await service.accept(seller, created.id);
-    await expect(service.edit(seller, created.id, { quantityKwh: 2 })).rejects.toMatchObject({ code: 'TRANSACTION_ALREADY_ACCEPTED' });
-    await expect(service.cancel(seller, created.id)).rejects.toMatchObject({ code: 'TRANSACTION_ALREADY_ACCEPTED' });
-    expect((await service.reject(buyer, created.id)).status).toBe('REJECTED');
+    const edited = await service.edit(seller, created.id, { quantityKwh: 2 });
+    expect(edited).toMatchObject({ quantityKwh: '2', sellerAcceptedAt: null, buyerAcceptedAt: null, status: 'PENDING_ACCEPTANCE', role: 'SELLER', proposalOwnership: 'CREATED_BY_ME' });
+    expect(transactions.get(created.id)!.createdAt.toISOString()).toBe(created.createdAt);
+    expect(transactions.get(created.id)!.updatedAt.getTime()).toBeGreaterThan(transactions.get(created.id)!.createdAt.getTime());
+    const cancellable = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 });
+    await service.accept(buyer, cancellable.id);
+    expect(await service.cancel(seller, cancellable.id)).toMatchObject({ status: 'CANCELLED', role: 'SELLER', proposalOwnership: 'CREATED_BY_ME' });
+    const rejectable = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 });
+    await service.accept(seller, rejectable.id);
+    expect(await service.reject(buyer, rejectable.id)).toMatchObject({ status: 'REJECTED', role: 'BUYER', proposalOwnership: 'RECEIVED' });
+  });
+
+  test('TXF-05b: edit, accept, reject y cancel devuelven DTO participante sin IDs internos', async () => {
+    const { service } = fixture();
+    const expectParticipant = (value: Record<string, unknown>, role: string, ownership: string) => {
+      expect(value).toMatchObject({ role, proposalOwnership: ownership });
+      expect(value).not.toHaveProperty('sellerUserId');
+      expect(value).not.toHaveProperty('buyerUserId');
+      expect(value).not.toHaveProperty('proposedByUserId');
+    };
+    const editable = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 });
+    expectParticipant(await service.edit(seller, editable.id, { quantityKwh: 2 }), 'SELLER', 'CREATED_BY_ME');
+    expectParticipant(await service.accept(seller, editable.id), 'SELLER', 'CREATED_BY_ME');
+    expectParticipant(await service.reject(buyer, editable.id), 'BUYER', 'RECEIVED');
+    const cancellable = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 });
+    expectParticipant(await service.cancel(seller, cancellable.id), 'SELLER', 'CREATED_BY_ME');
   });
 
   test('TXF-06: creador cancela, receptor rechaza y roles inversos se rechazan', async () => {

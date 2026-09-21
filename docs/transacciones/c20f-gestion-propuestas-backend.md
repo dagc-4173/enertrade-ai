@@ -19,14 +19,16 @@ nunca expone el ID del creador.
 ## API y estados
 
 - `PATCH /transactions/:id` acepta exclusivamente `{ "quantityKwh": number }`.
-- El creador solo puede editar una propuesta `PENDING_ACCEPTANCE` sin marcas de
-  aceptacion. Precio, fecha, participantes, estado, trazabilidad e IDs no se
-  pueden modificar.
+- El creador puede editar una propuesta `PENDING_ACCEPTANCE`, incluso si una
+  parte ya aceptó. Precio, fecha, participantes, estado, trazabilidad e IDs no
+  se pueden modificar. Al cambiar la cantidad, ambas marcas de aceptación se
+  reinician para que las dos partes acepten nuevamente los términos vigentes.
 - La edicion bloquea transaccion, oferta y demanda dentro de una transaccion
   PostgreSQL serializable. Al validar saldo, excluye la reserva previa de la
   propuesta y persiste la cantidad nueva y `totalAmountCop` decimal exacto.
-- El creador puede cancelar solo antes de aceptacion; se conserva la fila con
-  estado `CANCELLED`, liberando la reserva derivada.
+- El creador puede cancelar mientras siga `PENDING_ACCEPTANCE`, incluso tras
+  una aceptación individual; se conserva la fila con estado `CANCELLED`,
+  liberando la reserva derivada.
 - El receptor puede rechazar mientras siga pendiente, incluso si la otra parte
   ya acepto. En propuestas nuevas, el creador no puede rechazar y el receptor
   no puede cancelar.
@@ -47,6 +49,19 @@ otras propuestas y no compara la propuesta contra si misma como duplicado.
 ownership de creador/receptor responde 403; ausencia responde 404; estado,
 aceptacion, legado o saldo responden 409. Los envelopes conservan `error` y
 `message` publicos.
+
+## Corrección C20h: ciclo de vida y DTO
+
+`create`, `findMine`, `findOne`, `edit`, `accept`, `reject` y `cancel` devuelven
+el mismo DTO seguro de participante: `role` y `proposalOwnership`, sin IDs de
+vendedor, comprador o creador. Esto evita que una operación persistida sea
+rechazada por el validador del cliente.
+
+La edición conserva la misma fila, su `createdAt` y procedencia; Prisma
+actualiza `updatedAt`. Recalcula `totalAmountCop`, mantiene
+`PENDING_ACCEPTANCE` y pone `sellerAcceptedAt` y `buyerAcceptedAt` en `null`.
+`CONFIRMED`, `REJECTED`, `CANCELLED` y propuestas legacy permanecen inmutables
+para edición/cancelación de creador.
 
 ## Evidencia y limitaciones
 
