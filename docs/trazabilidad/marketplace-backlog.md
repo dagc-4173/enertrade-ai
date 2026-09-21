@@ -248,6 +248,13 @@ No se confunden las siguientes capacidades:
 
 No se recalcula la velocidad completa de S2 porque para ello deben revisarse todas las HU realmente completadas durante el sprint.
 
+## 9.1 Propuesta provisional C20f
+
+- **Título:** Gestionar propuestas de transacción simulada.
+- **Estado:** Implementado y probado automatizadamente; formalización académica pendiente.
+- **Criterios:** el creador puede editar cantidad antes de aceptación, puede cancelar antes de aceptación, el receptor puede aceptar o rechazar, una confirmada es inmutable y el historial se conserva.
+- **Límite:** no asigna una HU definitiva ni altera la numeración vigente.
+
 ## 10. Pendientes documentales
 
 - Incorporar HU-21 y HU-22 al Product Backlog de TG-II.

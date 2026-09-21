@@ -2,6 +2,8 @@
 
 **Estado:** Aceptado para C20a.
 
+**Extensión C20f:** Aceptada para ownership y mutabilidad de propuestas.
+
 ## Contexto
 
 HU-10 y HU-11 producen sugerencias y trazas, pero no crean operaciones comerciales ni modifican publicaciones. El cambio de alcance TG-II autorizado incorpora un nucleo de transacciones energeticas simuladas, sin pagos, liquidacion financiera ni entrega fisica.
@@ -35,3 +37,26 @@ La creacion se ejecuta en una transaccion PostgreSQL serializable. Bloquea prime
 - Las sugerencias de matching siguen siendo de solo lectura y pueden no reflejar reservas recientes; la validacion definitiva ocurre al crear la propuesta.
 - Un conflicto de serializacion de PostgreSQL se rechaza sin crear doble reserva. La politica de reintento se deja para una fase posterior si se observa contention real.
 - La relacion opcional con `MatchingExecution` conserva la procedencia cuando la propuesta aporta un UUID valido; C20b debe enviar ese dato solo al seleccionar una sugerencia correspondiente.
+
+## Extensión C20f: ownership y mutabilidad
+
+Cada propuesta nueva registra `proposedByUserId` desde la sesión autenticada;
+el cliente no puede enviarlo. El campo es nullable exclusivamente para preservar
+filas previas a C20f: no existe evidencia histórica suficiente para atribuirles
+un creador, por lo que se clasifican como `LEGACY_UNKNOWN` y no se pueden editar
+ni cancelar mediante la regla de creador.
+
+El creador puede editar solamente `quantityKwh` mientras la propuesta esté
+`PENDING_ACCEPTANCE` y ambas aceptaciones sean nulas. La edición se ejecuta en
+la misma transacción serializable que bloquea transacción, oferta y demanda;
+al validar saldo excluye la reserva actual y recalcula el total con aritmética
+decimal exacta. No modifica precio, fecha, participantes, estado ni procedencia.
+
+El creador puede cancelar antes de cualquier aceptación. El receptor puede
+rechazar mientras siga pendiente, incluso después de la aceptación de la otra
+parte. En una propuesta nueva, el creador no puede rechazar y el receptor no
+puede cancelar. `CONFIRMED`, `REJECTED` y `CANCELLED` son inmutables.
+
+Las pruebas unitarias conservan la simulación serializada heredada de C20a. La
+prueba de integración de concurrencia contra PostgreSQL real permanece
+pendiente; no se presenta como evidencia ejecutada.

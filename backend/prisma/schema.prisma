@@ -268,6 +268,7 @@ model User {
   demands EnergyDemand[]
   sales EnergyTransaction[] @relation("EnergyTransactionSeller")
   purchases EnergyTransaction[] @relation("EnergyTransactionBuyer")
+  proposedTransactions EnergyTransaction[] @relation("EnergyTransactionProposer")
 }
 model AuthSession {
   tokenHash String @id @db.Char(64)
@@ -325,6 +326,7 @@ model EnergyTransaction {
   demandId            String                  @db.Uuid
   sellerUserId        String                  @db.Uuid
   buyerUserId         String                  @db.Uuid
+  proposedByUserId    String?                 @db.Uuid
   quantityKwh         Decimal                 @db.Decimal(20, 2)
   pricePerKwh         Decimal                 @db.Decimal(18, 5)
   totalAmountCop      Decimal                 @db.Decimal(38, 7)
@@ -341,11 +343,13 @@ model EnergyTransaction {
   demand              EnergyDemand            @relation(fields: [demandId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   seller              User                    @relation("EnergyTransactionSeller", fields: [sellerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   buyer               User                    @relation("EnergyTransactionBuyer", fields: [buyerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  proposedBy          User?                   @relation("EnergyTransactionProposer", fields: [proposedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   matchingExecution   MatchingExecution?      @relation(fields: [matchingExecutionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   @@index([offerId, status])
   @@index([demandId, status])
   @@index([sellerUserId, createdAt])
   @@index([buyerUserId, createdAt])
+  @@index([proposedByUserId, createdAt])
   @@index([matchingExecutionId])
 }
