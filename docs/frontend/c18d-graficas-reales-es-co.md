@@ -17,7 +17,7 @@ No hay datos sintéticos, `Math.random`, mocks runtime ni identificadores de dat
 - `formatPercentCO`
 - `formatDateCO`
 
-La API conserva valores `number`, fechas ISO, `kWh` y `COP/kWh`. La interfaz los formatea al renderizar. Para precios energéticos se presenta, por ejemplo, `245,37 COP/kWh`, no solo un símbolo monetario. Dashboard, métricas de pronóstico, Patterns, Marketplace y consulta externa usan estas utilidades.
+La API conserva valores `number`, fechas ISO, `kWh` y `COP/kWh`. La interfaz los formatea al renderizar. Para precios energéticos se presenta, por ejemplo, `245,37 COP/kWh`, no solo un símbolo monetario. Dashboard, métricas de pronóstico, Patterns, Marketplace y consulta externa usan estas utilidades. Los resultados de matching convierten únicamente para presentación sus decimales validados y muestran cantidades sugeridas y pendientes con `formatEnergyKWh`; no alteran el contrato ni los estados `FULL`, `PARTIAL` y `NO_MATCH`.
 
 ## Cliente C18c
 

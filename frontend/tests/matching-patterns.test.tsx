@@ -39,15 +39,23 @@ test('matching service posts an empty authenticated JSON body and validates resp
 })
 
 test('matching UI distinguishes FULL, PARTIAL and NO_MATCH without calling it a transaction', () => {
-  const full = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: { status: 'matched', ...baseMatching } }} onSuggest={() => {}} />)
-  const partial: MatchingResult = { status: 'partial', ...baseMatching, demands: [{ ...baseMatching.demands[0], compatibility: 'PARTIAL', unmatchedQuantityKwh: '2', reasons: ['SAME_DELIVERY_DATE', 'INSUFFICIENT_QUANTITY'] }], warnings: ['PARTIAL_MATCHES'] }
-  const noMatch: MatchingResult = { status: 'no_matches', ...baseMatching, matches: [], demands: [{ ...baseMatching.demands[0], compatibility: 'NO_MATCH', suggestedQuantityKwh: '0', unmatchedQuantityKwh: '4.5', reasons: ['NO_COMPATIBLE_OFFERS'] }], summary: { ...baseMatching.summary, suggestedMatches: 0, matchedQuantityKwh: '0', unmatchedDemandKwh: '4.5' }, warnings: ['NO_ACTIVE_OFFERS'] }
-  expect(full).toContain('FULL')
-  expect(renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: partial }} onSuggest={() => {}} />)).toContain('PARTIAL')
-  const empty = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: noMatch }} onSuggest={() => {}} />)
-  expect(empty).toContain('NO_MATCH')
-  expect(empty).toContain('No se encontraron emparejamientos compatibles.')
-  expect(empty).not.toMatch(/transacción|pago|liquidación/i)
+  const full: MatchingResult = { status: 'matched', ...baseMatching, demands: [{ ...baseMatching.demands[0], suggestedQuantityKwh: '19703663.78', unmatchedQuantityKwh: '0' }] }
+  const partial: MatchingResult = { status: 'partial', ...baseMatching, demands: [{ ...baseMatching.demands[0], compatibility: 'PARTIAL', suggestedQuantityKwh: '19703663.78', unmatchedQuantityKwh: '232740895.05', reasons: ['SAME_DELIVERY_DATE', 'INSUFFICIENT_QUANTITY'] }], warnings: ['PARTIAL_MATCHES'] }
+  const noMatch: MatchingResult = { status: 'no_matches', ...baseMatching, matches: [], demands: [{ ...baseMatching.demands[0], compatibility: 'NO_MATCH', suggestedQuantityKwh: '0', unmatchedQuantityKwh: '252444558.83', reasons: ['NO_COMPATIBLE_OFFERS'] }], summary: { ...baseMatching.summary, suggestedMatches: 0, matchedQuantityKwh: '0', unmatchedDemandKwh: '252444558.83' }, warnings: ['NO_ACTIVE_OFFERS'] }
+  const fullMarkup = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: full }} onSuggest={() => {}} />)
+  const partialMarkup = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: partial }} onSuggest={() => {}} />)
+  const noMatchMarkup = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: noMatch }} onSuggest={() => {}} />)
+  expect(fullMarkup).toContain('FULL')
+  expect(fullMarkup).toContain('19.703.663,78 kWh')
+  expect(fullMarkup).toContain('0,00 kWh')
+  expect(partialMarkup).toContain('PARTIAL')
+  expect(partialMarkup).toContain('19.703.663,78 kWh')
+  expect(partialMarkup).toContain('232.740.895,05 kWh')
+  expect(noMatchMarkup).toContain('NO_MATCH')
+  expect(noMatchMarkup).toContain('0,00 kWh')
+  expect(noMatchMarkup).toContain('252.444.558,83 kWh')
+  expect(noMatchMarkup).toContain('No se encontraron emparejamientos compatibles.')
+  expect(noMatchMarkup).not.toMatch(/transacción|pago|liquidación/i)
 })
 
 test('matching loading and API errors are visible without a false success', async () => {

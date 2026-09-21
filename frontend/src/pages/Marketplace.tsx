@@ -4,7 +4,7 @@ import { createDemand, createOffer, getMyDemands, getMyOffers } from '../service
 import { suggestMatches } from '../services/matchingService'
 import type { EnergyDemandDto, EnergyOfferDto } from '../types/marketplace'
 import type { MatchingResult } from '../types/matching'
-import { formatCopPerKwh, formatDeliveryDate, formatEnergy } from '../utils/numberFormat'
+import { formatCopPerKwh, formatDeliveryDate, formatEnergy, formatEnergyKWh } from '../utils/numberFormat'
 import { DataTable } from '../components/tables/DataTable'
 import { SectionHeader } from '../components/ui/SectionHeader'
 import { StatusBadge } from '../components/ui/StatusBadge'
@@ -156,7 +156,7 @@ export function MatchingContent({ state, onSuggest }: { state: { kind: 'idle' | 
     {state.kind === 'success' && <div className="stack-list">
       <p className="marketplace-status">Estado: {state.result.status}. Coincidencias sugeridas: {state.result.summary.suggestedMatches}.</p>
       {state.result.status === 'no_matches' && <p className="marketplace-empty">No se encontraron emparejamientos compatibles.</p>}
-      {state.result.demands.map(demand => <article key={demand.demandId}><div className="row-between"><strong>Demanda {demand.demandId}</strong><StatusBadge tone={compatibilityTone(demand.compatibility)}>{demand.compatibility}</StatusBadge></div><p>Cantidad sugerida: {demand.suggestedQuantityKwh} kWh. Pendiente: {demand.unmatchedQuantityKwh} kWh.</p></article>)}
+      {state.result.demands.map(demand => <article key={demand.demandId}><div className="row-between"><strong>Demanda {demand.demandId}</strong><StatusBadge tone={compatibilityTone(demand.compatibility)}>{demand.compatibility}</StatusBadge></div><p>Cantidad sugerida: {formatEnergyKWh(Number(demand.suggestedQuantityKwh))}. Pendiente: {formatEnergyKWh(Number(demand.unmatchedQuantityKwh))}.</p></article>)}
       {state.result.trace.persistence === 'failed' && <p className="marketplace-error" role="alert">Las sugerencias se generaron, pero no fue posible conservar su trazabilidad.</p>}
     </div>}
   </section>
