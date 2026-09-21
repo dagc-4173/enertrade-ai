@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError } from '../services/apiClient'
-import { createDemand, createOffer, getMyDemands, getMyOffers } from '../services/marketplaceService'
+import { createDemand, createOffer, getMyDemands, getMyOffers, listMarketDemands, listMarketOffers } from '../services/marketplaceService'
 import { suggestMatches } from '../services/matchingService'
-import type { EnergyDemandDto, EnergyOfferDto } from '../types/marketplace'
+import { createTransaction } from '../services/transactionService'
+import type { EnergyDemandDto, EnergyOfferDto, MarketDemand, MarketOffer } from '../types/marketplace'
 import type { MatchingResult } from '../types/matching'
 import { formatCopPerKwh, formatDeliveryDate, formatEnergy, formatEnergyKWh } from '../utils/numberFormat'
 import { DataTable } from '../components/tables/DataTable'
@@ -21,6 +22,21 @@ function errorMessage(error: unknown) {
 function parsePositiveValue(value: FormDataEntryValue | null) {
   const number = Number(value)
   return Number.isFinite(number) && number > 0 ? number : null
+}
+
+function ActiveMarket({ offers, demands, ownOffers, ownDemands, onRefresh }: { offers: MarketOffer[]; demands: MarketDemand[]; ownOffers: EnergyOfferDto[]; ownDemands: EnergyDemandDto[]; onRefresh: () => void }) {
+  const [selected, setSelected] = useState<{ offerId: string; demandId: string; max: number } | null>(null)
+  const [quantity, setQuantity] = useState('')
+  const [error, setError] = useState('')
+  const [status, setStatus] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const select = (offer: { id: string; availableQuantityKwh: string }, demand: { id: string; availableQuantityKwh: string }) => { const max = Math.min(Number(offer.availableQuantityKwh), Number(demand.availableQuantityKwh)); setSelected({ offerId: offer.id, demandId: demand.id, max }); setQuantity(String(max)); setError(''); setStatus('') }
+  async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const amount = Number(quantity); if (!selected || !Number.isFinite(amount) || amount <= 0 || amount > selected.max) { setError('La cantidad debe ser positiva y no superar el saldo compatible.'); return } setSubmitting(true); setError(''); try { await createTransaction({ offerId: selected.offerId, demandId: selected.demandId, quantityKwh: amount }); setStatus('Propuesta de transacción energética simulada creada.'); setSelected(null); onRefresh() } catch (reason) { setError(errorMessage(reason)) } finally { setSubmitting(false) } }
+  return <section className="panel marketplace-section" aria-label="Mercado activo"><SectionHeader eyebrow="Mercado activo" title="Publicaciones disponibles" description="Saldos de publicaciones activas de otros usuarios. Las sugerencias de matching siguen siendo informativas." />
+    {status && <p className="marketplace-status" role="status">{status}</p>}{error && <p className="marketplace-error" role="alert">{error}</p>}
+    {selected && <form className="marketplace-form" onSubmit={submit}><label>Cantidad a transaccionar (kWh)<input type="number" min="0.01" step="0.01" value={quantity} onChange={event => setQuantity(event.target.value)} disabled={submitting} required /></label><div className="marketplace-actions"><button className="primary-button" disabled={submitting}>{submitting ? 'Creando…' : 'Crear propuesta'}</button><button type="button" className="secondary-button" onClick={() => setSelected(null)} disabled={submitting}>Cancelar</button></div></form>}
+    <div className="marketplace-columns"><div><h3>Ofertas activas</h3>{offers.length === 0 ? <p className="marketplace-empty">No hay ofertas externas disponibles.</p> : <div className="marketplace-list">{offers.map(offer => <article className="marketplace-item" key={offer.id}><strong>{formatEnergyKWh(Number(offer.availableQuantityKwh))} disponibles</strong><span>{formatCopPerKwh(Number(offer.pricePerKwh))}</span><span>Entrega: {formatDeliveryDate(offer.deliveryDate)}</span>{ownDemands.filter(demand => demand.status === 'ACTIVE' && demand.deliveryDate === offer.deliveryDate && demand.maxPricePerKwh >= Number(offer.pricePerKwh)).map(demand => <button className="secondary-button" type="button" key={demand.id} onClick={() => select(offer, { id: demand.id, availableQuantityKwh: String(demand.quantityKwh) })}>Proponer con mi demanda</button>)}</article>)}</div>}</div><div><h3>Demandas activas</h3>{demands.length === 0 ? <p className="marketplace-empty">No hay demandas externas disponibles.</p> : <div className="marketplace-list">{demands.map(demand => <article className="marketplace-item" key={demand.id}><strong>{formatEnergyKWh(Number(demand.availableQuantityKwh))} pendientes</strong><span>Máximo: {formatCopPerKwh(Number(demand.maxPricePerKwh))}</span><span>Entrega: {formatDeliveryDate(demand.deliveryDate)}</span>{ownOffers.filter(offer => offer.status === 'ACTIVE' && offer.deliveryDate === demand.deliveryDate && offer.pricePerKwh <= Number(demand.maxPricePerKwh)).map(offer => <button className="secondary-button" type="button" key={offer.id} onClick={() => select({ id: offer.id, availableQuantityKwh: String(offer.quantityKwh) }, demand)}>Proponer con mi oferta</button>)}</article>)}</div>}</div></div>
+  </section>
 }
 
 function OfferForm({ onCreated }: { onCreated: (offer: EnergyOfferDto) => void }) {
@@ -165,6 +181,8 @@ export function MatchingContent({ state, onSuggest }: { state: { kind: 'idle' | 
 export function Marketplace() {
   const [offers, setOffers] = useState<EnergyOfferDto[]>([])
   const [demands, setDemands] = useState<EnergyDemandDto[]>([])
+  const [marketOffers, setMarketOffers] = useState<MarketOffer[]>([])
+  const [marketDemands, setMarketDemands] = useState<MarketDemand[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [reload, setReload] = useState(0)
@@ -172,11 +190,13 @@ export function Marketplace() {
 
   useEffect(() => {
     const controller = new AbortController()
-    Promise.all([getMyOffers(controller.signal), getMyDemands(controller.signal)])
-      .then(([loadedOffers, loadedDemands]) => {
+    Promise.all([getMyOffers(controller.signal), getMyDemands(controller.signal), listMarketOffers(controller.signal), listMarketDemands(controller.signal)])
+      .then(([loadedOffers, loadedDemands, loadedMarketOffers, loadedMarketDemands]) => {
         if (controller.signal.aborted) return
         setOffers(loadedOffers)
         setDemands(loadedDemands)
+        setMarketOffers(loadedMarketOffers)
+        setMarketDemands(loadedMarketDemands)
       })
       .catch(reason => {
         if (!controller.signal.aborted) setLoadError(errorMessage(reason))
@@ -199,7 +219,7 @@ export function Marketplace() {
       <SectionHeader
         eyebrow="Mercado energético"
         title="Mercado energético simulado"
-        description="Registro y consulta de ofertas y demandas asociadas al usuario autenticado."
+        description="Publica energía propia, consulta saldos externos y crea propuestas de intercambio simulado."
       />
     </section>
 
@@ -228,5 +248,6 @@ export function Marketplace() {
           : <DataTable columns={demandColumns} rows={demands} getRowKey={row => row.id} />}
       </section>
     </div>}
+    {!loading && !loadError && <ActiveMarket offers={marketOffers} demands={marketDemands} ownOffers={offers} ownDemands={demands} onRefresh={() => setReload(value => value + 1)} />}
   </div>
 }

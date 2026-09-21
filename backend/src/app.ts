@@ -8,6 +8,7 @@ import { router as forecastRouter } from '@/controllers/forecast.controller';
 import { router as offerRouter } from '@/controllers/offer.controller';
 import { router as demandRouter } from '@/controllers/demand.controller';
 import { router as energyTransactionRouter } from '@/controllers/energy-transaction.controller';
+import { router as marketRouter } from '@/controllers/market.controller';
 import { createMatchingRouter } from '@/controllers/matching.controller';
 import { router as modelCatalogRouter } from '@/controllers/model-catalog.controller';
 import { router as patternsRouter } from '@/controllers/patterns.controller';
@@ -79,6 +80,7 @@ app.use('/forecasts', forecastRouter)
 app.use('/offers', offerRouter)
 app.use('/demands', demandRouter)
 app.use('/transactions', energyTransactionRouter)
+app.use('/market', marketRouter)
 app.use('/matches', matchingRouter)
 app.use('/models', modelCatalogRouter)
 app.use('/capabilities', capabilityVersionsRouter)

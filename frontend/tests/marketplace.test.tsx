@@ -65,7 +65,11 @@ test('la página no ejecuta POST automáticamente y no muestra resultados mock d
   expect(source).toContain('No tienes demandas registradas.')
   expect(html).toContain('Emparejamientos sugeridos')
   expect(html).toContain('Solicita sugerencias')
-  expect(source).not.toMatch(/marketOffers|userEnergyCards|smartMatches/)
+  expect(source).toContain('Mercado activo')
+  expect(source).toContain('listMarketOffers')
+  expect(source).toContain('listMarketDemands')
+  expect(source).toContain('Crear propuesta')
+  expect(source).not.toMatch(/Pagar|Checkout|Tarjeta|Pago exitoso|Liquidado/)
 })
 
 test('los errores 401 del backend se conservan como ApiError seguro', async () => {

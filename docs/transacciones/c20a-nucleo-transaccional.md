@@ -61,3 +61,7 @@ Los DTO no exponen `sellerUserId`, `buyerUserId`, correo, contrasenas, hashes, t
 La prueba de concurrencia usa un repositorio en memoria serializado y demuestra la regla de negocio. No es una prueba de integracion contra PostgreSQL real; esa evidencia queda pendiente antes de afirmar validacion de concurrencia en infraestructura real.
 
 No se implementan endpoints globales publicos de Marketplace en C20a. Se difieren a C20b para evitar ampliar esta fase.
+
+## Continuidad C20b
+
+C20b implementa el frontend transaccional y los endpoints autenticados de mercado activo como cambio de alcance TG-II autorizado por el estudiante. La historia transaccional mantiene caracter provisional y pendiente de formalizacion formal en backlog. Ver `c20b-frontend-transaccional.md`.

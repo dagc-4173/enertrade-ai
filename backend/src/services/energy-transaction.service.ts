@@ -143,6 +143,10 @@ function dto(value: TransactionRecord) {
   };
 }
 
+function participantDto(value: TransactionRecord, userId: string) {
+  return { ...dto(value), role: value.sellerUserId === userId ? 'SELLER' as const : 'BUYER' as const };
+}
+
 function prismaStore(transaction: Prisma.TransactionClient, offerId: string, demandId: string): LockedStore {
   const toRecord = (value: any): TransactionRecord => value;
   return {
@@ -253,12 +257,12 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
     },
     async findMine(userId: string, status?: string) {
       if (status && !Object.values(EnergyTransactionStatus).includes(status as EnergyTransactionStatus)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_STATUS', 'El estado de transacción no es válido.');
-      return (await repo.findMine(userId, status as EnergyTransactionStatus | undefined)).map(dto);
+      return (await repo.findMine(userId, status as EnergyTransactionStatus | undefined)).map(value => participantDto(value, userId));
     },
     async findOne(userId: string, id: string) {
       const value = await repo.findForParticipant(id, userId);
       if (!value) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
-      return dto(value);
+      return participantDto(value, userId);
     },
   };
 }

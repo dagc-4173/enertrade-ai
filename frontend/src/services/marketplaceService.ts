@@ -4,6 +4,8 @@ import type {
   CreateOfferInput,
   EnergyDemandDto,
   EnergyOfferDto,
+  MarketDemand,
+  MarketOffer,
 } from '../types/marketplace'
 
 const object = (value: unknown): value is Record<string, unknown> =>
@@ -76,4 +78,19 @@ export async function createDemand(input: CreateDemandInput, signal?: AbortSigna
 
 export function getMyDemands(signal?: AbortSignal) {
   return apiRequest<unknown>('/demands/mine', { credentials: 'include', signal }).then(response => list(response, 'demands', demand))
+}
+
+function publicMarketBase(value: unknown): value is Record<string, unknown> {
+  return object(value) && text(value.id) && text(value.availableQuantityKwh) && positiveNumber(Number(value.availableQuantityKwh)) && date(value.deliveryDate) && value.status === 'ACTIVE' && !('userId' in value) && !('email' in value)
+}
+
+const marketOffer = (value: unknown): value is MarketOffer => publicMarketBase(value) && text(value.pricePerKwh) && positiveNumber(Number(value.pricePerKwh))
+const marketDemand = (value: unknown): value is MarketDemand => publicMarketBase(value) && text(value.maxPricePerKwh) && positiveNumber(Number(value.maxPricePerKwh))
+
+export function listMarketOffers(signal?: AbortSignal) {
+  return apiRequest<unknown>('/market/offers', { credentials: 'include', signal }).then(response => list(response, 'offers', marketOffer))
+}
+
+export function listMarketDemands(signal?: AbortSignal) {
+  return apiRequest<unknown>('/market/demands', { credentials: 'include', signal }).then(response => list(response, 'demands', marketDemand))
 }

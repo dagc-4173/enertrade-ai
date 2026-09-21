@@ -1,4 +1,4 @@
-export type EnergyMarketStatus = 'ACTIVE'
+export type EnergyMarketStatus = 'ACTIVE' | 'FULFILLED'
 
 export interface EnergyOfferDto {
   id: string
@@ -30,4 +30,20 @@ export interface CreateDemandInput {
   quantityKwh: number
   maxPricePerKwh: number
   deliveryDate: string
+}
+
+export interface MarketOffer {
+  id: string
+  availableQuantityKwh: string
+  pricePerKwh: string
+  deliveryDate: string
+  status: 'ACTIVE'
+}
+
+export interface MarketDemand {
+  id: string
+  availableQuantityKwh: string
+  maxPricePerKwh: string
+  deliveryDate: string
+  status: 'ACTIVE'
 }

@@ -71,6 +71,11 @@
   min-width: 520px;
 }
 
+.marketplace-list { display: grid; gap: 10px; }
+.marketplace-item { display: grid; gap: 7px; padding: 14px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface-alt); }
+.marketplace-item span { color: var(--color-muted); font-size: 14px; }
+.marketplace-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
 @media (max-width: 900px) {
   .marketplace-columns {
     grid-template-columns: 1fr;

@@ -1,0 +1,6 @@
+.transactions-intro { padding: 22px; }
+.transaction-filters, .transaction-list { display: grid; gap: 12px; }
+.transaction-filters { grid-template-columns: repeat(auto-fit, minmax(120px, max-content)); margin-top: 18px; }
+.transaction-item { padding: 20px; display: grid; gap: 7px; }
+.transaction-item p { margin: 0; color: var(--color-muted); }
+.transaction-notice { margin: 0; padding: 14px 18px; color: var(--color-forest); background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 8px; font-weight: 700; }
