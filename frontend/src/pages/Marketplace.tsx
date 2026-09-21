@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError } from '../services/apiClient'
-import { createDemand, createOffer, getMyDemands, getMyOffers, listMarketDemands, listMarketOffers } from '../services/marketplaceService'
+import { cancelDemand, cancelOffer, createDemand, createOffer, getMyDemands, getMyOffers, listMarketDemands, listMarketOffers, updateDemand, updateOffer } from '../services/marketplaceService'
 import { suggestMatches } from '../services/matchingService'
 import { createTransaction } from '../services/transactionService'
 import type { EnergyDemandDto, EnergyOfferDto, MarketDemand, MarketOffer } from '../types/marketplace'
@@ -24,6 +24,21 @@ function parsePositiveValue(value: FormDataEntryValue | null) {
   return Number.isFinite(number) && number > 0 ? number : null
 }
 
+function CompatibilityAction({ ownOffer, ownDemand, externalOffer, externalDemand, onSelect }: { ownOffer?: EnergyOfferDto; ownDemand?: EnergyDemandDto; externalOffer?: MarketOffer; externalDemand?: MarketDemand; onSelect: () => void }) {
+  const own = ownOffer ?? ownDemand!
+  const external = externalOffer ?? externalDemand!
+  const quantityCompatible = own.quantityKwh >= Number(external.availableQuantityKwh)
+  const dateCompatible = own.deliveryDate === external.deliveryDate
+  const priceCompatible = ownOffer
+    ? ownOffer.pricePerKwh <= Number(externalDemand!.maxPricePerKwh)
+    : ownDemand!.maxPricePerKwh >= Number(externalOffer!.pricePerKwh)
+  const compatible = quantityCompatible && dateCompatible && priceCompatible
+  const priceMessage = ownOffer
+    ? `Tu oferta es de ${formatCopPerKwh(ownOffer.pricePerKwh)} y la demanda acepta máximo ${formatCopPerKwh(Number(externalDemand!.maxPricePerKwh))}.`
+    : `Tu demanda acepta máximo ${formatCopPerKwh(ownDemand!.maxPricePerKwh)} y la oferta cuesta ${formatCopPerKwh(Number(externalOffer!.pricePerKwh))}.`
+  return <div className="marketplace-compatibility"><strong>{ownOffer ? 'Tu oferta' : 'Tu demanda'}: {quantityCompatible ? 'cantidad compatible' : 'cantidad no compatible'}, {dateCompatible ? 'fecha compatible' : 'fecha no compatible'}, {priceCompatible ? 'precio compatible' : 'precio no compatible'}.</strong>{!priceCompatible && <span>{priceMessage}</span>}<button className="secondary-button" type="button" disabled={!compatible} title={compatible ? undefined : 'Corrige la cantidad, fecha o precio de tu publicación para crear una propuesta.'} onClick={onSelect}>{ownOffer ? 'Proponer con mi oferta' : 'Proponer con mi demanda'}</button></div>
+}
+
 function ActiveMarket({ offers, demands, ownOffers, ownDemands, onRefresh }: { offers: MarketOffer[]; demands: MarketDemand[]; ownOffers: EnergyOfferDto[]; ownDemands: EnergyDemandDto[]; onRefresh: () => void }) {
   const [selected, setSelected] = useState<{ offerId: string; demandId: string; max: number } | null>(null)
   const [quantity, setQuantity] = useState('')
@@ -35,7 +50,7 @@ function ActiveMarket({ offers, demands, ownOffers, ownDemands, onRefresh }: { o
   return <section className="panel marketplace-section" aria-label="Mercado activo"><SectionHeader eyebrow="Mercado activo" title="Publicaciones disponibles" description="Saldos de publicaciones activas de otros usuarios. Las sugerencias de matching siguen siendo informativas." />
     {status && <p className="marketplace-status" role="status">{status}</p>}{error && <p className="marketplace-error" role="alert">{error}</p>}
     {selected && <form className="marketplace-form" onSubmit={submit}><label>Cantidad a transaccionar (kWh)<input type="number" min="0.01" step="0.01" value={quantity} onChange={event => setQuantity(event.target.value)} disabled={submitting} required /></label><div className="marketplace-actions"><button className="primary-button" disabled={submitting}>{submitting ? 'Creando…' : 'Crear propuesta'}</button><button type="button" className="secondary-button" onClick={() => setSelected(null)} disabled={submitting}>Cancelar</button></div></form>}
-    <div className="marketplace-columns"><div><h3>Ofertas activas</h3>{offers.length === 0 ? <p className="marketplace-empty">No hay ofertas externas disponibles.</p> : <div className="marketplace-list">{offers.map(offer => <article className="marketplace-item" key={offer.id}><strong>{formatEnergyKWh(Number(offer.availableQuantityKwh))} disponibles</strong><span>{formatCopPerKwh(Number(offer.pricePerKwh))}</span><span>Entrega: {formatDeliveryDate(offer.deliveryDate)}</span>{ownDemands.filter(demand => demand.status === 'ACTIVE' && demand.deliveryDate === offer.deliveryDate && demand.maxPricePerKwh >= Number(offer.pricePerKwh)).map(demand => <button className="secondary-button" type="button" key={demand.id} onClick={() => select(offer, { id: demand.id, availableQuantityKwh: String(demand.quantityKwh) })}>Proponer con mi demanda</button>)}</article>)}</div>}</div><div><h3>Demandas activas</h3>{demands.length === 0 ? <p className="marketplace-empty">No hay demandas externas disponibles.</p> : <div className="marketplace-list">{demands.map(demand => <article className="marketplace-item" key={demand.id}><strong>{formatEnergyKWh(Number(demand.availableQuantityKwh))} pendientes</strong><span>Máximo: {formatCopPerKwh(Number(demand.maxPricePerKwh))}</span><span>Entrega: {formatDeliveryDate(demand.deliveryDate)}</span>{ownOffers.filter(offer => offer.status === 'ACTIVE' && offer.deliveryDate === demand.deliveryDate && offer.pricePerKwh <= Number(demand.maxPricePerKwh)).map(offer => <button className="secondary-button" type="button" key={offer.id} onClick={() => select({ id: offer.id, availableQuantityKwh: String(offer.quantityKwh) }, demand)}>Proponer con mi oferta</button>)}</article>)}</div>}</div></div>
+    <div className="marketplace-columns"><div><h3>Ofertas activas</h3>{offers.length === 0 ? <p className="marketplace-empty">No hay ofertas externas disponibles.</p> : <div className="marketplace-list">{offers.map(offer => <article className="marketplace-item" key={offer.id}><strong>{formatEnergyKWh(Number(offer.availableQuantityKwh))} disponibles</strong><span>{formatCopPerKwh(Number(offer.pricePerKwh))}</span><span>Entrega: {formatDeliveryDate(offer.deliveryDate)}</span>{ownDemands.filter(demand => demand.status === 'ACTIVE').map(demand => <CompatibilityAction key={demand.id} ownDemand={demand} externalOffer={offer} onSelect={() => select(offer, { id: demand.id, availableQuantityKwh: String(demand.quantityKwh) })} />)}</article>)}</div>}</div><div><h3>Demandas activas</h3>{demands.length === 0 ? <p className="marketplace-empty">No hay demandas externas disponibles.</p> : <div className="marketplace-list">{demands.map(demand => <article className="marketplace-item" key={demand.id}><strong>{formatEnergyKWh(Number(demand.availableQuantityKwh))} pendientes</strong><span>Máximo: {formatCopPerKwh(Number(demand.maxPricePerKwh))}</span><span>Entrega: {formatDeliveryDate(demand.deliveryDate)}</span>{ownOffers.filter(offer => offer.status === 'ACTIVE').map(offer => <CompatibilityAction key={offer.id} ownOffer={offer} externalDemand={demand} onSelect={() => select({ id: offer.id, availableQuantityKwh: String(offer.quantityKwh) }, demand)} />)}</article>)}</div>}</div></div>
   </section>
 }
 
@@ -147,19 +162,60 @@ function DemandForm({ onCreated }: { onCreated: (demand: EnergyDemandDto) => voi
   </form>
 }
 
-const offerColumns = [
+function PublicationActions({ type, publication, onChanged }: { type: 'offer' | 'demand'; publication: EnergyOfferDto | EnergyDemandDto; onChanged: (value: EnergyOfferDto | EnergyDemandDto) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  if (publication.status !== 'ACTIVE') return null
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const data = new FormData(event.currentTarget)
+    const quantityKwh = parsePositiveValue(data.get('quantityKwh'))
+    const price = parsePositiveValue(data.get('pricePerKwh'))
+    const deliveryDate = String(data.get('deliveryDate') ?? '')
+    if (quantityKwh === null || price === null || !deliveryDate) { setError('Completa valores positivos y una fecha válida.'); return }
+    setSubmitting(true); setError('')
+    try {
+      const updated = type === 'offer'
+        ? await updateOffer(publication.id, { quantityKwh, pricePerKwh: price, deliveryDate })
+        : await updateDemand(publication.id, { quantityKwh, maxPricePerKwh: price, deliveryDate })
+      onChanged(updated); setEditing(false)
+    } catch (reason) { setError(errorMessage(reason)) } finally { setSubmitting(false) }
+  }
+  async function cancel() {
+    if (!window.confirm('Esta publicación dejará de estar disponible en el mercado.')) return
+    setSubmitting(true); setError('')
+    try { onChanged(type === 'offer' ? await cancelOffer(publication.id) : await cancelDemand(publication.id)) }
+    catch (reason) { setError(errorMessage(reason)) } finally { setSubmitting(false) }
+  }
+  if (!editing) return <div className="marketplace-actions"><button className="secondary-button" type="button" onClick={() => setEditing(true)} disabled={submitting}>Editar</button><button className="secondary-button" type="button" onClick={() => { void cancel() }} disabled={submitting}>Cancelar publicación</button>{error && <p className="marketplace-error" role="alert">{error}</p>}</div>
+  const price = type === 'offer' ? (publication as EnergyOfferDto).pricePerKwh : (publication as EnergyDemandDto).maxPricePerKwh
+  return <form className="marketplace-form" onSubmit={save}><label>Cantidad<input name="quantityKwh" type="number" min="0.01" step="0.01" defaultValue={publication.quantityKwh} required disabled={submitting} /></label><label>{type === 'offer' ? 'Precio (COP/kWh)' : 'Precio máximo (COP/kWh)'}<input name="pricePerKwh" type="number" min="0.00001" step="0.00001" defaultValue={price} required disabled={submitting} /></label><label>Entrega<input name="deliveryDate" type="date" defaultValue={publication.deliveryDate} required disabled={submitting} /></label>{error && <p className="marketplace-error" role="alert">{error}</p>}<div className="marketplace-actions"><button className="primary-button" disabled={submitting}>{submitting ? 'Guardando…' : 'Guardar cambios'}</button><button className="secondary-button" type="button" onClick={() => setEditing(false)} disabled={submitting}>Cancelar edición</button></div></form>
+}
+
+function publicationStatus(status: EnergyOfferDto['status']) {
+  if (status === 'FULFILLED') return <StatusBadge tone="success">Completada</StatusBadge>
+  if (status === 'CANCELLED') return <StatusBadge tone="neutral">Cancelada</StatusBadge>
+  return <StatusBadge tone="success">Activa</StatusBadge>
+}
+
+function offerColumns(onChanged: (value: EnergyOfferDto) => void) {
+  return [
   { header: 'Cantidad', render: (row: EnergyOfferDto) => formatEnergy(row.quantityKwh) },
   { header: 'Precio', render: (row: EnergyOfferDto) => formatCopPerKwh(row.pricePerKwh) },
   { header: 'Fecha de entrega', render: (row: EnergyOfferDto) => formatDeliveryDate(row.deliveryDate) },
-  { header: 'Estado', render: () => <StatusBadge tone="success">Activa</StatusBadge> },
-]
+  { header: 'Estado', render: (row: EnergyOfferDto) => publicationStatus(row.status) },
+  { header: 'Acciones', render: (row: EnergyOfferDto) => <PublicationActions type="offer" publication={row} onChanged={value => onChanged(value as EnergyOfferDto)} /> },
+]}
 
-const demandColumns = [
+function demandColumns(onChanged: (value: EnergyDemandDto) => void) {
+  return [
   { header: 'Cantidad', render: (row: EnergyDemandDto) => formatEnergy(row.quantityKwh) },
   { header: 'Precio máximo', render: (row: EnergyDemandDto) => formatCopPerKwh(row.maxPricePerKwh) },
   { header: 'Fecha de entrega', render: (row: EnergyDemandDto) => formatDeliveryDate(row.deliveryDate) },
-  { header: 'Estado', render: () => <StatusBadge tone="success">Activa</StatusBadge> },
-]
+  { header: 'Estado', render: (row: EnergyDemandDto) => publicationStatus(row.status) },
+  { header: 'Acciones', render: (row: EnergyDemandDto) => <PublicationActions type="demand" publication={row} onChanged={value => onChanged(value as EnergyDemandDto)} /> },
+]}
 
 const compatibilityTone = (value: string) => value === 'FULL' ? 'success' : value === 'PARTIAL' ? 'warning' : 'neutral'
 
@@ -214,6 +270,9 @@ export function Marketplace() {
     catch (reason) { setMatching({ kind: 'error', message: errorMessage(reason) }) }
   }
 
+  function replaceOffer(offer: EnergyOfferDto) { setOffers(current => current.map(value => value.id === offer.id ? offer : value)); setMatching({ kind: 'idle' }); setReload(value => value + 1) }
+  function replaceDemand(demand: EnergyDemandDto) { setDemands(current => current.map(value => value.id === demand.id ? demand : value)); setMatching({ kind: 'idle' }); setReload(value => value + 1) }
+
   return <div className="page-grid marketplace-page">
     <section className="panel marketplace-intro">
       <SectionHeader
@@ -237,7 +296,7 @@ export function Marketplace() {
         <OfferForm onCreated={offer => setOffers(current => [offer, ...current])} />
         {offers.length === 0
           ? <p className="marketplace-empty">No tienes ofertas registradas.</p>
-          : <DataTable columns={offerColumns} rows={offers} getRowKey={row => row.id} />}
+          : <DataTable columns={offerColumns(replaceOffer)} rows={offers} getRowKey={row => row.id} />}
       </section>
 
       <section className="panel marketplace-section" aria-label="Demandas">
@@ -245,7 +304,7 @@ export function Marketplace() {
         <DemandForm onCreated={demand => setDemands(current => [demand, ...current])} />
         {demands.length === 0
           ? <p className="marketplace-empty">No tienes demandas registradas.</p>
-          : <DataTable columns={demandColumns} rows={demands} getRowKey={row => row.id} />}
+          : <DataTable columns={demandColumns(replaceDemand)} rows={demands} getRowKey={row => row.id} />}
       </section>
     </div>}
     {!loading && !loadError && <ActiveMarket offers={marketOffers} demands={marketDemands} ownOffers={offers} ownDemands={demands} onRefresh={() => setReload(value => value + 1)} />}

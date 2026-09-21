@@ -1,4 +1,4 @@
-export type EnergyMarketStatus = 'ACTIVE' | 'FULFILLED'
+export type EnergyMarketStatus = 'ACTIVE' | 'FULFILLED' | 'CANCELLED'
 
 export interface EnergyOfferDto {
   id: string

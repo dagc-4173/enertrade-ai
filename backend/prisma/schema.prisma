@@ -282,6 +282,7 @@ model AuthSession {
 enum EnergyMarketStatus {
   ACTIVE
   FULFILLED
+  CANCELLED
 }
 
 model EnergyOffer {

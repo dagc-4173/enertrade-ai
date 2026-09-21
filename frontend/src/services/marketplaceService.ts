@@ -20,7 +20,7 @@ const date = (value: unknown): value is string => {
 
 function base(value: unknown): value is Record<string, unknown> {
   return object(value) && text(value.id) && positiveNumber(value.quantityKwh) && date(value.deliveryDate) &&
-    value.status === 'ACTIVE' && text(value.createdAt) && Number.isFinite(Date.parse(value.createdAt)) &&
+    (value.status === 'ACTIVE' || value.status === 'FULFILLED' || value.status === 'CANCELLED') && text(value.createdAt) && Number.isFinite(Date.parse(value.createdAt)) &&
     text(value.updatedAt) && Number.isFinite(Date.parse(value.updatedAt)) && !('userId' in value)
 }
 
@@ -63,6 +63,14 @@ export function getMyOffers(signal?: AbortSignal) {
   return apiRequest<unknown>('/offers/mine', { credentials: 'include', signal }).then(response => list(response, 'offers', offer))
 }
 
+export async function updateOffer(id: string, input: CreateOfferInput) {
+  return envelope(await apiRequest<unknown>(`/offers/${encodeURIComponent(id)}`, { method: 'PATCH', json: input, credentials: 'include' }), 'offer', offer, 200)
+}
+
+export async function cancelOffer(id: string) {
+  return envelope(await postJson<unknown>(`/offers/${encodeURIComponent(id)}/cancel`, {}, { credentials: 'include' }), 'offer', offer, 200)
+}
+
 export async function createDemand(input: CreateDemandInput, signal?: AbortSignal) {
   return envelope(
     await postJson<unknown>('/demands', {
@@ -78,6 +86,14 @@ export async function createDemand(input: CreateDemandInput, signal?: AbortSigna
 
 export function getMyDemands(signal?: AbortSignal) {
   return apiRequest<unknown>('/demands/mine', { credentials: 'include', signal }).then(response => list(response, 'demands', demand))
+}
+
+export async function updateDemand(id: string, input: CreateDemandInput) {
+  return envelope(await apiRequest<unknown>(`/demands/${encodeURIComponent(id)}`, { method: 'PATCH', json: input, credentials: 'include' }), 'demand', demand, 200)
+}
+
+export async function cancelDemand(id: string) {
+  return envelope(await postJson<unknown>(`/demands/${encodeURIComponent(id)}/cancel`, {}, { credentials: 'include' }), 'demand', demand, 200)
 }
 
 function publicMarketBase(value: unknown): value is Record<string, unknown> {
