@@ -1,0 +1,264 @@
+import { EnergyMarketStatus, EnergyTransactionStatus, Prisma } from '@/generated/prisma/client';
+import { prisma } from '@/lib/prisma';
+
+type MarketRecord = {
+  id: string;
+  userId: string;
+  quantityKwh: unknown;
+  pricePerKwh?: unknown;
+  maxPricePerKwh?: unknown;
+  deliveryDate: Date;
+  status: EnergyMarketStatus;
+};
+
+export type TransactionRecord = {
+  id: string;
+  offerId: string;
+  demandId: string;
+  sellerUserId: string;
+  buyerUserId: string;
+  quantityKwh: unknown;
+  pricePerKwh: unknown;
+  totalAmountCop: unknown;
+  deliveryDate: Date;
+  status: EnergyTransactionStatus;
+  sellerAcceptedAt: Date | null;
+  buyerAcceptedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  confirmedAt: Date | null;
+  cancelledAt: Date | null;
+  matchingExecutionId: string | null;
+};
+
+type TransactionCreation = {
+  offerId: string;
+  demandId: string;
+  sellerUserId: string;
+  buyerUserId: string;
+  quantityKwh: string;
+  pricePerKwh: string;
+  totalAmountCop: string;
+  deliveryDate: Date;
+  status: EnergyTransactionStatus;
+  matchingExecutionId: string | null;
+};
+
+type LockedStore = {
+  offer(): Promise<MarketRecord | null>;
+  demand(): Promise<MarketRecord | null>;
+  reservedOfferQuantity(): Promise<string>;
+  reservedDemandQuantity(): Promise<string>;
+  activeDuplicate(quantityKwh: string): Promise<TransactionRecord | null>;
+  create(data: TransactionCreation): Promise<TransactionRecord>;
+};
+
+type TransactionStore = {
+  transaction(): Promise<TransactionRecord | null>;
+  update(data: Partial<Pick<TransactionRecord, 'status' | 'sellerAcceptedAt' | 'buyerAcceptedAt' | 'confirmedAt' | 'cancelledAt'>>): Promise<TransactionRecord>;
+  confirmedOfferQuantity(): Promise<string>;
+  confirmedDemandQuantity(): Promise<string>;
+  offer(): Promise<MarketRecord | null>;
+  demand(): Promise<MarketRecord | null>;
+  setOfferStatus(status: EnergyMarketStatus): Promise<void>;
+  setDemandStatus(status: EnergyMarketStatus): Promise<void>;
+};
+
+export interface EnergyTransactionRepository {
+  withLockedPublications<T>(offerId: string, demandId: string, action: (store: LockedStore) => Promise<T>): Promise<T>;
+  withLockedTransaction<T>(id: string, action: (store: TransactionStore) => Promise<T>): Promise<T>;
+  findMine(userId: string, status?: EnergyTransactionStatus): Promise<TransactionRecord[]>;
+  findForParticipant(id: string, userId: string): Promise<TransactionRecord | null>;
+}
+
+export class EnergyTransactionError extends Error {
+  constructor(readonly status: number, readonly code: string, message: string) { super(message); }
+}
+
+function decimalString(value: unknown): string {
+  const text = typeof value === 'string' ? value : value && typeof value === 'object' && 'toString' in value ? String(value) : String(value);
+  if (!/^-?\d+(?:\.\d+)?$/.test(text)) throw new Error('Invalid persisted decimal');
+  return text;
+}
+
+function scale(value: string) { return value.split('.')[1]?.length ?? 0; }
+function scaled(value: string, targetScale: number): bigint {
+  const negative = value.startsWith('-');
+  const [whole, fraction = ''] = value.replace(/^-/, '').split('.');
+  const digits = `${whole}${fraction.padEnd(targetScale, '0').slice(0, targetScale)}`.replace(/^0+(?=\d)/, '') || '0';
+  return (negative ? -1n : 1n) * BigInt(digits);
+}
+function decimal(value: bigint, valueScale: number): string {
+  const negative = value < 0n;
+  const digits = (negative ? -value : value).toString();
+  if (valueScale === 0) return `${negative ? '-' : ''}${digits}`;
+  const padded = digits.padStart(valueScale + 1, '0');
+  return `${negative ? '-' : ''}${padded.slice(0, -valueScale)}.${padded.slice(-valueScale)}`;
+}
+function compare(left: string, right: string) {
+  const valueScale = Math.max(scale(left), scale(right));
+  return scaled(left, valueScale) === scaled(right, valueScale) ? 0 : scaled(left, valueScale) > scaled(right, valueScale) ? 1 : -1;
+}
+function subtract(left: string, right: string) {
+  const valueScale = Math.max(scale(left), scale(right));
+  return decimal(scaled(left, valueScale) - scaled(right, valueScale), valueScale);
+}
+function multiply(left: string, right: string) { return decimal(scaled(left, scale(left)) * scaled(right, scale(right)), scale(left) + scale(right)); }
+function dateOnly(value: Date) { return value.toISOString().slice(0, 10); }
+
+function quantity(value: unknown): string {
+  const text = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : '';
+  if (!/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(text) || compare(text, '0') <= 0) {
+    throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_QUANTITY', 'La cantidad debe ser decimal positiva con máximo dos decimales.');
+  }
+  return text;
+}
+
+function createInput(body: unknown) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacción no es válida.');
+  const value = body as Record<string, unknown>;
+  if (Object.keys(value).some(key => !['offerId', 'demandId', 'quantityKwh', 'matchingExecutionId'].includes(key)) || typeof value.offerId !== 'string' || typeof value.demandId !== 'string' || (value.matchingExecutionId !== undefined && (typeof value.matchingExecutionId !== 'string' || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value.matchingExecutionId)))) {
+    throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacción no es válida.');
+  }
+  return { offerId: value.offerId, demandId: value.demandId, quantityKwh: quantity(value.quantityKwh), matchingExecutionId: value.matchingExecutionId ?? null };
+}
+
+function dto(value: TransactionRecord) {
+  return {
+    id: value.id,
+    offerId: value.offerId,
+    demandId: value.demandId,
+    quantityKwh: decimalString(value.quantityKwh),
+    pricePerKwh: decimalString(value.pricePerKwh),
+    totalAmountCop: decimalString(value.totalAmountCop),
+    deliveryDate: dateOnly(value.deliveryDate),
+    status: value.status,
+    sellerAcceptedAt: value.sellerAcceptedAt?.toISOString() ?? null,
+    buyerAcceptedAt: value.buyerAcceptedAt?.toISOString() ?? null,
+    createdAt: value.createdAt.toISOString(),
+    updatedAt: value.updatedAt.toISOString(),
+    confirmedAt: value.confirmedAt?.toISOString() ?? null,
+    cancelledAt: value.cancelledAt?.toISOString() ?? null,
+    matchingExecutionId: value.matchingExecutionId,
+  };
+}
+
+function prismaStore(transaction: Prisma.TransactionClient, offerId: string, demandId: string): LockedStore {
+  const toRecord = (value: any): TransactionRecord => value;
+  return {
+    offer: () => transaction.energyOffer.findUnique({ where: { id: offerId } }),
+    demand: () => transaction.energyDemand.findUnique({ where: { id: demandId } }),
+    reservedOfferQuantity: async () => decimalString((await transaction.energyTransaction.aggregate({ _sum: { quantityKwh: true }, where: { offerId, status: { in: ['PENDING_ACCEPTANCE', 'CONFIRMED'] } } }))._sum.quantityKwh ?? '0'),
+    reservedDemandQuantity: async () => decimalString((await transaction.energyTransaction.aggregate({ _sum: { quantityKwh: true }, where: { demandId, status: { in: ['PENDING_ACCEPTANCE', 'CONFIRMED'] } } }))._sum.quantityKwh ?? '0'),
+    activeDuplicate: async quantityKwh => {
+      const value = await transaction.energyTransaction.findFirst({ where: { offerId, demandId, quantityKwh, status: 'PENDING_ACCEPTANCE' } });
+      return value ? toRecord(value) : null;
+    },
+    create: async data => toRecord(await transaction.energyTransaction.create({ data })),
+  };
+}
+
+const repository: EnergyTransactionRepository = {
+  withLockedPublications: (offerId, demandId, action) => prisma.$transaction(async transaction => {
+    await transaction.$queryRaw`SELECT "id" FROM "EnergyOffer" WHERE "id" = ${offerId}::uuid FOR UPDATE`;
+    await transaction.$queryRaw`SELECT "id" FROM "EnergyDemand" WHERE "id" = ${demandId}::uuid FOR UPDATE`;
+    return action(prismaStore(transaction, offerId, demandId));
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }),
+  withLockedTransaction: (id, action) => prisma.$transaction(async transaction => {
+    const rows = await transaction.$queryRaw<Array<{ offerId: string; demandId: string }>>`SELECT "offerId", "demandId" FROM "EnergyTransaction" WHERE "id" = ${id}::uuid FOR UPDATE`;
+    const row = rows[0];
+    if (!row) return action({
+      transaction: async () => null,
+      update: async () => { throw new Error('unreachable'); },
+      confirmedOfferQuantity: async () => '0', confirmedDemandQuantity: async () => '0', offer: async () => null, demand: async () => null,
+      setOfferStatus: async () => {}, setDemandStatus: async () => {},
+    });
+    await transaction.$queryRaw`SELECT "id" FROM "EnergyOffer" WHERE "id" = ${row.offerId}::uuid FOR UPDATE`;
+    await transaction.$queryRaw`SELECT "id" FROM "EnergyDemand" WHERE "id" = ${row.demandId}::uuid FOR UPDATE`;
+    const store: TransactionStore = {
+      transaction: async () => (await transaction.energyTransaction.findUnique({ where: { id } })) as TransactionRecord | null,
+      update: async data => transaction.energyTransaction.update({ where: { id }, data }) as Promise<TransactionRecord>,
+      confirmedOfferQuantity: async () => decimalString((await transaction.energyTransaction.aggregate({ _sum: { quantityKwh: true }, where: { offerId: row.offerId, status: 'CONFIRMED' } }))._sum.quantityKwh ?? '0'),
+      confirmedDemandQuantity: async () => decimalString((await transaction.energyTransaction.aggregate({ _sum: { quantityKwh: true }, where: { demandId: row.demandId, status: 'CONFIRMED' } }))._sum.quantityKwh ?? '0'),
+      offer: () => transaction.energyOffer.findUnique({ where: { id: row.offerId } }),
+      demand: () => transaction.energyDemand.findUnique({ where: { id: row.demandId } }),
+      setOfferStatus: async status => { await transaction.energyOffer.update({ where: { id: row.offerId }, data: { status } }); },
+      setDemandStatus: async status => { await transaction.energyDemand.update({ where: { id: row.demandId }, data: { status } }); },
+    };
+    return action(store);
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }),
+  findMine: async (userId, status) => (await prisma.energyTransaction.findMany({ where: { OR: [{ sellerUserId: userId }, { buyerUserId: userId }], ...(status ? { status } : {}) }, orderBy: { createdAt: 'desc' } })) as TransactionRecord[],
+  findForParticipant: async (id, userId) => (await prisma.energyTransaction.findFirst({ where: { id, OR: [{ sellerUserId: userId }, { buyerUserId: userId }] } })) as TransactionRecord | null,
+};
+
+async function ensureConfirmedPublicationStatuses(store: TransactionStore, record: TransactionRecord) {
+  const [offer, demand, confirmedOffer, confirmedDemand] = await Promise.all([store.offer(), store.demand(), store.confirmedOfferQuantity(), store.confirmedDemandQuantity()]);
+  if (offer && compare(decimalString(offer.quantityKwh), confirmedOffer) === 0) await store.setOfferStatus('FULFILLED');
+  if (demand && compare(decimalString(demand.quantityKwh), confirmedDemand) === 0) await store.setDemandStatus('FULFILLED');
+  return record;
+}
+
+export function createEnergyTransactionService(repo: EnergyTransactionRepository = repository, now: () => Date = () => new Date()) {
+  return {
+    async create(userId: string, body: unknown) {
+      const input = createInput(body);
+      return dto(await repo.withLockedPublications(input.offerId, input.demandId, async store => {
+        const [offer, demand, reservedOffer, reservedDemand, duplicate] = await Promise.all([store.offer(), store.demand(), store.reservedOfferQuantity(), store.reservedDemandQuantity(), store.activeDuplicate(input.quantityKwh)]);
+        if (!offer) throw new EnergyTransactionError(404, 'OFFER_NOT_FOUND', 'La oferta no existe.');
+        if (!demand) throw new EnergyTransactionError(404, 'DEMAND_NOT_FOUND', 'La demanda no existe.');
+        if (offer.status !== 'ACTIVE' || demand.status !== 'ACTIVE') throw new EnergyTransactionError(409, 'PUBLICATION_NOT_ACTIVE', 'La oferta y demanda deben estar activas.');
+        if (offer.userId === demand.userId) throw new EnergyTransactionError(409, 'SAME_TRANSACTION_PARTICIPANT', 'La oferta y demanda deben pertenecer a usuarios distintos.');
+        if (userId !== offer.userId && userId !== demand.userId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede proponer la transacción.');
+        if (dateOnly(offer.deliveryDate) !== dateOnly(demand.deliveryDate)) throw new EnergyTransactionError(409, 'DELIVERY_DATE_MISMATCH', 'La fecha de entrega debe coincidir.');
+        const price = decimalString(offer.pricePerKwh);
+        if (compare(price, decimalString(demand.maxPricePerKwh!)) > 0) throw new EnergyTransactionError(409, 'PRICE_NOT_COMPATIBLE', 'El precio de la oferta supera el máximo de la demanda.');
+        if (duplicate) throw new EnergyTransactionError(409, 'DUPLICATE_ACTIVE_PROPOSAL', 'Ya existe una propuesta activa equivalente.');
+        const offerAvailable = subtract(decimalString(offer.quantityKwh), reservedOffer);
+        const demandAvailable = subtract(decimalString(demand.quantityKwh), reservedDemand);
+        if (compare(input.quantityKwh, offerAvailable) > 0) throw new EnergyTransactionError(409, 'OFFER_QUANTITY_UNAVAILABLE', 'La cantidad supera el saldo disponible de la oferta.');
+        if (compare(input.quantityKwh, demandAvailable) > 0) throw new EnergyTransactionError(409, 'DEMAND_QUANTITY_UNAVAILABLE', 'La cantidad supera el saldo pendiente de la demanda.');
+        return store.create({ offerId: offer.id, demandId: demand.id, sellerUserId: offer.userId, buyerUserId: demand.userId, quantityKwh: input.quantityKwh, pricePerKwh: price, totalAmountCop: multiply(input.quantityKwh, price), deliveryDate: offer.deliveryDate, status: 'PENDING_ACCEPTANCE', matchingExecutionId: input.matchingExecutionId });
+      }));
+    },
+    async accept(userId: string, id: string) {
+      return dto(await repo.withLockedTransaction(id, async store => {
+        const current = await store.transaction();
+        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
+        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite aceptación.');
+        if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede aceptar la transacción.');
+        const sellerAcceptedAt = userId === current.sellerUserId ? current.sellerAcceptedAt ?? now() : current.sellerAcceptedAt;
+        const buyerAcceptedAt = userId === current.buyerUserId ? current.buyerAcceptedAt ?? now() : current.buyerAcceptedAt;
+        const confirmed = sellerAcceptedAt !== null && buyerAcceptedAt !== null;
+        const updated = await store.update({ sellerAcceptedAt, buyerAcceptedAt, ...(confirmed ? { status: 'CONFIRMED', confirmedAt: now() } : {}) });
+        return confirmed ? ensureConfirmedPublicationStatuses(store, updated) : updated;
+      }));
+    },
+    async reject(userId: string, id: string) {
+      return dto(await repo.withLockedTransaction(id, async store => {
+        const current = await store.transaction();
+        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
+        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite rechazo.');
+        if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede rechazar la transacción.');
+        return store.update({ status: 'REJECTED' });
+      }));
+    },
+    async cancel(userId: string, id: string) {
+      return dto(await repo.withLockedTransaction(id, async store => {
+        const current = await store.transaction();
+        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
+        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite cancelación.');
+        if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede cancelar la transacción.');
+        return store.update({ status: 'CANCELLED', cancelledAt: now() });
+      }));
+    },
+    async findMine(userId: string, status?: string) {
+      if (status && !Object.values(EnergyTransactionStatus).includes(status as EnergyTransactionStatus)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_STATUS', 'El estado de transacción no es válido.');
+      return (await repo.findMine(userId, status as EnergyTransactionStatus | undefined)).map(dto);
+    },
+    async findOne(userId: string, id: string) {
+      const value = await repo.findForParticipant(id, userId);
+      if (!value) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
+      return dto(value);
+    },
+  };
+}

@@ -10,7 +10,7 @@ export type MatchingOfferLike = {
   pricePerKwh: DecimalLike;
   deliveryDate: Date | string;
   createdAt: Date | string;
-  status: 'ACTIVE';
+  status: string;
 };
 
 export type MatchingDemandLike = {
@@ -19,7 +19,7 @@ export type MatchingDemandLike = {
   maxPricePerKwh: DecimalLike;
   deliveryDate: Date | string;
   createdAt: Date | string;
-  status: 'ACTIVE';
+  status: string;
 };
 
 export type MatchingSuggestion = {

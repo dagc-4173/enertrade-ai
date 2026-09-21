@@ -206,6 +206,13 @@ enum MatchingResultStatus {
   no_matches
 }
 
+enum EnergyTransactionStatus {
+  PENDING_ACCEPTANCE
+  CONFIRMED
+  REJECTED
+  CANCELLED
+}
+
 model PriceForecastExecution {
   id                     String                               @id @default(uuid()) @db.Uuid
   forecastType           String
@@ -243,6 +250,7 @@ model MatchingExecution {
   errorCode        String?
   createdAt        DateTime               @default(now()) @db.Timestamptz(3)
   completedAt      DateTime?              @db.Timestamptz(3)
+  transactions     EnergyTransaction[]
 
   @@index([createdAt])
   @@index([executionStatus])
@@ -258,6 +266,8 @@ model User {
   sessions AuthSession[]
   offers EnergyOffer[]
   demands EnergyDemand[]
+  sales EnergyTransaction[] @relation("EnergyTransactionSeller")
+  purchases EnergyTransaction[] @relation("EnergyTransactionBuyer")
 }
 model AuthSession {
   tokenHash String @id @db.Char(64)
@@ -271,6 +281,7 @@ model AuthSession {
 
 enum EnergyMarketStatus {
   ACTIVE
+  FULFILLED
 }
 
 model EnergyOffer {
@@ -283,6 +294,7 @@ model EnergyOffer {
   createdAt    DateTime          @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime          @updatedAt @db.Timestamptz(3)
   user         User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  transactions EnergyTransaction[]
 
   @@index([userId])
   @@index([status])
@@ -299,8 +311,40 @@ model EnergyDemand {
   createdAt      DateTime          @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime          @updatedAt @db.Timestamptz(3)
   user           User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  transactions   EnergyTransaction[]
 
   @@index([userId])
   @@index([status])
   @@index([deliveryDate])
+}
+
+model EnergyTransaction {
+  id                  String                  @id @default(uuid()) @db.Uuid
+  offerId             String                  @db.Uuid
+  demandId            String                  @db.Uuid
+  sellerUserId        String                  @db.Uuid
+  buyerUserId         String                  @db.Uuid
+  quantityKwh         Decimal                 @db.Decimal(20, 2)
+  pricePerKwh         Decimal                 @db.Decimal(18, 5)
+  totalAmountCop      Decimal                 @db.Decimal(38, 7)
+  deliveryDate        DateTime                @db.Date
+  status              EnergyTransactionStatus @default(PENDING_ACCEPTANCE)
+  sellerAcceptedAt    DateTime?               @db.Timestamptz(3)
+  buyerAcceptedAt     DateTime?               @db.Timestamptz(3)
+  createdAt           DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime                @updatedAt @db.Timestamptz(3)
+  confirmedAt         DateTime?               @db.Timestamptz(3)
+  cancelledAt         DateTime?               @db.Timestamptz(3)
+  matchingExecutionId String?                 @db.Uuid
+  offer               EnergyOffer             @relation(fields: [offerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  demand              EnergyDemand            @relation(fields: [demandId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  seller              User                    @relation("EnergyTransactionSeller", fields: [sellerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  buyer               User                    @relation("EnergyTransactionBuyer", fields: [buyerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  matchingExecution   MatchingExecution?      @relation(fields: [matchingExecutionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([offerId, status])
+  @@index([demandId, status])
+  @@index([sellerUserId, createdAt])
+  @@index([buyerUserId, createdAt])
+  @@index([matchingExecutionId])
 }
