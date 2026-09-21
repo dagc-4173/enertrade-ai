@@ -271,6 +271,13 @@ No se recalcula la velocidad completa de S2 porque para ello deben revisarse tod
 - **Límites:** no asigna una HU oficial ni altera la numeración vigente. No incluye pagos, liquidación, entrega física, cambios de frontend ni modificación de matching-v1.
 - **Evidencia pendiente:** prueba real de concurrencia PostgreSQL para contrapropuestas simultáneas.
 
+## 9.4 Propuesta provisional C21d
+
+- **Título:** Sincronizar automáticamente Marketplace y transacciones, con formato numérico es-CO y filtros de publicaciones.
+- **Estado:** Implementado; pruebas frontend y validación manual entre dos sesiones pendientes de evidencia.
+- **Criterios:** polling visible cada 5 segundos, formularios locales preservados, historial abierto actualizado, no auto-matching, aviso de sugerencias desactualizadas, payload numérico canónico y filtros de trazabilidad por estado.
+- **Límites:** no añade WebSocket/SSE, backend, pagos ni cambios a matching-v1.
+
 ## 10. Pendientes documentales
 
 - Incorporar HU-21 y HU-22 al Product Backlog de TG-II.
