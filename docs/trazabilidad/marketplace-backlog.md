@@ -263,10 +263,10 @@ No se recalcula la velocidad completa de S2 porque para ello deben revisarse tod
 - **Regla de estado:** una publicación sigue `ACTIVE` mientras la suma confirmada sea menor a su cantidad original; las reservas pendientes descuentan saldo pero no la completan.
 - **Límite:** no incluye pagos, negociación de precio, migración de datos ni modificación del matching informativo.
 
-## 9.3 Propuesta provisional C21b
+## 9.3 Propuesta provisional C21b/C21c
 
-- **Título:** Negociar términos de una transacción energética simulada.
-- **Estado:** Implementado y probado automatizadamente; formalización académica pendiente.
+- **Título:** Negociar términos de una transacción energética simulada y presentar el flujo de negociación.
+- **Estado:** Implementado y probado técnicamente; evidencia manual PE-13 disponible; formalización académica pendiente.
 - **Criterios:** iniciar una negociación aunque no exista match de precio automático; proponer cantidad y precio; emitir contrapropuestas alternadas; conservar historial inmutable; mantener una reserva vigente; aceptar el último término; y conservar el saldo parcial final de las publicaciones.
 - **Límites:** no asigna una HU oficial ni altera la numeración vigente. No incluye pagos, liquidación, entrega física, cambios de frontend ni modificación de matching-v1.
 - **Evidencia pendiente:** prueba real de concurrencia PostgreSQL para contrapropuestas simultáneas.
@@ -274,9 +274,16 @@ No se recalcula la velocidad completa de S2 porque para ello deben revisarse tod
 ## 9.4 Propuesta provisional C21d
 
 - **Título:** Sincronizar automáticamente Marketplace y transacciones, con formato numérico es-CO y filtros de publicaciones.
-- **Estado:** Implementado; pruebas frontend y validación manual entre dos sesiones pendientes de evidencia.
+- **Estado:** Implementado y probado técnicamente; evidencia manual PE-12 disponible; formalización académica pendiente.
 - **Criterios:** polling visible cada 5 segundos, formularios locales preservados, historial abierto actualizado, no auto-matching, aviso de sugerencias desactualizadas, payload numérico canónico y filtros de trazabilidad por estado.
 - **Límites:** no añade WebSocket/SSE, backend, pagos ni cambios a matching-v1.
+
+## 9.5 Propuesta provisional C21e
+
+- **Título:** Explicar sugerencias de matching sobre saldos operativos disponibles.
+- **Estado:** Implementado y probado técnicamente; evidencia manual PE-14 disponible; formalización académica pendiente.
+- **Criterios:** matching sobre saldo operativo, reglas deterministas de fecha y precio, cobertura completa/parcial/sin coincidencia, diagnóstico explicable y detalle de ofertas utilizadas.
+- **Límites:** no asigna una HU oficial ni altera la numeración vigente. No incorpora scoring, modelos ML, pronósticos, negociación automática, pagos ni liquidación.
 
 ## 10. Pendientes documentales
 
