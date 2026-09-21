@@ -8,7 +8,7 @@ const decimal = (value: unknown): value is string => text(value) && /^-?\d+(?:\.
 const date = (value: unknown): value is string => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(`${value}T00:00:00Z`))
 const matchingStatuses = new Set(['matched', 'partial', 'no_matches'])
 const compatibilities = new Set(['FULL', 'PARTIAL', 'NO_MATCH'])
-const reasons = new Set(['SAME_DELIVERY_DATE', 'PRICE_COMPATIBLE', 'INSUFFICIENT_QUANTITY', 'NO_COMPATIBLE_OFFERS'])
+const reasons = new Set(['NO_ACTIVE_OFFERS', 'NO_SAME_DELIVERY_DATE', 'PRICE_ABOVE_MAX', 'INSUFFICIENT_AVAILABLE_QUANTITY', 'FULLY_MATCHED', 'PARTIALLY_MATCHED'])
 const warnings = new Set(['NO_ACTIVE_OFFERS', 'NO_ACTIVE_DEMANDS', 'PARTIAL_MATCHES'])
 
 export function parseMatching(value: unknown): MatchingResult {
@@ -16,7 +16,7 @@ export function parseMatching(value: unknown): MatchingResult {
     throw new ApiError('response', 'La API devolvió emparejamientos con formato inesperado.')
   }
   const validMatches = value.matches.every(item => object(item) && text(item.offerId) && text(item.demandId) && decimal(item.suggestedQuantityKwh) && decimal(item.offerPricePerKwh) && decimal(item.maxDemandPricePerKwh) && date(item.deliveryDate))
-  const validDemands = value.demands.every(item => object(item) && text(item.demandId) && decimal(item.requestedQuantityKwh) && decimal(item.suggestedQuantityKwh) && decimal(item.unmatchedQuantityKwh) && typeof item.compatibility === 'string' && compatibilities.has(item.compatibility) && Array.isArray(item.reasons) && item.reasons.every(reason => typeof reason === 'string' && reasons.has(reason)))
+  const validDemands = value.demands.every(item => object(item) && text(item.demandId) && decimal(item.requestedQuantityKwh) && decimal(item.suggestedQuantityKwh) && decimal(item.unmatchedQuantityKwh) && typeof item.coveragePercent === 'number' && Number.isFinite(item.coveragePercent) && item.coveragePercent >= 0 && item.coveragePercent <= 100 && typeof item.compatibility === 'string' && compatibilities.has(item.compatibility) && Array.isArray(item.reasons) && item.reasons.every(reason => typeof reason === 'string' && reasons.has(reason)))
   const summary = value.summary
   if (!validMatches || !validDemands || !count(summary.offersConsidered) || !count(summary.demandsConsidered) || !count(summary.suggestedMatches) || !decimal(summary.matchedQuantityKwh) || !decimal(summary.unmatchedDemandKwh) || summary.suggestedMatches !== value.matches.length || !value.warnings.every(warning => typeof warning === 'string' && warnings.has(warning)) || !text(value.trace.executionId) || (value.trace.persistence !== 'persisted' && value.trace.persistence !== 'failed')) {
     throw new ApiError('response', 'La API devolvió emparejamientos con formato inesperado.')

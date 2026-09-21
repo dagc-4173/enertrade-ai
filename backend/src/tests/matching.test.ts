@@ -4,6 +4,7 @@ import { createMatchingRouter } from '@/controllers/matching.controller';
 import { buildMatchingSuggestions, createMatchingService, formatDecimal, type MatchingOfferLike, type MatchingDemandLike, type MatchingReadRepository } from '@/services/matching.service';
 import { AuthError, type AuthUser } from '@/services/auth.service';
 import { requireAuth } from '@/middlewares/auth.middleware';
+import { createAvailableMatchingReadRepository } from '@/services/market.service';
 
 const user: AuthUser = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -273,6 +274,40 @@ describe('buildMatchingSuggestions', () => {
     );
     expect(result.matches).toHaveLength(1);
     expect(Object.keys(result).sort()).toContain('summary');
+  });
+
+  test('C21E-SALDO-01: matching usa los 6000 kWh disponibles y no la cantidad original', () => {
+    const result = buildMatchingSuggestions(
+      [{ id: 'offer-available', quantityKwh: decimal('6000'), pricePerKwh: decimal('400'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' }],
+      [{ id: 'demand-8000', quantityKwh: decimal('8000'), maxPricePerKwh: decimal('500'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T01:00:00Z'), status: 'ACTIVE' }],
+    );
+    expect(first(result.matches).suggestedQuantityKwh).toBe('6000');
+    expect(first(result.demands)).toMatchObject({ compatibility: 'PARTIAL', unmatchedQuantityKwh: '2000', coveragePercent: 75 });
+    expect(first(result.demands).reasons).toContain('INSUFFICIENT_AVAILABLE_QUANTITY');
+  });
+
+  test('C21E-SALDO-02: repositorio descuenta confirmadas y pendientes con la misma lógica del mercado', async () => {
+    const balances = { 'offer-1': '94000', 'offer-2': '7000', 'demand-1': '42000' };
+    const repository = createAvailableMatchingReadRepository({
+      energyOffer: { findMany: async () => [
+        { id: 'offer-1', quantityKwh: decimal('100000'), pricePerKwh: decimal('400'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' },
+        { id: 'offer-2', quantityKwh: decimal('10000'), pricePerKwh: decimal('400'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' },
+      ] },
+      energyDemand: { findMany: async () => [{ id: 'demand-1', quantityKwh: decimal('50000'), maxPricePerKwh: decimal('500'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' }] },
+      energyTransaction: { aggregate: async ({ where }: { where: Record<string, unknown> }) => ({ _sum: { quantityKwh: balances[String(where.offerId ?? where.demandId) as keyof typeof balances] ?? '0' } }) },
+    });
+    await expect(repository.listActiveOffers()).resolves.toMatchObject([{ id: 'offer-1', quantityKwh: '6000' }, { id: 'offer-2', quantityKwh: '3000' }]);
+    await expect(repository.listActiveDemands()).resolves.toMatchObject([{ id: 'demand-1', quantityKwh: '8000' }]);
+  });
+
+  test('C21E-DIAGNOSTICO: distingue fecha, precio, cobertura completa y varias ofertas', () => {
+    const dateMiss = buildMatchingSuggestions([{ id: 'other-date', quantityKwh: decimal('8000'), pricePerKwh: decimal('400'), deliveryDate: isoDate('2026-10-02'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' }], [{ id: 'date-demand', quantityKwh: decimal('8000'), maxPricePerKwh: decimal('500'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T01:00:00Z'), status: 'ACTIVE' }]);
+    expect(first(dateMiss.demands).reasons).toEqual(['NO_SAME_DELIVERY_DATE']);
+    const priceMiss = buildMatchingSuggestions([{ id: 'above-max', quantityKwh: decimal('8000'), pricePerKwh: decimal('450'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' }], [{ id: 'price-demand', quantityKwh: decimal('8000'), maxPricePerKwh: decimal('420'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T01:00:00Z'), status: 'ACTIVE' }]);
+    expect(first(priceMiss.demands).reasons).toEqual(['PRICE_ABOVE_MAX']);
+    const full = buildMatchingSuggestions([{ id: 'offer-a', quantityKwh: decimal('6000'), pricePerKwh: decimal('400'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' }, { id: 'offer-b', quantityKwh: decimal('4000'), pricePerKwh: decimal('450'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-21T00:00:00Z'), status: 'ACTIVE' }], [{ id: 'full-demand', quantityKwh: decimal('10000'), maxPricePerKwh: decimal('500'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T01:00:00Z'), status: 'ACTIVE' }]);
+    expect(first(full.demands)).toMatchObject({ coveragePercent: 100, reasons: ['FULLY_MATCHED'] });
+    expect(full.matches.map(match => match.offerId)).toEqual(['offer-a', 'offer-b']);
   });
 });
 

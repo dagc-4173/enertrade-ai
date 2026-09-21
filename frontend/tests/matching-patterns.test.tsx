@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { MatchingContent } from '../src/pages/Marketplace'
 import { PatternResults, Patterns } from '../src/pages/Patterns'
 import { ApiError } from '../src/services/apiClient'
-import { suggestMatches } from '../src/services/matchingService'
+import { parseMatching, suggestMatches } from '../src/services/matchingService'
 import { analyzePatterns, getPatterns } from '../src/services/patternsService'
 import type { MatchingResult } from '../src/types/matching'
 import type { PatternAnalysisResponse } from '../src/types/patterns'
@@ -16,7 +16,7 @@ function respond(body: unknown, status = 200) { return spyOn(globalThis, 'fetch'
 
 const baseMatching = {
   matches: [{ offerId: 'offer-1', demandId: 'demand-1', suggestedQuantityKwh: '4.5', offerPricePerKwh: '10', maxDemandPricePerKwh: '12', deliveryDate: '2026-09-18' }],
-  demands: [{ demandId: 'demand-1', requestedQuantityKwh: '4.5', suggestedQuantityKwh: '4.5', unmatchedQuantityKwh: '0', compatibility: 'FULL', reasons: ['SAME_DELIVERY_DATE', 'PRICE_COMPATIBLE'] }],
+  demands: [{ demandId: 'demand-1', requestedQuantityKwh: '4.5', suggestedQuantityKwh: '4.5', unmatchedQuantityKwh: '0', coveragePercent: 100, compatibility: 'FULL', reasons: ['FULLY_MATCHED'] }],
   summary: { offersConsidered: 1, demandsConsidered: 1, suggestedMatches: 1, matchedQuantityKwh: '4.5', unmatchedDemandKwh: '0' },
   warnings: [], trace: { executionId: 'run-1', persistence: 'persisted' },
 } as const
@@ -38,24 +38,33 @@ test('matching service posts an empty authenticated JSON body and validates resp
   expect(fetch.mock.calls[0]?.[1]?.credentials).toBe('include')
 })
 
-test('matching UI distinguishes FULL, PARTIAL and NO_MATCH without calling it a transaction', () => {
+test('matching UI explica cobertura, referencias cortas, motivos y asignaciones sin datos privados', () => {
   const full: MatchingResult = { status: 'matched', ...baseMatching, demands: [{ ...baseMatching.demands[0], suggestedQuantityKwh: '19703663.78', unmatchedQuantityKwh: '0' }] }
-  const partial: MatchingResult = { status: 'partial', ...baseMatching, demands: [{ ...baseMatching.demands[0], compatibility: 'PARTIAL', suggestedQuantityKwh: '19703663.78', unmatchedQuantityKwh: '232740895.05', reasons: ['SAME_DELIVERY_DATE', 'INSUFFICIENT_QUANTITY'] }], warnings: ['PARTIAL_MATCHES'] }
-  const noMatch: MatchingResult = { status: 'no_matches', ...baseMatching, matches: [], demands: [{ ...baseMatching.demands[0], compatibility: 'NO_MATCH', suggestedQuantityKwh: '0', unmatchedQuantityKwh: '252444558.83', reasons: ['NO_COMPATIBLE_OFFERS'] }], summary: { ...baseMatching.summary, suggestedMatches: 0, matchedQuantityKwh: '0', unmatchedDemandKwh: '252444558.83' }, warnings: ['NO_ACTIVE_OFFERS'] }
+  const partial: MatchingResult = { status: 'partial', ...baseMatching, matches: [{ ...baseMatching.matches[0], offerId: 'offer-2', suggestedQuantityKwh: '19703663.78' }, { ...baseMatching.matches[0], offerId: 'offer-3', suggestedQuantityKwh: '10' }], demands: [{ ...baseMatching.demands[0], compatibility: 'PARTIAL', suggestedQuantityKwh: '19703663.78', unmatchedQuantityKwh: '232740895.05', coveragePercent: 70, reasons: ['PARTIALLY_MATCHED', 'INSUFFICIENT_AVAILABLE_QUANTITY'] }], warnings: ['PARTIAL_MATCHES'] }
+  const noMatchDate: MatchingResult = { status: 'no_matches', ...baseMatching, matches: [], demands: [{ ...baseMatching.demands[0], compatibility: 'NO_MATCH', suggestedQuantityKwh: '0', unmatchedQuantityKwh: '252444558.83', coveragePercent: 0, reasons: ['NO_SAME_DELIVERY_DATE'] }], summary: { ...baseMatching.summary, suggestedMatches: 0, matchedQuantityKwh: '0', unmatchedDemandKwh: '252444558.83' }, warnings: ['NO_ACTIVE_OFFERS'] }
+  const noMatchPrice: MatchingResult = { ...noMatchDate, demands: [{ ...noMatchDate.demands[0], reasons: ['PRICE_ABOVE_MAX'] }] }
   const fullMarkup = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: full }} onSuggest={() => {}} />)
   const partialMarkup = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: partial }} onSuggest={() => {}} />)
-  const noMatchMarkup = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: noMatch }} onSuggest={() => {}} />)
-  expect(fullMarkup).toContain('FULL')
+  const dateMarkup = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: noMatchDate }} stale onSuggest={() => {}} />)
+  const priceMarkup = renderToStaticMarkup(<MatchingContent state={{ kind: 'success', result: noMatchPrice }} onSuggest={() => {}} />)
+  expect(fullMarkup).toContain('Coincidencia completa')
+  expect(fullMarkup).toContain('Demanda #demand-1')
+  expect(fullMarkup).toContain('Oferta #offer-1')
+  expect(fullMarkup).toContain('Margen frente al máximo: 2,00 COP/kWh')
+  expect(fullMarkup).toContain('Demandas evaluadas: 1')
   expect(fullMarkup).toContain('19.703.663,78 kWh')
   expect(fullMarkup).toContain('0,00 kWh')
-  expect(partialMarkup).toContain('PARTIAL')
+  expect(partialMarkup).toContain('Coincidencia parcial')
+  expect(partialMarkup).toContain('Ofertas utilizadas: 2')
+  expect(partialMarkup).toContain('Cobertura: 70 %')
   expect(partialMarkup).toContain('19.703.663,78 kWh')
   expect(partialMarkup).toContain('232.740.895,05 kWh')
-  expect(noMatchMarkup).toContain('NO_MATCH')
-  expect(noMatchMarkup).toContain('0,00 kWh')
-  expect(noMatchMarkup).toContain('252.444.558,83 kWh')
-  expect(noMatchMarkup).toContain('No se encontraron emparejamientos compatibles.')
-  expect(noMatchMarkup).not.toMatch(/transacción|pago|liquidación/i)
+  expect(dateMarkup).toContain('Sin coincidencia')
+  expect(dateMarkup).toContain('No hay ofertas disponibles para la misma fecha de entrega.')
+  expect(dateMarkup).toContain('El mercado cambió desde el último emparejamiento.')
+  expect(dateMarkup).toContain('Actualizar sugerencias')
+  expect(priceMarkup).toContain('sus precios superan el máximo de la demanda.')
+  expect(priceMarkup).not.toMatch(/userId|sellerUserId|buyerUserId|email/)
 })
 
 test('matching loading and API errors are visible without a false success', async () => {
@@ -99,4 +108,11 @@ test('patterns history accepts empty responses and rejects malformed or API erro
   await expect(getPatterns()).rejects.toBeInstanceOf(ApiError)
   respond({ error: 'PREPARED_DATASET_NOT_FOUND', message: 'Dataset preparado no encontrado.' }, 404)
   await expect(analyzePatterns(7)).rejects.toMatchObject({ kind: 'http', status: 404, serverMessage: 'Dataset preparado no encontrado.' })
+})
+
+test('matching parser rechaza cobertura ausente o fuera de rango', () => {
+  expect(() => parseMatching({ status: 'matched', ...baseMatching, demands: [{ ...baseMatching.demands[0], coveragePercent: 101 }] })).toThrow(ApiError)
+  const withoutCoverage = { ...baseMatching.demands[0] }
+  delete (withoutCoverage as Partial<typeof withoutCoverage>).coveragePercent
+  expect(() => parseMatching({ status: 'matched', ...baseMatching, demands: [withoutCoverage] })).toThrow(ApiError)
 })

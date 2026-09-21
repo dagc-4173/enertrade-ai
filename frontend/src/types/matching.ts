@@ -1,6 +1,6 @@
 export type MatchingStatus = 'matched' | 'partial' | 'no_matches'
 export type MatchingCompatibility = 'FULL' | 'PARTIAL' | 'NO_MATCH'
-export type MatchingReason = 'SAME_DELIVERY_DATE' | 'PRICE_COMPATIBLE' | 'INSUFFICIENT_QUANTITY' | 'NO_COMPATIBLE_OFFERS'
+export type MatchingReason = 'NO_ACTIVE_OFFERS' | 'NO_SAME_DELIVERY_DATE' | 'PRICE_ABOVE_MAX' | 'INSUFFICIENT_AVAILABLE_QUANTITY' | 'FULLY_MATCHED' | 'PARTIALLY_MATCHED'
 export type MatchingWarning = 'NO_ACTIVE_OFFERS' | 'NO_ACTIVE_DEMANDS' | 'PARTIAL_MATCHES'
 
 export interface MatchingSuggestion {
@@ -17,6 +17,7 @@ export interface MatchingDemandSummary {
   requestedQuantityKwh: string
   suggestedQuantityKwh: string
   unmatchedQuantityKwh: string
+  coveragePercent: number
   compatibility: MatchingCompatibility
   reasons: MatchingReason[]
 }

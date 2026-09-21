@@ -112,7 +112,7 @@ test('la página no ejecuta POST automáticamente y no muestra resultados mock d
   expect(source).toContain('useVisiblePolling')
   expect(source).toContain('marketFingerprint')
   expect(source).toContain('matchingStale')
-  expect(source).toContain('Actualizar sugerencias')
+  expect(readFileSync(new URL('../src/components/matching/MatchingResults.tsx', import.meta.url), 'utf8')).toContain('Actualizar sugerencias')
   expect(source).not.toContain('suggestMatches(controller.signal)')
   expect(source).not.toMatch(/Pagar|Checkout|Tarjeta|Pago exitoso|Liquidado/)
 })

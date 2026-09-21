@@ -3,12 +3,12 @@ import { LocalizedDecimalInput } from '../components/forms/LocalizedDecimalInput
 import { DataTable } from '../components/tables/DataTable'
 import { SectionHeader } from '../components/ui/SectionHeader'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { MatchingResults, type MatchingPresentationState } from '../components/matching/MatchingResults'
 import { useVisiblePolling } from '../hooks/useVisiblePolling'
 import { cancelDemand, cancelOffer, createDemand, createOffer, getMyDemands, getMyOffers, listMarketDemands, listMarketOffers, updateDemand, updateOffer } from '../services/marketplaceService'
 import { suggestMatches } from '../services/matchingService'
 import { createTransaction } from '../services/transactionService'
 import type { EnergyDemandDto, EnergyMarketStatus, EnergyOfferDto, MarketDemand, MarketOffer } from '../types/marketplace'
-import type { MatchingResult } from '../types/matching'
 import type { EnergyTransaction } from '../types/transactions'
 import { errorMessage, selectProposal, type SelectedProposal } from '../utils/marketplaceActions'
 import { filteredPublications, marketFingerprint, publicationEmptyLabel, publicationFilters } from '../utils/marketplaceSync'
@@ -21,7 +21,7 @@ const positive = (value: string, mode: 'quantity' | 'price') => {
   return parsed !== null && parsed > 0 ? parsed : null
 }
 
-type MatchingState = { kind: 'idle' } | { kind: 'loading'; message: string } | { kind: 'error'; message: string } | { kind: 'success'; result: MatchingResult }
+type MatchingState = MatchingPresentationState
 
 export function CompatibilityAction({ ownOffer, ownDemand, externalOffer, externalDemand, onSelect }: { ownOffer?: EnergyOfferDto; ownDemand?: EnergyDemandDto; externalOffer?: MarketOffer; externalDemand?: MarketDemand; onSelect: () => void }) {
   const own = ownOffer ?? ownDemand!
@@ -95,8 +95,7 @@ export function PublicationQuantity({ type, publication }: { type: 'offer' | 'de
 function offerColumns(onChanged: (value: EnergyOfferDto) => void) { return [{ header: 'Disponible', render: (row: EnergyOfferDto) => <PublicationQuantity type="offer" publication={row} /> }, { header: 'Precio', render: (row: EnergyOfferDto) => formatCopPerKwh(row.pricePerKwh) }, { header: 'Fecha de entrega', render: (row: EnergyOfferDto) => formatDeliveryDate(row.deliveryDate) }, { header: 'Estado', render: (row: EnergyOfferDto) => <PublicationStatus status={row.status} /> }, { header: 'Acciones', className: 'publication-actions-cell', render: (row: EnergyOfferDto) => <PublicationActions type="offer" publication={row} onChanged={value => onChanged(value as EnergyOfferDto)} /> }] }
 function demandColumns(onChanged: (value: EnergyDemandDto) => void) { return [{ header: 'Pendiente', render: (row: EnergyDemandDto) => <PublicationQuantity type="demand" publication={row} /> }, { header: 'Precio máximo', render: (row: EnergyDemandDto) => formatCopPerKwh(row.maxPricePerKwh) }, { header: 'Fecha de entrega', render: (row: EnergyDemandDto) => formatDeliveryDate(row.deliveryDate) }, { header: 'Estado', render: (row: EnergyDemandDto) => <PublicationStatus status={row.status} /> }, { header: 'Acciones', className: 'publication-actions-cell', render: (row: EnergyDemandDto) => <PublicationActions type="demand" publication={row} onChanged={value => onChanged(value as EnergyDemandDto)} /> }] }
 
-const compatibilityTone = (value: string) => value === 'FULL' ? 'success' : value === 'PARTIAL' ? 'warning' : 'neutral'
-export function MatchingContent({ state, stale, onSuggest }: { state: MatchingState; stale: boolean; onSuggest: () => void }) { return <section className="panel marketplace-section" aria-label="Emparejamientos sugeridos"><SectionHeader eyebrow="Emparejamiento" title="Emparejamientos sugeridos" description="Los emparejamientos se generan sobre las publicaciones activas disponibles." /><button type="button" className="secondary-button" onClick={onSuggest} disabled={state.kind === 'loading'}>{state.kind === 'loading' ? state.message : stale ? 'Actualizar sugerencias' : 'Sugerir emparejamientos'}</button>{stale && <p className="marketplace-incompatibility" role="status">El mercado cambió desde el último emparejamiento.</p>}{state.kind === 'idle' && <p className="marketplace-empty">Solicita sugerencias para consultar las publicaciones activas disponibles.</p>}{state.kind === 'error' && <p className="marketplace-error" role="alert">{state.message}</p>}{state.kind === 'success' && <div className="stack-list"><p className="marketplace-status">Estado: {state.result.status}. Coincidencias sugeridas: {state.result.summary.suggestedMatches}.</p>{state.result.status === 'no_matches' && <p className="marketplace-empty">No se encontraron emparejamientos compatibles.</p>}{state.result.demands.map(demand => <article key={demand.demandId}><div className="row-between"><strong>Demanda {demand.demandId}</strong><StatusBadge tone={compatibilityTone(demand.compatibility)}>{demand.compatibility}</StatusBadge></div><p>Cantidad sugerida: {formatEnergyKWh(Number(demand.suggestedQuantityKwh))}. Pendiente: {formatEnergyKWh(Number(demand.unmatchedQuantityKwh))}.</p></article>)}</div>}</section> }
+export function MatchingContent({ state, stale = false, onSuggest }: { state: MatchingState; stale?: boolean; onSuggest: () => void }) { return <MatchingResults state={state} stale={stale} onSuggest={onSuggest} /> }
 
 function PublicationFilter({ value, counts, onChange }: { value: EnergyMarketStatus | 'ALL'; counts: Record<EnergyMarketStatus | 'ALL', number>; onChange: (value: EnergyMarketStatus | 'ALL') => void }) { return <div className="publication-filters">{publicationFilters.map(filter => <button key={filter.value} type="button" className={value === filter.value ? 'primary-button' : 'secondary-button'} onClick={() => onChange(filter.value)}>{filter.label} ({counts[filter.value]})</button>)}</div> }
 function counts<T extends EnergyOfferDto | EnergyDemandDto>(publications: T[]) { return Object.fromEntries(publicationFilters.map(filter => [filter.value, filter.value === 'ALL' ? publications.length : publications.filter(publication => publication.status === filter.value).length])) as Record<EnergyMarketStatus | 'ALL', number> }

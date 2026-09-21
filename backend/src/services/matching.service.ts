@@ -1,5 +1,5 @@
 export type MatchingCompatibility = 'FULL' | 'PARTIAL' | 'NO_MATCH';
-export type MatchingReason = 'SAME_DELIVERY_DATE' | 'PRICE_COMPATIBLE' | 'INSUFFICIENT_QUANTITY' | 'NO_COMPATIBLE_OFFERS';
+export type MatchingReason = 'NO_ACTIVE_OFFERS' | 'NO_SAME_DELIVERY_DATE' | 'PRICE_ABOVE_MAX' | 'INSUFFICIENT_AVAILABLE_QUANTITY' | 'FULLY_MATCHED' | 'PARTIALLY_MATCHED';
 
 export type DecimalLike = string | number | { toString(): string };
 export type MatchWarning = 'NO_ACTIVE_OFFERS' | 'NO_ACTIVE_DEMANDS' | 'PARTIAL_MATCHES';
@@ -36,6 +36,7 @@ export type MatchingDemandSummary = {
   requestedQuantityKwh: string;
   suggestedQuantityKwh: string;
   unmatchedQuantityKwh: string;
+  coveragePercent: number;
   compatibility: MatchingCompatibility;
   reasons: MatchingReason[];
 };
@@ -136,6 +137,15 @@ function sumStringValues(values: string[]): string {
   return values.reduce((total, value) => addDecimal(total, value), '0');
 }
 
+function coveragePercent(assigned: string, requested: string): number {
+  if (compareDecimal(requested, '0') <= 0) return 0;
+  const scale = Math.max(decimalScale(assigned), decimalScale(requested));
+  const assignedValue = toComparableBigInt(assigned, scale);
+  const requestedValue = toComparableBigInt(requested, scale);
+  const hundredths = (assignedValue * 10000n + requestedValue / 2n) / requestedValue;
+  return Number(hundredths) / 100;
+}
+
 function sortOffers(offers: MatchingOfferLike[]) {
   return [...offers].sort((left, right) => {
     const priceComparison = compareDecimal(decimalToString(left.pricePerKwh), decimalToString(right.pricePerKwh));
@@ -175,7 +185,8 @@ export function buildMatchingSuggestions(offers: MatchingOfferLike[], demands: M
   for (const demand of sortedDemands) {
     let remainingDemand = decimalToString(demand.quantityKwh);
     let assignedTotal = '0';
-    const reasons = new Set<MatchingReason>();
+    const sameDateOffers = sortedOffers.filter(offer => asDateString(offer.deliveryDate) === asDateString(demand.deliveryDate));
+    const compatibleOffers = sameDateOffers.filter(offer => compareDecimal(decimalToString(offer.pricePerKwh), decimalToString(demand.maxPricePerKwh)) <= 0);
 
     for (const offer of sortedOffers) {
       if (!remainingOffer.has(offer.id)) continue;
@@ -186,9 +197,6 @@ export function buildMatchingSuggestions(offers: MatchingOfferLike[], demands: M
       if (offerDate !== demandDate) continue;
       if (compareDecimal(decimalToString(offer.pricePerKwh), decimalToString(demand.maxPricePerKwh)) > 0) continue;
       if (decimalIsZero(offerRemaining) || decimalIsZero(remainingDemand)) continue;
-
-      reasons.add('SAME_DELIVERY_DATE');
-      reasons.add('PRICE_COMPATIBLE');
 
       const allocated = minDecimal(offerRemaining, remainingDemand);
       if (compareDecimal(allocated, '0') <= 0) continue;
@@ -214,20 +222,29 @@ export function buildMatchingSuggestions(offers: MatchingOfferLike[], demands: M
       compatibility = 'FULL';
     } else if (compareDecimal(assignedTotal, '0') > 0) {
       compatibility = 'PARTIAL';
-      reasons.add('INSUFFICIENT_QUANTITY');
     } else {
       compatibility = 'NO_MATCH';
-      reasons.add('NO_COMPATIBLE_OFFERS');
     }
 
-    const demandReasons = Array.from(reasons);
+    const reason: MatchingReason = sortedOffers.length === 0
+      ? 'NO_ACTIVE_OFFERS'
+      : sameDateOffers.length === 0
+        ? 'NO_SAME_DELIVERY_DATE'
+        : compatibleOffers.length === 0
+          ? 'PRICE_ABOVE_MAX'
+          : compatibility === 'FULL'
+            ? 'FULLY_MATCHED'
+            : compatibility === 'PARTIAL'
+              ? 'INSUFFICIENT_AVAILABLE_QUANTITY'
+              : 'INSUFFICIENT_AVAILABLE_QUANTITY';
     demandResults.push({
       demandId: demand.id,
       requestedQuantityKwh: decimalToString(demand.quantityKwh),
       suggestedQuantityKwh: assignedTotal,
       unmatchedQuantityKwh: remainingDemand,
+      coveragePercent: coveragePercent(assignedTotal, decimalToString(demand.quantityKwh)),
       compatibility,
-      reasons: demandReasons,
+      reasons: compatibility === 'PARTIAL' ? ['PARTIALLY_MATCHED', reason] : [reason],
     });
   }
 

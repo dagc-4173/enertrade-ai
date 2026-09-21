@@ -109,3 +109,11 @@ Un repositorio válido sin ofertas o demandas es un resultado de negocio
 y no se convierte en una sugerencia vacía.
 
 Se trata de una implementación técnica acotada, validada por pruebas automatizadas y sin expansión funcional fuera de HU-10.
+
+## Extensión C21e: saldo operativo y diagnóstico explicable
+
+El repositorio productivo no puede entregar `quantityKwh` original al algoritmo cuando una parte de la publicación ya está confirmada o reservada. Se reutiliza la misma función usada por el mercado público: cantidad original menos transacciones `PENDING_ACCEPTANCE` y `CONFIRMED`. El saldo resultante se mapea al campo operacional del algoritmo, sin modificar la política de asignación ni persistir una nueva proyección.
+
+El resultado agrega cobertura derivada y razones por demanda. El diagnóstico observa ofertas activas disponibles, fecha, precio y cantidad, pero no altera el orden ni la asignación greedy. Esto permite explicar ausencia de oferta, fecha distinta, precio sobre máximo o disponibilidad insuficiente sin introducir scoring o modelos nuevos.
+
+La interfaz muestra solo referencias cortas de publicaciones y métricas de resultado. El matching continúa siendo informativo: una sugerencia no reserva saldo y una incompatibilidad automática de precio puede tratarse mediante negociación manual, fuera del algoritmo.
