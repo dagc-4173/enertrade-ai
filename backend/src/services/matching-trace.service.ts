@@ -106,11 +106,13 @@ export function createMatchingTraceService(store: Store) {
 export function createTracedMatchingService(
   repository: MatchingReadRepository,
   trace: ReturnType<typeof createMatchingTraceService>,
+  beforeSuggest: () => Promise<void> = async () => {},
 ): TracedMatchingService {
   return {
     async suggest(): Promise<TracedMatchingResponse> {
       const state = await trace.startExecution();
       try {
+        await beforeSuggest();
         const [offers, demands] = await Promise.all([
           repository.listActiveOffers(),
           repository.listActiveDemands(),

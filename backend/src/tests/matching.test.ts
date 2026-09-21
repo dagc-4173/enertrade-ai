@@ -36,6 +36,16 @@ function at<T>(items: T[], index: number): T {
 }
 
 describe('buildMatchingSuggestions', () => {
+  test('C21a.2: fechas editadas a 2026-10-01 recalculan una coincidencia parcial', () => {
+    const offer = { id: 'offer-october', quantityKwh: decimal('30000'), pricePerKwh: decimal('950'), deliveryDate: isoDate('2026-09-30'), createdAt: isoDate('2026-09-21T10:00:00Z'), status: 'ACTIVE' };
+    const demand = { id: 'demand-october', quantityKwh: decimal('20000'), maxPricePerKwh: decimal('1000'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-21T10:01:00Z'), status: 'ACTIVE' };
+    expect(buildMatchingSuggestions([offer], [demand]).status).toBe('no_matches');
+    offer.deliveryDate = isoDate('2026-10-01');
+    const recalculated = buildMatchingSuggestions([offer], [demand]);
+    expect(recalculated.status).toBe('matched');
+    expect(recalculated.matches).toMatchObject([{ offerId: 'offer-october', demandId: 'demand-october', suggestedQuantityKwh: '20000' }]);
+  });
+
   test('MATCH-DECIMAL-01: formatDecimal conserva enteros y escalas decimales', () => {
     expect(formatDecimal(10000n, 0)).toBe('10000');
     expect(formatDecimal(0n, 0)).toBe('0');

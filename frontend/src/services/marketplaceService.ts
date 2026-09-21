@@ -11,39 +11,66 @@ import type {
 const object = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0
-const positiveNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0
+function decimal(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && /^\d+(?:\.\d+)?$/.test(value)) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
+const positiveNumber = (value: unknown): value is number => (decimal(value) ?? 0) > 0
 const date = (value: unknown): value is string => {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
   const time = Date.parse(`${value}T00:00:00Z`)
   return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === value
 }
 
-function base(value: unknown): value is Record<string, unknown> {
-  return object(value) && text(value.id) && positiveNumber(value.quantityKwh) && date(value.deliveryDate) &&
-    (value.status === 'ACTIVE' || value.status === 'FULFILLED' || value.status === 'CANCELLED') && text(value.createdAt) && Number.isFinite(Date.parse(value.createdAt)) &&
-    text(value.updatedAt) && Number.isFinite(Date.parse(value.updatedAt)) && !('userId' in value)
+type PublicationBase = Pick<EnergyOfferDto, 'id' | 'quantityKwh' | 'confirmedQuantityKwh' | 'reservedQuantityKwh' | 'availableQuantityKwh' | 'deliveryDate' | 'status' | 'createdAt' | 'updatedAt'>
+
+function base(value: unknown): PublicationBase | null {
+  if (!object(value) || !text(value.id) || !date(value.deliveryDate) ||
+    (value.status !== 'ACTIVE' && value.status !== 'FULFILLED' && value.status !== 'CANCELLED' && value.status !== 'EXPIRED') ||
+    !text(value.createdAt) || !Number.isFinite(Date.parse(value.createdAt)) || !text(value.updatedAt) || !Number.isFinite(Date.parse(value.updatedAt)) || 'userId' in value) return null
+  const quantityKwh = decimal(value.quantityKwh)
+  const confirmedQuantityKwh = decimal(value.confirmedQuantityKwh)
+  const reservedQuantityKwh = decimal(value.reservedQuantityKwh)
+  const availableQuantityKwh = decimal(value.availableQuantityKwh)
+  if (quantityKwh === null || quantityKwh <= 0 || confirmedQuantityKwh === null || confirmedQuantityKwh < 0 || reservedQuantityKwh === null || reservedQuantityKwh < 0 || availableQuantityKwh === null || availableQuantityKwh < 0) return null
+  return { id: value.id, quantityKwh, confirmedQuantityKwh, reservedQuantityKwh, availableQuantityKwh, deliveryDate: value.deliveryDate, status: value.status, createdAt: value.createdAt, updatedAt: value.updatedAt }
 }
 
-function offer(value: unknown): value is EnergyOfferDto {
-  return base(value) && positiveNumber(value.pricePerKwh)
+function offer(value: unknown): EnergyOfferDto | null {
+  const parsed = base(value)
+  const pricePerKwh = object(value) ? decimal(value.pricePerKwh) : null
+  return parsed && pricePerKwh !== null && pricePerKwh > 0 ? { ...parsed, pricePerKwh } : null
 }
 
-function demand(value: unknown): value is EnergyDemandDto {
-  return base(value) && positiveNumber(value.maxPricePerKwh)
+function demand(value: unknown): EnergyDemandDto | null {
+  const parsed = base(value)
+  const maxPricePerKwh = object(value) ? decimal(value.maxPricePerKwh) : null
+  return parsed && maxPricePerKwh !== null && maxPricePerKwh > 0 ? { ...parsed, maxPricePerKwh } : null
 }
 
-function envelope<T>(response: { status: number; data: unknown }, key: string, check: (value: unknown) => value is T, expectedStatus: number): T {
-  if (response.status !== expectedStatus || !object(response.data) || !check(response.data[key])) {
+function envelope<T>(response: { status: number; data: unknown }, key: string, parse: (value: unknown) => T | null, expectedStatus: number): T {
+  const parsed = object(response.data) ? parse(response.data[key]) : null
+  if (response.status !== expectedStatus || parsed === null) {
     throw new ApiError('response', 'La API devolvió una publicación energética con formato inesperado.', response.status)
   }
-  return response.data[key]
+  return parsed
 }
 
-function list<T>(response: { status: number; data: unknown }, key: string, check: (value: unknown) => value is T): T[] {
-  if (response.status !== 200 || !object(response.data) || !Array.isArray(response.data[key]) || !response.data[key].every(check)) {
+function list<T>(response: { status: number; data: unknown }, key: string, parse: (value: unknown) => T | null): T[] {
+  if (response.status !== 200 || !object(response.data) || !Array.isArray(response.data[key])) {
     throw new ApiError('response', 'La API devolvió un listado energético con formato inesperado.', response.status)
   }
-  return response.data[key]
+  const parsed: T[] = []
+  for (const value of response.data[key]) {
+    const item = parse(value)
+    if (item === null) throw new ApiError('response', 'La API devolvió un listado energético con formato inesperado.', response.status)
+    parsed.push(item)
+  }
+  return parsed
 }
 
 export async function createOffer(input: CreateOfferInput, signal?: AbortSignal) {
@@ -100,13 +127,16 @@ function publicMarketBase(value: unknown): value is Record<string, unknown> {
   return object(value) && text(value.id) && text(value.availableQuantityKwh) && positiveNumber(Number(value.availableQuantityKwh)) && date(value.deliveryDate) && value.status === 'ACTIVE' && !('userId' in value) && !('email' in value)
 }
 
-const marketOffer = (value: unknown): value is MarketOffer => publicMarketBase(value) && text(value.pricePerKwh) && positiveNumber(Number(value.pricePerKwh))
-const marketDemand = (value: unknown): value is MarketDemand => publicMarketBase(value) && text(value.maxPricePerKwh) && positiveNumber(Number(value.maxPricePerKwh))
+const positiveDecimalText = (value: unknown): value is string => typeof value === 'string' && (decimal(value) ?? 0) > 0
+const marketOffer = (value: unknown): value is MarketOffer => publicMarketBase(value) && positiveDecimalText(value.pricePerKwh)
+const marketDemand = (value: unknown): value is MarketDemand => publicMarketBase(value) && positiveDecimalText(value.maxPricePerKwh)
+const parseMarketOffer = (value: unknown): MarketOffer | null => marketOffer(value) ? value : null
+const parseMarketDemand = (value: unknown): MarketDemand | null => marketDemand(value) ? value : null
 
 export function listMarketOffers(signal?: AbortSignal) {
-  return apiRequest<unknown>('/market/offers', { credentials: 'include', signal }).then(response => list(response, 'offers', marketOffer))
+  return apiRequest<unknown>('/market/offers', { credentials: 'include', signal }).then(response => list(response, 'offers', parseMarketOffer))
 }
 
 export function listMarketDemands(signal?: AbortSignal) {
-  return apiRequest<unknown>('/market/demands', { credentials: 'include', signal }).then(response => list(response, 'demands', marketDemand))
+  return apiRequest<unknown>('/market/demands', { credentials: 'include', signal }).then(response => list(response, 'demands', parseMarketDemand))
 }

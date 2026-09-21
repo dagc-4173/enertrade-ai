@@ -46,6 +46,20 @@ function row(rows: Map<string, Record<string, unknown>>, executionId: string) {
 }
 
 describe('HU11 matching execution trace', () => {
+  test('C21a.2: ejecuta expiración antes de leer las publicaciones para matching', async () => {
+    let expired = false;
+    const trace = createMatchingTraceService({ create: async () => {}, update: async () => {} });
+    const repository: MatchingReadRepository = {
+      listActiveOffers: async () => expired ? [] : [offer()],
+      listActiveDemands: async () => expired ? [] : [demand()],
+    };
+    const service = createTracedMatchingService(repository, trace, async () => { expired = true; });
+    const result = await service.suggest();
+    expect(result.status).toBe('no_matches');
+    expect(result.summary.offersConsidered).toBe(0);
+    expect(result.summary.demandsConsidered).toBe(0);
+  });
+
   test('TRACE-MATCH-01: FULL se persiste', async () => {
     const h = harness();
     const result = await h.service.suggest();

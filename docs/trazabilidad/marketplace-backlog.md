@@ -255,6 +255,14 @@ No se recalcula la velocidad completa de S2 porque para ello deben revisarse tod
 - **Criterios:** el creador puede editar cantidad antes de aceptación, puede cancelar antes de aceptación, el receptor puede aceptar o rechazar, una confirmada es inmutable y el historial se conserva.
 - **Límite:** no asigna una HU definitiva ni altera la numeración vigente.
 
+## 9.2 Propuesta provisional C21a
+
+- **Título:** Permitir cobertura parcial y acumulativa de publicaciones.
+- **Estado:** Implementado y probado automatizadamente; formalización académica pendiente.
+- **Criterios:** una oferta puede cubrir varias demandas, una demanda puede cubrirse con varias ofertas, el saldo restante sigue disponible, no se permite sobreasignación y el historial conserva la cantidad original y las transacciones asociadas.
+- **Regla de estado:** una publicación sigue `ACTIVE` mientras la suma confirmada sea menor a su cantidad original; las reservas pendientes descuentan saldo pero no la completan.
+- **Límite:** no incluye pagos, negociación de precio, migración de datos ni modificación del matching informativo.
+
 ## 10. Pendientes documentales
 
 - Incorporar HU-21 y HU-22 al Product Backlog de TG-II.

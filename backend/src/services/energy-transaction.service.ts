@@ -1,5 +1,6 @@
 import { EnergyMarketStatus, EnergyTransactionStatus, Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
+import { businessDateInColombia } from '@/services/publication-expiration.service';
 
 type MarketRecord = {
   id: string;
@@ -52,6 +53,7 @@ type LockedStore = {
   reservedOfferQuantity(): Promise<string>;
   reservedDemandQuantity(): Promise<string>;
   activeDuplicate(quantityKwh: string): Promise<TransactionRecord | null>;
+  expire?(today: string): Promise<void>;
   create(data: TransactionCreation): Promise<TransactionRecord>;
 };
 
@@ -169,6 +171,13 @@ function prismaStore(transaction: Prisma.TransactionClient, offerId: string, dem
       const value = await transaction.energyTransaction.findFirst({ where: { offerId, demandId, quantityKwh, status: 'PENDING_ACCEPTANCE' } });
       return value ? toRecord(value) : null;
     },
+    expire: async today => {
+      const cutoff = new Date(`${today}T00:00:00.000Z`);
+      await Promise.all([
+        transaction.energyOffer.updateMany({ where: { id: offerId, status: 'ACTIVE', deliveryDate: { lt: cutoff } }, data: { status: 'EXPIRED' } }),
+        transaction.energyDemand.updateMany({ where: { id: demandId, status: 'ACTIVE', deliveryDate: { lt: cutoff } }, data: { status: 'EXPIRED' } }),
+      ]);
+    },
     create: async data => toRecord(await transaction.energyTransaction.create({ data })),
   };
 }
@@ -210,8 +219,8 @@ const repository: EnergyTransactionRepository = {
 
 async function ensureConfirmedPublicationStatuses(store: TransactionStore, record: TransactionRecord) {
   const [offer, demand, confirmedOffer, confirmedDemand] = await Promise.all([store.offer(), store.demand(), store.confirmedOfferQuantity(), store.confirmedDemandQuantity()]);
-  if (offer && compare(decimalString(offer.quantityKwh), confirmedOffer) === 0) await store.setOfferStatus('FULFILLED');
-  if (demand && compare(decimalString(demand.quantityKwh), confirmedDemand) === 0) await store.setDemandStatus('FULFILLED');
+  if (offer && compare(confirmedOffer, decimalString(offer.quantityKwh)) >= 0) await store.setOfferStatus('FULFILLED');
+  if (demand && compare(confirmedDemand, decimalString(demand.quantityKwh)) >= 0) await store.setDemandStatus('FULFILLED');
   return record;
 }
 
@@ -220,9 +229,11 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
     async create(userId: string, body: unknown) {
       const input = createInput(body);
       const created = await repo.withLockedPublications(input.offerId, input.demandId, async store => {
+        await store.expire?.(businessDateInColombia(now()));
         const [offer, demand, reservedOffer, reservedDemand, duplicate] = await Promise.all([store.offer(), store.demand(), store.reservedOfferQuantity(), store.reservedDemandQuantity(), store.activeDuplicate(input.quantityKwh)]);
         if (!offer) throw new EnergyTransactionError(404, 'OFFER_NOT_FOUND', 'La oferta no existe.');
         if (!demand) throw new EnergyTransactionError(404, 'DEMAND_NOT_FOUND', 'La demanda no existe.');
+        if (offer.status === 'EXPIRED' || demand.status === 'EXPIRED') throw new EnergyTransactionError(409, 'PUBLICATION_EXPIRED', 'La oferta o demanda está vencida y no admite nuevas propuestas.');
         if (offer.status !== 'ACTIVE' || demand.status !== 'ACTIVE') throw new EnergyTransactionError(409, 'PUBLICATION_NOT_ACTIVE', 'La oferta y demanda deben estar activas.');
         if (offer.userId === demand.userId) throw new EnergyTransactionError(409, 'SAME_TRANSACTION_PARTICIPANT', 'La oferta y demanda deben pertenecer a usuarios distintos.');
         if (userId !== offer.userId && userId !== demand.userId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede proponer la transacción.');

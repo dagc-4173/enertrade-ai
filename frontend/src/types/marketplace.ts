@@ -1,8 +1,11 @@
-export type EnergyMarketStatus = 'ACTIVE' | 'FULFILLED' | 'CANCELLED'
+export type EnergyMarketStatus = 'ACTIVE' | 'FULFILLED' | 'CANCELLED' | 'EXPIRED'
 
 export interface EnergyOfferDto {
   id: string
   quantityKwh: number
+  confirmedQuantityKwh: number
+  reservedQuantityKwh: number
+  availableQuantityKwh: number
   pricePerKwh: number
   deliveryDate: string
   status: EnergyMarketStatus
@@ -13,6 +16,9 @@ export interface EnergyOfferDto {
 export interface EnergyDemandDto {
   id: string
   quantityKwh: number
+  confirmedQuantityKwh: number
+  reservedQuantityKwh: number
+  availableQuantityKwh: number
   maxPricePerKwh: number
   deliveryDate: string
   status: EnergyMarketStatus

@@ -59,7 +59,7 @@ test('matching UI distinguishes FULL, PARTIAL and NO_MATCH without calling it a 
 })
 
 test('matching loading and API errors are visible without a false success', async () => {
-  expect(renderToStaticMarkup(<MatchingContent state={{ kind: 'loading' }} onSuggest={() => {}} />)).toContain('Generando sugerencias…')
+  expect(renderToStaticMarkup(<MatchingContent state={{ kind: 'loading', message: 'Generando sugerencias…' }} onSuggest={() => {}} />)).toContain('Generando sugerencias…')
   expect(renderToStaticMarkup(<MatchingContent state={{ kind: 'error', message: 'No fue posible completar la solicitud.' }} onSuggest={() => {}} />)).toContain('role="alert"')
   respond({ error: 'MATCHING_OPERATION_FAILED', message: 'No fue posible sugerir emparejamientos.' }, 500)
   await expect(suggestMatches()).rejects.toMatchObject({ kind: 'http', status: 500, serverMessage: 'No fue posible sugerir emparejamientos.' })

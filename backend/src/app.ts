@@ -22,6 +22,7 @@ import { createAiQueryTraceMiddleware } from '@/middlewares/ai-query-trace.middl
 import { prisma } from '@/lib/prisma';
 import type { MatchingReadRepository } from '@/services/matching.service';
 import { createTracedMatchingService, matchingTrace } from '@/services/matching-trace.service';
+import { expireActivePublications } from '@/services/publication-expiration.service';
 const app = express()
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim()
 
@@ -29,7 +30,7 @@ const matchingRepository: MatchingReadRepository = {
     listActiveOffers: () => prisma.energyOffer.findMany({ where: { status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } }),
     listActiveDemands: () => prisma.energyDemand.findMany({ where: { status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } }),
 }
-const matchingRouter = createMatchingRouter(createTracedMatchingService(matchingRepository, matchingTrace))
+const matchingRouter = createMatchingRouter(createTracedMatchingService(matchingRepository, matchingTrace, () => expireActivePublications()))
 
 app.use(requestIdMiddleware)
 app.use(createAiQueryTraceMiddleware())

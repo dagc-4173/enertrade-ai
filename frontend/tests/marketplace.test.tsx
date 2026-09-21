@@ -2,9 +2,9 @@ import { afterEach, expect, spyOn, test } from 'bun:test'
 import process from 'node:process'
 import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { CompatibilityAction, Marketplace } from '../src/pages/Marketplace'
+import { CompatibilityAction, Marketplace, PublicationActions, PublicationQuantity, PublicationStatus } from '../src/pages/Marketplace'
 import { canAccept, canCancel, canEdit, canReject } from '../src/utils/transactionActions'
-import { errorMessage, selectProposal } from '../src/utils/marketplaceActions'
+import { availablePublicationQuantity, errorMessage, selectProposal } from '../src/utils/marketplaceActions'
 import { ApiError } from '../src/services/apiClient'
 import { createDemand, createOffer, getMyDemands, getMyOffers, updateDemand } from '../src/services/marketplaceService'
 import { acceptTransaction, cancelTransaction, createTransaction, listMyTransactions, rejectTransaction, updateTransaction } from '../src/services/transactionService'
@@ -12,8 +12,8 @@ import { formatCopPerKwh, formatEnergy } from '../src/utils/numberFormat'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
 const date = '2026-09-18'
-const offer = { id: 'offer-1', quantityKwh: 9851831.89, pricePerKwh: 412.5, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
-const demand = { id: 'demand-1', quantityKwh: 252444558.83, maxPricePerKwh: 960.71104, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
+const offer = { id: 'offer-1', quantityKwh: 9851831.89, confirmedQuantityKwh: 0, reservedQuantityKwh: 0, availableQuantityKwh: 9851831.89, pricePerKwh: 412.5, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
+const demand = { id: 'demand-1', quantityKwh: 252444558.83, confirmedQuantityKwh: 0, reservedQuantityKwh: 0, availableQuantityKwh: 252444558.83, maxPricePerKwh: 960.71104, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
 const transaction = { id: 'transaction-1', offerId: 'external-offer', demandId: 'own-demand', quantityKwh: '21000', pricePerKwh: '950', totalAmountCop: '19950000', deliveryDate: '2026-09-25', status: 'PENDING_ACCEPTANCE', role: 'BUYER', proposalOwnership: 'RECEIVED' as const, sellerAcceptedAt: null, buyerAcceptedAt: null, createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z', confirmedAt: null, cancelledAt: null, matchingExecutionId: null }
 const originalFetch = globalThis.fetch
 afterEach(() => { globalThis.fetch = originalFetch })
@@ -73,7 +73,62 @@ test('la página no ejecuta POST automáticamente y no muestra resultados mock d
   expect(source).toContain('listMarketOffers')
   expect(source).toContain('listMarketDemands')
   expect(source).toContain('Crear propuesta')
+  expect(source).toContain("message: 'Actualizando emparejamientos…'")
+  expect(source).toContain('refreshRequest.rematch')
+  expect(source).toContain('suggestMatches(controller.signal)')
   expect(source).not.toMatch(/Pagar|Checkout|Tarjeta|Pago exitoso|Liquidado/)
+})
+
+test('las acciones de publicaciones usan botones iguales y permanecen visibles al desplazar la tabla', () => {
+  const page = readFileSync(new URL('../src/pages/Marketplace.tsx', import.meta.url), 'utf8')
+  const css = readFileSync(new URL('../src/pages/Marketplace.css', import.meta.url), 'utf8')
+  expect(page).toContain('publication-action-button')
+  expect(page).toContain('>Cancelar</button>')
+  expect(page).not.toContain('Cancelar publicación')
+  expect(css).toContain('.publication-actions-cell')
+  expect(css).toContain('position: sticky')
+  expect(css).toContain('.publication-actions')
+  expect(css).toContain('flex-direction: column')
+  expect(css).toContain('.publication-action-button')
+  expect(css).toContain('min-height: 42px')
+})
+
+test('el contrato frontend conserva publicaciones vencidas para el historial', async () => {
+  const expired = { ...offer, status: 'EXPIRED' as const }
+  respond({ offers: [expired] })
+  await expect(getMyOffers()).resolves.toEqual([expired])
+})
+
+test('GET /mine normaliza saldos decimales en cadena y rechaza DTO incompleto', async () => {
+  const stringOffer = { ...offer, quantityKwh: '100000', confirmedQuantityKwh: '50000', reservedQuantityKwh: '0', availableQuantityKwh: '50000', pricePerKwh: '450' }
+  respond({ offers: [stringOffer] })
+  await expect(getMyOffers()).resolves.toEqual([{ ...offer, quantityKwh: 100000, confirmedQuantityKwh: 50000, reservedQuantityKwh: 0, availableQuantityKwh: 50000, pricePerKwh: 450 }])
+  const stringDemand = { ...demand, quantityKwh: '100000', confirmedQuantityKwh: '50000', reservedQuantityKwh: '0', availableQuantityKwh: '50000', maxPricePerKwh: '500' }
+  respond({ demands: [stringDemand] })
+  await expect(getMyDemands()).resolves.toEqual([{ ...demand, quantityKwh: 100000, confirmedQuantityKwh: 50000, reservedQuantityKwh: 0, availableQuantityKwh: 50000, maxPricePerKwh: 500 }])
+  respond({ offers: [{ ...stringOffer, availableQuantityKwh: undefined }] })
+  await expect(getMyOffers()).rejects.toMatchObject({ kind: 'response', status: 200 })
+})
+
+test('mis ofertas y demandas muestran saldo derivado con formato es-CO', () => {
+  const partialOffer = renderToStaticMarkup(<PublicationQuantity type="offer" publication={{ ...offer, quantityKwh: 100_000, confirmedQuantityKwh: 50_000, availableQuantityKwh: 50_000 }} />)
+  expect(partialOffer).toContain('50.000,00 kWh disponibles')
+  expect(partialOffer).toContain('Publicada: 100.000,00 kWh')
+  expect(partialOffer).toContain('Confirmada: 50.000,00 kWh')
+  const reservedDemand = renderToStaticMarkup(<PublicationQuantity type="demand" publication={{ ...demand, quantityKwh: 100_000, confirmedQuantityKwh: 30_000, reservedQuantityKwh: 20_000, availableQuantityKwh: 50_000 }} />)
+  expect(reservedDemand).toContain('50.000,00 kWh pendientes')
+  expect(reservedDemand).toContain('Solicitada: 100.000,00 kWh')
+  expect(reservedDemand).toContain('Reservada: 20.000,00 kWh')
+  const reservedOffer = renderToStaticMarkup(<PublicationQuantity type="offer" publication={{ ...offer, quantityKwh: 100_000, confirmedQuantityKwh: 50_000, reservedQuantityKwh: 50_000, availableQuantityKwh: 0 }} />)
+  expect(reservedOffer).toContain('0,00 kWh disponibles')
+  expect(reservedOffer).toContain('Reservada: 50.000,00 kWh')
+})
+
+test('demanda completamente cubierta muestra Completada, saldo cero y no acciones', () => {
+  const fulfilled = { ...demand, quantityKwh: 50_000, confirmedQuantityKwh: 50_000, availableQuantityKwh: 0, status: 'FULFILLED' as const }
+  expect(renderToStaticMarkup(<PublicationStatus status={fulfilled.status} />)).toContain('Completada')
+  expect(renderToStaticMarkup(<PublicationQuantity type="demand" publication={fulfilled} />)).toContain('0,00 kWh pendientes')
+  expect(renderToStaticMarkup(<PublicationActions type="demand" publication={fulfilled} onChanged={() => {}} />)).toBe('')
 })
 
 test('los errores 401 del backend se conservan como ApiError seguro', async () => {
@@ -104,8 +159,9 @@ test('compatibilidad 900 frente a 950 deja el CTA visible, deshabilitado y sin P
   expect(fetch).not.toHaveBeenCalled()
 })
 
-test('compatibilidad 1000 frente a 950 habilita el CTA y crea la propuesta con IDs y cantidad reales', async () => {
+test('compatibilidad de precio y fecha habilita cantidades parciales negociables', async () => {
   const html = renderToStaticMarkup(<CompatibilityAction ownDemand={{ ...demand, id: 'own-demand', quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' }} externalOffer={{ id: 'external-offer', availableQuantityKwh: '21000', pricePerKwh: '950', deliveryDate: '2026-09-25', status: 'ACTIVE' }} onSelect={() => {}} />)
+  expect(html).toContain('Cantidad negociable hasta 21.000,00 kWh.')
   expect(html).toContain('precio compatible')
   expect(html).not.toMatch(/disabled=""[^>]*>Proponer con mi demanda/)
   const fetch = respond({ transaction }, 201)
@@ -113,6 +169,22 @@ test('compatibilidad 1000 frente a 950 habilita el CTA y crea la propuesta con I
   expect(fetch).toHaveBeenCalledTimes(1)
   expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions')
   expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({ offerId: 'external-offer', demandId: 'own-demand', quantityKwh: 21_000 })
+})
+
+test('una demanda mayor que la oferta disponible sigue siendo parcialmente negociable', () => {
+  const html = renderToStaticMarkup(<CompatibilityAction ownDemand={{ ...demand, id: 'own-demand', quantityKwh: 30_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' }} externalOffer={{ id: 'external-offer', availableQuantityKwh: '8000', pricePerKwh: '950', deliveryDate: '2026-09-25', status: 'ACTIVE' }} onSelect={() => {}} />)
+  expect(html).toContain('Cantidad negociable hasta 8.000,00 kWh.')
+  expect(html).not.toMatch(/disabled=""[^>]*>Proponer con mi demanda/)
+  expect(html).not.toContain('cantidad no compatible')
+})
+
+test('el saldo propio descuenta reservas pendientes y confirmadas antes de calcular el máximo', () => {
+  const transactions = [
+    { ...transaction, offerId: 'own-offer', quantityKwh: '10000', status: 'CONFIRMED' as const },
+    { ...transaction, offerId: 'own-offer', quantityKwh: '5000', status: 'PENDING_ACCEPTANCE' as const },
+    { ...transaction, offerId: 'own-offer', quantityKwh: '4000', status: 'CANCELLED' as const },
+  ]
+  expect(availablePublicationQuantity('own-offer', 30_000, transactions, 'offerId')).toBe(15_000)
 })
 
 test('seleccionar propuesta con mi demanda no hace POST y conserva IDs y máximo correctos', () => {

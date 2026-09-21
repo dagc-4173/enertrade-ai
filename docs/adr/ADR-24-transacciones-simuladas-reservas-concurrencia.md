@@ -4,6 +4,12 @@
 
 **Extensión C20f:** Aceptada para ownership y mutabilidad de propuestas.
 
+**Extensión C21a:** Aceptada para saldos parciales acumulativos.
+
+**Extensión C21a.2:** Aceptada para vencimiento de publicaciones y recálculo de matching.
+
+**Extensión C21a.3:** Aceptada para visibilidad de saldos propios y edición acotada.
+
 ## Contexto
 
 HU-10 y HU-11 producen sugerencias y trazas, pero no crean operaciones comerciales ni modifican publicaciones. El cambio de alcance TG-II autorizado incorpora un nucleo de transacciones energeticas simuladas, sin pagos, liquidacion financiera ni entrega fisica.
@@ -67,3 +73,62 @@ un contrato uniforme con creación y consultas.
 Las pruebas unitarias conservan la simulación serializada heredada de C20a. La
 prueba de integración de concurrencia contra PostgreSQL real permanece
 pendiente; no se presenta como evidencia ejecutada.
+
+## Extensión C21a: saldos parciales acumulativos
+
+`EnergyOffer.quantityKwh` y `EnergyDemand.quantityKwh` son cantidades
+originales inmutables para trazabilidad. El saldo disponible no se persiste ni
+reduce físicamente: se deriva como cantidad original menos la suma de
+transacciones `PENDING_ACCEPTANCE` y `CONFIRMED` asociadas a la publicación.
+
+Por tanto, una oferta puede cubrir varias demandas y una demanda puede recibir
+cobertura de varias ofertas, siempre que cada nueva propuesta no exceda ambos
+saldos derivados. `REJECTED` y `CANCELLED` liberan saldo; no existe
+sobreasignación porque la validación y creación suceden bajo bloqueos de oferta
+y demanda en una transacción serializable.
+
+Una publicación se conserva `ACTIVE` mientras su suma `CONFIRMED` sea menor
+que la cantidad original, aunque las reservas pendientes dejen saldo disponible
+cero y la oculten temporalmente del mercado. Solo pasa a `FULFILLED` cuando la
+suma confirmada es mayor o igual que su cantidad original. Las reservas
+pendientes no completan una publicación.
+
+El Marketplace presenta el saldo externo derivado y permite proponer hasta el
+mínimo entre ambos saldos mostrados en la interacción. Esta extensión no añade
+pagos ni contrapropuestas de precio y no modifica el matching informativo
+existente.
+
+## Extensión C21a.2: publicaciones vencidas
+
+Se conserva una publicación vencida como historia, pero deja de ser negociable:
+el enum de mercado incorpora `EXPIRED` mediante migración. La transición es
+perezosa y centralizada al consultar publicaciones, mercado o entradas de
+matching; actualiza exclusivamente `ACTIVE` con `deliveryDate` estrictamente
+anterior a la fecha calendario de negocio en `America/Bogota`.
+
+`EXPIRED` no se devuelve desde el mercado activo ni se entrega a matching. El
+propietario sí la conserva en `/offers/mine` o `/demands/mine`, pero no puede
+editarla ni cancelarla. Las creaciones y ediciones con fecha pasada se rechazan;
+una propuesta nueva detecta la expiración dentro de su transacción bloqueada y
+retorna `PUBLICATION_EXPIRED`.
+
+Una propuesta pendiente preexistente no se modifica automáticamente si una de
+sus publicaciones vence. Su trazabilidad se conserva y no se establece una
+política de cancelación, rechazo o liberación automática sin refinamiento de
+negocio posterior.
+
+## Extensión C21a.3: saldo visible de publicaciones propias
+
+`quantityKwh` conserva el término publicado original y nunca se sobrescribe por
+el saldo operativo. `/offers/mine` y `/demands/mine` devuelven además
+`confirmedQuantityKwh`, `reservedQuantityKwh` y `availableQuantityKwh`,
+derivados respectivamente de transacciones `CONFIRMED`,
+`PENDING_ACCEPTANCE` y de la resta no negativa contra `quantityKwh`.
+`REJECTED` y `CANCELLED` no participan en esos agregados.
+
+La interfaz consume esos saldos del backend en cada carga o refresh y conserva
+`quantityKwh` al editar. Una publicación `ACTIVE` puede modificar su término
+original, pero no por debajo de la suma confirmada y reservada; la violación se
+rechaza como `PUBLICATION_QUANTITY_BELOW_COMMITTED`. La cancelación permanece
+bloqueada cuando hay reserva o confirmación. Esta decisión permite ampliar o
+reducir capacidad no comprometida sin alterar el historial de transacciones.

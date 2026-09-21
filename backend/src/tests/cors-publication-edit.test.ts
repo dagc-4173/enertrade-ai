@@ -1,7 +1,7 @@
 import { afterAll, expect, test } from 'bun:test';
 import { app } from '@/app';
 
-const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim();
+const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim() ?? '';
 if (!frontendOrigin) throw new Error('FRONTEND_ORIGIN debe configurarse para probar CORS.');
 
 const server = app.listen(0, '127.0.0.1');

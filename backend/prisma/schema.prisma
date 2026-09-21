@@ -284,6 +284,7 @@ enum EnergyMarketStatus {
   ACTIVE
   FULFILLED
   CANCELLED
+  EXPIRED
 }
 
 model EnergyOffer {

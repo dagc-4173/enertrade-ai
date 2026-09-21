@@ -1,4 +1,5 @@
 import { calendarDate } from '@/services/forecast.contract';
+import { businessDateInColombia, isPublicationExpired } from '@/services/publication-expiration.service';
 
 export class EnergyMarketInputError extends Error {
   constructor(public readonly code: string, message: string) {
@@ -34,8 +35,15 @@ function validateBody(body: unknown, fields: readonly string[]) {
   return body;
 }
 
-export function validateOfferInput(body: unknown) {
+function validateNotPast(deliveryDate: string, now: Date) {
+  if (isPublicationExpired(deliveryDate, businessDateInColombia(now))) {
+    throw new EnergyMarketInputError('DELIVERY_DATE_PAST', 'deliveryDate no puede ser anterior a la fecha de negocio actual.');
+  }
+}
+
+export function validateOfferInput(body: unknown, now = new Date()) {
   const input = validateBody(body, ['quantityKwh', 'pricePerKwh', 'deliveryDate']);
+  validateNotPast(input.deliveryDate as string, now);
   return {
     quantityKwh: positiveNumber(input.quantityKwh, 'quantityKwh'),
     pricePerKwh: positiveNumber(input.pricePerKwh, 'pricePerKwh'),
@@ -43,8 +51,9 @@ export function validateOfferInput(body: unknown) {
   };
 }
 
-export function validateDemandInput(body: unknown) {
+export function validateDemandInput(body: unknown, now = new Date()) {
   const input = validateBody(body, ['quantityKwh', 'maxPricePerKwh', 'deliveryDate']);
+  validateNotPast(input.deliveryDate as string, now);
   return {
     quantityKwh: positiveNumber(input.quantityKwh, 'quantityKwh'),
     maxPricePerKwh: positiveNumber(input.maxPricePerKwh, 'maxPricePerKwh'),

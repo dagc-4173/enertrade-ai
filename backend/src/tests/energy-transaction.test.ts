@@ -28,6 +28,11 @@ function createRepository(overrides: { offer?: any; demand?: any } = {}) {
   const sum = (field: 'offerId' | 'demandId', id: string, statuses: EnergyTransactionStatus[]) => Array.from(transactions.values()).filter(value => value[field] === id && statuses.includes(value.status)).reduce((total, value) => total + BigInt(String(value.quantityKwh)), 0n).toString();
   const repository: EnergyTransactionRepository = {
     withLockedPublications: (offerId, demandId, action) => lock(() => action({
+      expire: async today => {
+        for (const publication of [...offers.values(), ...demands.values()]) {
+          if (publication.status === EnergyMarketStatus.ACTIVE && publication.deliveryDate.toISOString().slice(0, 10) < today) publication.status = EnergyMarketStatus.EXPIRED;
+        }
+      },
       offer: async () => offers.get(offerId) ?? null,
       demand: async () => demands.get(demandId) ?? null,
       reservedOfferQuantity: async () => sum('offerId', offerId, [EnergyTransactionStatus.PENDING_ACCEPTANCE, EnergyTransactionStatus.CONFIRMED]),
@@ -243,5 +248,68 @@ describe('C20f gestión de propuestas transaccionales', () => {
     expect((await service.findOne(seller, 'legacy-1')).proposalOwnership).toBe('LEGACY_UNKNOWN');
     await expect(service.edit(seller, 'legacy-1', { quantityKwh: 1 })).rejects.toMatchObject({ code: 'TRANSACTION_LEGACY_IMMUTABLE' });
     await expect(service.cancel(seller, 'legacy-1')).rejects.toMatchObject({ code: 'TRANSACTION_LEGACY_IMMUTABLE' });
+  });
+});
+
+describe('C21a saldos parciales acumulativos', () => {
+  test('C21a-01: confirmadas parciales mantienen publicaciones ACTIVE y una reserva pendiente no las cumple', async () => {
+    const { service, offers, demands } = fixture({ offer: market('offer-1', seller, '30000', 'pricePerKwh', '950'), demand: market('demand-1', buyer, '30000', 'maxPricePerKwh', '1000') });
+    const first = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 10000 });
+    await service.accept(seller, first.id); await service.accept(buyer, first.id);
+    const second = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 12000 });
+    await service.accept(seller, second.id); await service.accept(buyer, second.id);
+    expect(offers.get('offer-1')!.status).toBe(EnergyMarketStatus.ACTIVE);
+    expect(demands.get('demand-1')!.status).toBe(EnergyMarketStatus.ACTIVE);
+    const pending = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 8000 });
+    await expect(service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 })).rejects.toMatchObject({ code: 'OFFER_QUANTITY_UNAVAILABLE' });
+    expect(offers.get('offer-1')!.status).toBe(EnergyMarketStatus.ACTIVE);
+    expect(demands.get('demand-1')!.status).toBe(EnergyMarketStatus.ACTIVE);
+    await service.accept(seller, pending.id); await service.accept(buyer, pending.id);
+    expect(offers.get('offer-1')!.status).toBe(EnergyMarketStatus.FULFILLED);
+    expect(demands.get('demand-1')!.status).toBe(EnergyMarketStatus.FULFILLED);
+  });
+
+  test('C21a-02: cancelación y rechazo liberan reserva sin modificar cantidad publicada', async () => {
+    const { service, offers, demands } = fixture({ offer: market('offer-1', seller, '30000', 'pricePerKwh', '950'), demand: market('demand-1', buyer, '30000', 'maxPricePerKwh', '1000') });
+    const cancellable = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 20000 });
+    await service.cancel(seller, cancellable.id);
+    expect((await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 30000 })).status).toBe('PENDING_ACCEPTANCE');
+    expect(offers.get('offer-1')!.quantityKwh).toBe('30000');
+    expect(demands.get('demand-1')!.quantityKwh).toBe('30000');
+  });
+
+  test('C21a-03: una demanda acumula proveedores y una oferta acumula demandantes con cantidades desiguales', async () => {
+    const { service, offers, demands } = fixture({ offer: market('offer-1', seller, '10000', 'pricePerKwh', '950'), demand: market('demand-1', buyer, '30000', 'maxPricePerKwh', '1000') });
+    offers.set('offer-2', market('offer-2', outsider, '12000', 'pricePerKwh', '950'));
+    offers.set('offer-3', market('offer-3', '44444444-4444-4444-8444-444444444444', '20000', 'pricePerKwh', '950'));
+    const first = await service.create(buyer, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 10000 });
+    await service.accept(seller, first.id); await service.accept(buyer, first.id);
+    const second = await service.create(buyer, { offerId: 'offer-2', demandId: 'demand-1', quantityKwh: 12000 });
+    await service.accept(outsider, second.id); await service.accept(buyer, second.id);
+    expect((await service.create(buyer, { offerId: 'offer-3', demandId: 'demand-1', quantityKwh: 8000 })).quantityKwh).toBe('8000');
+  });
+
+  test('C21a-04: una oferta cubre varias demandas sin exceder su saldo acumulado', async () => {
+    const { service, offers, demands } = fixture({ offer: market('offer-1', seller, '30000', 'pricePerKwh', '950'), demand: market('demand-1', buyer, '10000', 'maxPricePerKwh', '1000') });
+    demands.set('demand-2', market('demand-2', outsider, '12000', 'maxPricePerKwh', '1000'));
+    demands.set('demand-3', market('demand-3', '44444444-4444-4444-8444-444444444444', '8000', 'maxPricePerKwh', '1000'));
+    const first = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 10000 });
+    await service.accept(seller, first.id); await service.accept(buyer, first.id);
+    const second = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-2', quantityKwh: 12000 });
+    await service.accept(seller, second.id); await service.accept(outsider, second.id);
+    expect((await service.create(seller, { offerId: 'offer-1', demandId: 'demand-3', quantityKwh: 8000 })).quantityKwh).toBe('8000');
+    expect(offers.get('offer-1')!.status).toBe(EnergyMarketStatus.ACTIVE);
+  });
+});
+
+describe('C21a.2 publicaciones vencidas', () => {
+  test('C21a.2-01: una publicación ACTIVE con fecha anterior se vence antes de crear propuesta', async () => {
+    const { service } = fixture({ offer: market('offer-1', seller, '10000', 'pricePerKwh', '950', new Date('2026-09-20T00:00:00.000Z')) });
+    await expect(service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 })).rejects.toMatchObject({ status: 409, code: 'PUBLICATION_EXPIRED' });
+  });
+
+  test('C21a.2-02: la fecha de negocio de hoy no vence una publicación', async () => {
+    const { service } = fixture({ offer: market('offer-1', seller, '10000', 'pricePerKwh', '950', new Date('2026-09-21T00:00:00.000Z')), demand: market('demand-1', buyer, '10000', 'maxPricePerKwh', '1000', new Date('2026-09-21T00:00:00.000Z')) });
+    expect((await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 })).status).toBe('PENDING_ACCEPTANCE');
   });
 });
