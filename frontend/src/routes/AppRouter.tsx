@@ -8,17 +8,16 @@ import { Predictions } from '../pages/Predictions'
 import { Profile } from '../pages/Profile'
 import { Transactions } from '../pages/Transactions'
 
-const pageComponents = {
-  dashboard: Dashboard,
-  marketplace: Marketplace,
-  predictions: Predictions,
-  transactions: Transactions,
-  patterns: Patterns,
-  profile: Profile,
-} satisfies Record<PageKey, ComponentType>
-
 export default function AppRouter() {
   const [activePage, setActivePage] = useState<PageKey>('dashboard')
+  const pageComponents = {
+    dashboard: Dashboard,
+    marketplace: () => <Marketplace onNavigate={() => setActivePage('transactions')} />,
+    predictions: Predictions,
+    transactions: Transactions,
+    patterns: Patterns,
+    profile: Profile,
+  } satisfies Record<PageKey, ComponentType>
   const ActivePage = pageComponents[activePage]
 
   return (
