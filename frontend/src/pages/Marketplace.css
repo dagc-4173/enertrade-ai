@@ -78,6 +78,10 @@
 .marketplace-compatibility { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--color-border); }
 .marketplace-incompatibility { color: #9a4d10 !important; font-weight: 700; }
 .marketplace-disabled-action:disabled { color: var(--color-muted); background: transparent; border-color: var(--color-border); opacity: 1; cursor: not-allowed; text-decoration: line-through; }
+.proposal-selected, .proposal-result { display: grid; gap: 10px; margin: 18px 0; padding: 16px; border: 2px solid var(--color-forest); border-radius: 8px; background: var(--color-surface-alt); }
+.proposal-selected h3, .proposal-result strong { margin: 0; color: var(--color-forest-dark); }
+.proposal-details { display: grid; gap: 4px; }
+.proposal-details p { margin: 0; }
 
 @media (max-width: 900px) {
   .marketplace-columns {

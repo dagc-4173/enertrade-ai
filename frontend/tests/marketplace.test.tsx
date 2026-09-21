@@ -2,10 +2,10 @@ import { afterEach, expect, spyOn, test } from 'bun:test'
 import process from 'node:process'
 import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { CompatibilityAction, errorMessage, Marketplace } from '../src/pages/Marketplace'
+import { CompatibilityAction, errorMessage, Marketplace, selectProposal } from '../src/pages/Marketplace'
 import { ApiError } from '../src/services/apiClient'
 import { createDemand, createOffer, getMyDemands, getMyOffers, updateDemand } from '../src/services/marketplaceService'
-import { createTransaction } from '../src/services/transactionService'
+import { createTransaction, listMyTransactions } from '../src/services/transactionService'
 import { formatCopPerKwh, formatEnergy } from '../src/utils/numberFormat'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
@@ -111,6 +111,31 @@ test('compatibilidad 1000 frente a 950 habilita el CTA y crea la propuesta con I
   expect(fetch).toHaveBeenCalledTimes(1)
   expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions')
   expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({ offerId: 'external-offer', demandId: 'own-demand', quantityKwh: 21_000 })
+})
+
+test('seleccionar propuesta con mi demanda no hace POST y conserva IDs y máximo correctos', () => {
+  const fetch = spyOn(globalThis, 'fetch')
+  const selection = selectProposal({ id: 'external-offer', availableQuantityKwh: '15000', pricePerKwh: '950', deliveryDate: '2026-09-25', status: 'ACTIVE' }, { ...demand, id: 'own-demand', quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' })
+  expect(selection).toMatchObject({ max: 15_000, offer: { id: 'external-offer' }, demand: { id: 'own-demand' } })
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+test('GET /transactions/mine incluye pendiente bajo Todas y Pendientes', async () => {
+  let fetch = respond({ transactions: [transaction] })
+  expect(await listMyTransactions()).toEqual([transaction])
+  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions/mine')
+  fetch.mockRestore()
+  fetch = respond({ transactions: [transaction] })
+  expect(await listMyTransactions('PENDING_ACCEPTANCE')).toEqual([transaction])
+  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions/mine?status=PENDING_ACCEPTANCE')
+})
+
+test('el éxito muestra los datos de la propuesta y el acceso a Transacciones', () => {
+  const source = readFileSync(new URL('../src/pages/Marketplace.tsx', import.meta.url), 'utf8')
+  expect(source).toContain('Propuesta seleccionada')
+  expect(source).toContain('Estado: Pendiente')
+  expect(source).toContain('Ver mis transacciones')
+  expect(source).toContain('setSelected(null)')
 })
 
 test('errores reales de edición o propuesta conservan mensaje, código y estado seguro', async () => {

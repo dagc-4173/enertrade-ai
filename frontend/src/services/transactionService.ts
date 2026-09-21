@@ -7,11 +7,12 @@ const date = (value: unknown) => typeof value === 'string' && Number.isFinite(Da
 function transaction(value: unknown): value is EnergyTransaction {
   return object(value) && ['id', 'offerId', 'demandId', 'quantityKwh', 'pricePerKwh', 'totalAmountCop', 'deliveryDate'].every(key => typeof value[key] === 'string') && statuses.includes(value.status as TransactionStatus) && (value.role === 'BUYER' || value.role === 'SELLER') && date(value.createdAt) && date(value.updatedAt) && (value.sellerAcceptedAt === null || date(value.sellerAcceptedAt)) && (value.buyerAcceptedAt === null || date(value.buyerAcceptedAt)) && !('sellerUserId' in value) && !('buyerUserId' in value)
 }
-function one(response: { status: number; data: unknown }, status: number) {
-  if (response.status !== status || !object(response.data) || !transaction(response.data.transaction)) throw new ApiError('response', 'La API devolvió una transacción con formato inesperado.', response.status)
+function one(response: { status: number; data: unknown }, status: number | number[]) {
+  const accepted = Array.isArray(status) ? status : [status]
+  if (!accepted.includes(response.status) || !object(response.data) || !transaction(response.data.transaction)) throw new ApiError('response', 'La API devolvió una transacción con formato inesperado.', response.status)
   return response.data.transaction
 }
-export async function createTransaction(input: { offerId: string; demandId: string; quantityKwh: number }) { return one(await postJson<unknown>('/transactions', input, { credentials: 'include' }), 201) }
+export async function createTransaction(input: { offerId: string; demandId: string; quantityKwh: number }) { return one(await postJson<unknown>('/transactions', input, { credentials: 'include' }), [200, 201]) }
 export async function listMyTransactions(status?: TransactionStatus, signal?: AbortSignal) {
   const suffix = status ? `?status=${encodeURIComponent(status)}` : ''
   const response = await apiRequest<unknown>(`/transactions/mine${suffix}`, { credentials: 'include', signal })
