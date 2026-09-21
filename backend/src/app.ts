@@ -39,7 +39,7 @@ app.use((req, res, next) => {
     res.vary('Origin')
     if (frontendOrigin && req.get('Origin') === frontendOrigin) {
         res.set('Access-Control-Allow-Origin', frontendOrigin)
-        res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        res.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS')
         res.set('Access-Control-Allow-Credentials', 'true')
         res.set('Access-Control-Allow-Headers', 'Content-Type, Accept')
         if (req.method === 'OPTIONS') {
