@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { EnergyMarketStatus, EnergyTransactionStatus } from '@/generated/prisma/client';
-import { createEnergyTransactionService, type EnergyTransactionRepository, type TransactionRecord } from '@/services/energy-transaction.service';
+import { createEnergyTransactionService, type EnergyTransactionRepository, type TransactionRecord, type TransactionRevisionRecord } from '@/services/energy-transaction.service';
 
 const seller = '11111111-1111-4111-8111-111111111111';
 const buyer = '22222222-2222-4222-8222-222222222222';
@@ -16,6 +16,7 @@ function createRepository(overrides: { offer?: any; demand?: any } = {}) {
   const offers = new Map([[overrides.offer?.id ?? 'offer-1', overrides.offer ?? market('offer-1', seller, '10000', 'pricePerKwh', '950')]]);
   const demands = new Map([[overrides.demand?.id ?? 'demand-1', overrides.demand ?? market('demand-1', buyer, '10000', 'maxPricePerKwh', '1000')]]);
   const transactions = new Map<string, TransactionRecord>();
+  const revisions = new Map<string, TransactionRevisionRecord[]>();
   let sequence = 0;
   let queue = Promise.resolve();
   const lock = async <T>(action: () => Promise<T>) => {
@@ -40,8 +41,13 @@ function createRepository(overrides: { offer?: any; demand?: any } = {}) {
       activeDuplicate: async quantityKwh => Array.from(transactions.values()).find(value => value.offerId === offerId && value.demandId === demandId && String(value.quantityKwh) === quantityKwh && value.status === EnergyTransactionStatus.PENDING_ACCEPTANCE) ?? null,
       create: async data => {
         const now = new Date(`2026-09-21T09:30:${String(sequence).padStart(2, '0')}.000Z`);
-        const value: TransactionRecord = { id: `transaction-${++sequence}`, ...data, sellerAcceptedAt: null, buyerAcceptedAt: null, createdAt: now, updatedAt: now, confirmedAt: null, cancelledAt: null };
+        const value: TransactionRecord = { id: `transaction-${++sequence}`, ...data, createdAt: now, updatedAt: now, confirmedAt: null, cancelledAt: null };
         transactions.set(value.id, value);
+        return value;
+      },
+      createRevision: async data => {
+        const value: TransactionRevisionRecord = { id: `revision-${data.transactionId}-${data.sequence}`, ...data, createdAt: new Date(`2026-09-21T09:30:${String(sequence).padStart(2, '0')}.000Z`) };
+        revisions.set(data.transactionId, [...(revisions.get(data.transactionId) ?? []), value]);
         return value;
       },
     })),
@@ -60,16 +66,29 @@ function createRepository(overrides: { offer?: any; demand?: any } = {}) {
       demand: async () => { const value = transactions.get(id); return value ? demands.get(value.demandId) ?? null : null; },
       setOfferStatus: async status => { const value = transactions.get(id); if (value) offers.get(value.offerId)!.status = status; },
       setDemandStatus: async status => { const value = transactions.get(id); if (value) demands.get(value.demandId)!.status = status; },
+      latestRevision: async () => (revisions.get(id) ?? []).at(-1) ?? null,
+      createRevision: async data => {
+        const value: TransactionRevisionRecord = { id: `revision-${data.transactionId}-${data.sequence}`, ...data, createdAt: new Date() };
+        revisions.set(data.transactionId, [...(revisions.get(data.transactionId) ?? []), value]);
+        return value;
+      },
     })),
     findMine: async (userId, status) => Array.from(transactions.values()).filter(value => (value.sellerUserId === userId || value.buyerUserId === userId) && (!status || value.status === status)),
     findForParticipant: async (id, userId) => { const value = transactions.get(id); return value && (value.sellerUserId === userId || value.buyerUserId === userId) ? value : null; },
+    findRevisions: async transactionId => revisions.get(transactionId) ?? [],
   };
-  return { repository, offers, demands, transactions };
+  return { repository, offers, demands, transactions, revisions };
 }
 
 function fixture(overrides?: { offer?: any; demand?: any }) {
   const memory = createRepository(overrides);
-  return { ...memory, service: createEnergyTransactionService(memory.repository, () => new Date('2026-09-21T10:00:00.000Z')) };
+  const rawService = createEnergyTransactionService(memory.repository, () => new Date('2026-09-21T10:00:00.000Z'));
+  const createLegacy = async (userId: string, body: any) => {
+    const created = await rawService.create(userId, { ...body, pricePerKwh: body?.pricePerKwh ?? memory.offers.get(body?.offerId)?.pricePerKwh ?? '950' });
+    memory.revisions.delete(created.id);
+    return created;
+  };
+  return { ...memory, rawService, service: { ...rawService, create: createLegacy } };
 }
 
 describe('C20a simulated energy transactions', () => {
@@ -86,7 +105,6 @@ describe('C20a simulated energy transactions', () => {
     ['oferta inexistente', () => fixture(), seller, { offerId: 'missing', demandId: 'demand-1', quantityKwh: 1 }, 'OFFER_NOT_FOUND'],
     ['demanda inexistente', () => fixture(), seller, { offerId: 'offer-1', demandId: 'missing', quantityKwh: 1 }, 'DEMAND_NOT_FOUND'],
     ['fecha distinta', () => fixture({ demand: market('demand-1', buyer, '10000', 'maxPricePerKwh', '1000', new Date('2026-09-24T00:00:00.000Z')) }), seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 }, 'DELIVERY_DATE_MISMATCH'],
-    ['precio incompatible', () => fixture({ demand: market('demand-1', buyer, '10000', 'maxPricePerKwh', '900') }), seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 }, 'PRICE_NOT_COMPATIBLE'],
     ['cantidad cero', () => fixture(), seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 0 }, 'INVALID_TRANSACTION_QUANTITY'],
     ['cantidad negativa', () => fixture(), seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: -1 }, 'INVALID_TRANSACTION_QUANTITY'],
     ['cantidad supera oferta', () => fixture({ offer: market('offer-1', seller, '5', 'pricePerKwh', '950') }), seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 6 }, 'OFFER_QUANTITY_UNAVAILABLE'],
@@ -96,14 +114,11 @@ describe('C20a simulated energy transactions', () => {
     await expect(build().service.create(actor, input)).rejects.toMatchObject({ code });
   });
 
-  test('TX-03: aceptaciones de comprador y vendedor confirman automáticamente; repetición es idempotente antes de confirmar', async () => {
+  test('TX-03: la aceptación de la contraparte confirma una propuesta autoaceptada por su creador', async () => {
     const { service, offers, demands } = fixture();
     const created = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 10000 });
-    const first = await service.accept(buyer, created.id);
-    const repeated = await service.accept(buyer, created.id);
-    const confirmed = await service.accept(seller, created.id);
-    expect(first.status).toBe('PENDING_ACCEPTANCE');
-    expect(repeated.buyerAcceptedAt).toBe(first.buyerAcceptedAt);
+    const confirmed = await service.accept(buyer, created.id);
+    expect(created.sellerAcceptedAt).not.toBeNull();
     expect(confirmed).toMatchObject({ status: 'CONFIRMED', quantityKwh: '10000' });
     expect(offers.get('offer-1')!.status).toBe(EnergyMarketStatus.FULFILLED);
     expect(demands.get('demand-1')!.status).toBe(EnergyMarketStatus.FULFILLED);
@@ -204,7 +219,6 @@ describe('C20f gestión de propuestas transaccionales', () => {
     expect(transactions.get(created.id)!.createdAt.toISOString()).toBe(created.createdAt);
     expect(transactions.get(created.id)!.updatedAt.getTime()).toBeGreaterThan(transactions.get(created.id)!.createdAt.getTime());
     const cancellable = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 });
-    await service.accept(buyer, cancellable.id);
     expect(await service.cancel(seller, cancellable.id)).toMatchObject({ status: 'CANCELLED', role: 'SELLER', proposalOwnership: 'CREATED_BY_ME' });
     const rejectable = await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 });
     await service.accept(seller, rejectable.id);
@@ -246,6 +260,7 @@ describe('C20f gestión de propuestas transaccionales', () => {
     await expect(service.reject(buyer, created.id)).rejects.toMatchObject({ code: 'TRANSACTION_NOT_PENDING' });
     transactions.set('legacy-1', { id: 'legacy-1', offerId: 'offer-1', demandId: 'demand-1', sellerUserId: seller, buyerUserId: buyer, proposedByUserId: null, quantityKwh: '1', pricePerKwh: '900', totalAmountCop: '900', deliveryDate, status: EnergyTransactionStatus.PENDING_ACCEPTANCE, sellerAcceptedAt: null, buyerAcceptedAt: null, createdAt: deliveryDate, updatedAt: deliveryDate, confirmedAt: null, cancelledAt: null, matchingExecutionId: null });
     expect((await service.findOne(seller, 'legacy-1')).proposalOwnership).toBe('LEGACY_UNKNOWN');
+    expect(await service.revisions(seller, 'legacy-1')).toEqual([]);
     await expect(service.edit(seller, 'legacy-1', { quantityKwh: 1 })).rejects.toMatchObject({ code: 'TRANSACTION_LEGACY_IMMUTABLE' });
     await expect(service.cancel(seller, 'legacy-1')).rejects.toMatchObject({ code: 'TRANSACTION_LEGACY_IMMUTABLE' });
   });
@@ -283,9 +298,9 @@ describe('C21a saldos parciales acumulativos', () => {
     offers.set('offer-2', market('offer-2', outsider, '12000', 'pricePerKwh', '950'));
     offers.set('offer-3', market('offer-3', '44444444-4444-4444-8444-444444444444', '20000', 'pricePerKwh', '950'));
     const first = await service.create(buyer, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 10000 });
-    await service.accept(seller, first.id); await service.accept(buyer, first.id);
+    await service.accept(seller, first.id);
     const second = await service.create(buyer, { offerId: 'offer-2', demandId: 'demand-1', quantityKwh: 12000 });
-    await service.accept(outsider, second.id); await service.accept(buyer, second.id);
+    await service.accept(outsider, second.id);
     expect((await service.create(buyer, { offerId: 'offer-3', demandId: 'demand-1', quantityKwh: 8000 })).quantityKwh).toBe('8000');
   });
 
@@ -311,5 +326,69 @@ describe('C21a.2 publicaciones vencidas', () => {
   test('C21a.2-02: la fecha de negocio de hoy no vence una publicación', async () => {
     const { service } = fixture({ offer: market('offer-1', seller, '10000', 'pricePerKwh', '950', new Date('2026-09-21T00:00:00.000Z')), demand: market('demand-1', buyer, '10000', 'maxPricePerKwh', '1000', new Date('2026-09-21T00:00:00.000Z')) });
     expect((await service.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 1 })).status).toBe('PENDING_ACCEPTANCE');
+  });
+});
+
+describe('C21b negociación de precio y cantidad', () => {
+  test('C21b-01: exige precio explícito y permite negociar fuera del rango automático', async () => {
+    const { rawService, revisions } = fixture({ demand: market('demand-1', buyer, '10000', 'maxPricePerKwh', '900') });
+    await expect(rawService.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: 2 })).rejects.toMatchObject({ code: 'INVALID_NEGOTIATION_PRICE' });
+    const created = await rawService.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: '2.5', pricePerKwh: '950.12345' });
+    expect(created).toMatchObject({ quantityKwh: '2.5', pricePerKwh: '950.12345', totalAmountCop: '2375.308625', sellerAcceptedAt: '2026-09-21T10:00:00.000Z' });
+    expect(revisions.get(created.id)).toHaveLength(1);
+  });
+
+  test('C21b-02: contrapropuestas alternan, reinician aceptación y preservan historial privado', async () => {
+    const { rawService } = fixture();
+    const created = await rawService.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: '10', pricePerKwh: '950' });
+    await expect(rawService.counter(seller, created.id, { quantityKwh: '9', pricePerKwh: '960' })).rejects.toMatchObject({ code: 'COUNTERPARTY_REQUIRED' });
+    const countered = await rawService.counter(buyer, created.id, { quantityKwh: '8', pricePerKwh: '975.5' });
+    expect(countered).toMatchObject({ quantityKwh: '8', pricePerKwh: '975.5', totalAmountCop: '7804.0', sellerAcceptedAt: null });
+    const revisions = await rawService.revisions(seller, created.id);
+    expect(revisions).toMatchObject([{ sequence: 1, proposedByRole: 'SELLER' }, { sequence: 2, proposedByRole: 'BUYER', quantityKwh: '8' }]);
+    expect(revisions[0]).not.toHaveProperty('proposedByUserId');
+    await expect(rawService.revisions(outsider, created.id)).rejects.toMatchObject({ code: 'TRANSACTION_NOT_FOUND' });
+    const confirmed = await rawService.accept(seller, created.id);
+    expect(confirmed.status).toBe('CONFIRMED');
+  });
+
+  test('C21b-03: negociación 50.000 conserva publicaciones, snapshot, saldos y aceptación del último término', async () => {
+    const { rawService, offers, demands, transactions } = fixture({ offer: market('offer-1', seller, '50000', 'pricePerKwh', '450'), demand: market('demand-1', buyer, '50000', 'maxPricePerKwh', '412.50') });
+    const created = await rawService.create(buyer, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: '50000', pricePerKwh: '420' });
+    expect(created).toMatchObject({ status: 'PENDING_ACCEPTANCE', buyerAcceptedAt: '2026-09-21T10:00:00.000Z', sellerAcceptedAt: null, latestRevisionSequence: 1, latestRevisionProposedByRole: 'BUYER' });
+    const second = await rawService.counter(seller, created.id, { quantityKwh: '50000', pricePerKwh: '440' });
+    expect(second).toMatchObject({ sellerAcceptedAt: '2026-09-21T10:00:00.000Z', buyerAcceptedAt: null });
+    const third = await rawService.counter(buyer, created.id, { quantityKwh: '45000', pricePerKwh: '435' });
+    expect(third).toMatchObject({ quantityKwh: '45000', pricePerKwh: '435', totalAmountCop: '19575000', buyerAcceptedAt: '2026-09-21T10:00:00.000Z', sellerAcceptedAt: null, latestRevisionSequence: 3, latestRevisionProposedByRole: 'BUYER' });
+    await expect(rawService.counter(buyer, created.id, { quantityKwh: '44000', pricePerKwh: '430' })).rejects.toMatchObject({ code: 'COUNTERPARTY_REQUIRED' });
+    await expect(rawService.edit(buyer, created.id, { quantityKwh: '44000' })).rejects.toMatchObject({ code: 'TRANSACTION_NEGOTIATION_IMMUTABLE' });
+    expect(transactions.get(created.id)).toMatchObject({ quantityKwh: '45000', pricePerKwh: '435', totalAmountCop: '19575000' });
+    expect(await rawService.revisions(seller, created.id)).toMatchObject([{ sequence: 1, proposedByRole: 'BUYER' }, { sequence: 2, proposedByRole: 'SELLER' }, { sequence: 3, proposedByRole: 'BUYER' }]);
+    demands.set('demand-2', market('demand-2', outsider, '5000', 'maxPricePerKwh', '500'));
+    const released = await rawService.create(seller, { offerId: 'offer-1', demandId: 'demand-2', quantityKwh: '5000', pricePerKwh: '450' });
+    await expect(rawService.create(seller, { offerId: 'offer-1', demandId: 'demand-2', quantityKwh: '1', pricePerKwh: '450' })).rejects.toMatchObject({ code: 'OFFER_QUANTITY_UNAVAILABLE' });
+    await rawService.cancel(seller, released.id);
+    const confirmed = await rawService.accept(seller, created.id);
+    expect(confirmed).toMatchObject({ status: 'CONFIRMED', sellerAcceptedAt: '2026-09-21T10:00:00.000Z', buyerAcceptedAt: '2026-09-21T10:00:00.000Z' });
+    expect(offers.get('offer-1')).toMatchObject({ quantityKwh: '50000', pricePerKwh: '450', status: EnergyMarketStatus.ACTIVE });
+    expect(demands.get('demand-1')).toMatchObject({ quantityKwh: '50000', maxPricePerKwh: '412.50', status: EnergyMarketStatus.ACTIVE });
+  });
+
+  test('C21b-04: ajuste de reserva, cancelación y rechazo preservan revisiones', async () => {
+    const increased = fixture({ offer: market('offer-1', seller, '50000', 'pricePerKwh', '450'), demand: market('demand-1', buyer, '50000', 'maxPricePerKwh', '412.50') });
+    const started = await increased.rawService.create(buyer, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: '15000', pricePerKwh: '420' });
+    expect((await increased.rawService.counter(seller, started.id, { quantityKwh: '18000', pricePerKwh: '425' })).quantityKwh).toBe('18000');
+    await expect(increased.rawService.counter(buyer, started.id, { quantityKwh: '50001', pricePerKwh: '430' })).rejects.toMatchObject({ code: 'OFFER_QUANTITY_UNAVAILABLE' });
+    const cancelled = fixture();
+    const cancelTarget = await cancelled.rawService.create(buyer, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: '10', pricePerKwh: '420' });
+    await cancelled.rawService.counter(seller, cancelTarget.id, { quantityKwh: '9', pricePerKwh: '430' });
+    expect((await cancelled.rawService.cancel(buyer, cancelTarget.id)).status).toBe('CANCELLED');
+    expect(await cancelled.rawService.revisions(buyer, cancelTarget.id)).toHaveLength(2);
+    const rejected = fixture();
+    const rejectTarget = await rejected.rawService.create(seller, { offerId: 'offer-1', demandId: 'demand-1', quantityKwh: '10', pricePerKwh: '420' });
+    await rejected.rawService.counter(buyer, rejectTarget.id, { quantityKwh: '9', pricePerKwh: '430' });
+    await expect(rejected.rawService.reject(buyer, rejectTarget.id)).rejects.toMatchObject({ code: 'TRANSACTION_RECIPIENT_REQUIRED' });
+    expect((await rejected.rawService.reject(seller, rejectTarget.id)).status).toBe('REJECTED');
+    expect(await rejected.rawService.revisions(seller, rejectTarget.id)).toHaveLength(2);
   });
 });

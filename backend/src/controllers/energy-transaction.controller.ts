@@ -6,6 +6,7 @@ export function createEnergyTransactionRouter(service = createEnergyTransactionS
   const router = Router();
   router.use(auth);
   router.get('/mine', async (req, res, next) => { try { res.json({ transactions: await service.findMine(req.authUser!.id, typeof req.query.status === 'string' ? req.query.status : undefined) }); } catch (error) { next(error); } });
+  router.get('/:id/revisions', async (req, res, next) => { try { res.json({ revisions: await service.revisions(req.authUser!.id, req.params.id) }); } catch (error) { next(error); } });
   router.get('/:id', async (req, res, next) => { try { res.json({ transaction: await service.findOne(req.authUser!.id, req.params.id) }); } catch (error) { next(error); } });
   router.post('/', (req, res, next) => {
     if (!req.is('application/json')) { res.status(415).json({ error: 'UNSUPPORTED_MEDIA_TYPE', message: 'Se requiere Content-Type application/json.' }); return; }
@@ -15,6 +16,10 @@ export function createEnergyTransactionRouter(service = createEnergyTransactionS
     if (!req.is('application/json')) { res.status(415).json({ error: 'UNSUPPORTED_MEDIA_TYPE', message: 'Se requiere Content-Type application/json.' }); return; }
     next();
   }, express.json({ limit: '8kb' }), async (req, res, next) => { try { res.json({ transaction: await service.edit(req.authUser!.id, req.params.id, req.body) }); } catch (error) { next(error); } });
+  router.post('/:id/counter', (req, res, next) => {
+    if (!req.is('application/json')) { res.status(415).json({ error: 'UNSUPPORTED_MEDIA_TYPE', message: 'Se requiere Content-Type application/json.' }); return; }
+    next();
+  }, express.json({ limit: '8kb' }), async (req, res, next) => { try { res.json({ transaction: await service.counter(req.authUser!.id, req.params.id, req.body) }); } catch (error) { next(error); } });
   for (const [path, action] of [['/:id/accept', 'accept'], ['/:id/reject', 'reject'], ['/:id/cancel', 'cancel']] as const) {
     router.post(path, express.json({ limit: '1kb' }), async (req, res, next) => { try { if (Object.keys(req.body ?? {}).length !== 0) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud no debe incluir cuerpo.'); res.json({ transaction: await service[action](req.authUser!.id, req.params.id) }); } catch (error) { next(error); } });
   }

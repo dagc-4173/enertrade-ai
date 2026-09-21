@@ -6,4 +6,8 @@
 .transaction-ownership { font-weight: 700; color: var(--color-forest) !important; }
 .transaction-edit-form { display: grid; gap: 10px; padding-top: 8px; }
 .transaction-edit-form label { display: grid; gap: 6px; max-width: 280px; font-weight: 700; }
+.transaction-item h3 { margin: 6px 0 0; color: var(--color-forest-dark); font-size: 16px; }
+.transaction-history { display: grid; gap: 8px; margin: 4px 0; padding: 12px 0 0 22px; border-top: 1px solid var(--color-border); }
+.transaction-history li { display: grid; gap: 2px; color: var(--color-muted); }
+.transaction-history strong { color: var(--color-text); }
 .transaction-notice { margin: 0; padding: 14px 18px; color: var(--color-forest); background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 8px; font-weight: 700; }

@@ -122,6 +122,16 @@ describe('buildMatchingSuggestions', () => {
     expect(first(result.demands).compatibility).toBe('NO_MATCH');
   });
 
+  test('MATCH-03b: oferta 450 y demanda máxima 412.50 no hacen match automático', () => {
+    const result = buildMatchingSuggestions(
+      [{ id: 'offer-450', quantityKwh: decimal('50000'), pricePerKwh: decimal('450'), deliveryDate: isoDate('2026-09-23'), createdAt: isoDate('2026-09-21T10:00:00Z'), status: 'ACTIVE' }],
+      [{ id: 'demand-412', quantityKwh: decimal('50000'), maxPricePerKwh: decimal('412.50'), deliveryDate: isoDate('2026-09-23'), createdAt: isoDate('2026-09-21T09:00:00Z'), status: 'ACTIVE' }],
+    );
+    expect(result.status).toBe('no_matches');
+    expect(result.matches).toHaveLength(0);
+    expect(first(result.demands).compatibility).toBe('NO_MATCH');
+  });
+
   test('MATCH-04: deliveryDate distinta produce NO_MATCH', () => {
     const result = buildMatchingSuggestions(
       [{ id: 'offer-1', quantityKwh: decimal('30.00'), pricePerKwh: decimal('100.00000'), deliveryDate: isoDate('2026-09-19'), createdAt: isoDate('2026-09-16T10:00:00Z'), status: 'ACTIVE' }],

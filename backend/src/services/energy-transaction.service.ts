@@ -33,6 +33,23 @@ export type TransactionRecord = {
   matchingExecutionId: string | null;
 };
 
+export type TransactionRevisionRecord = {
+  id: string;
+  transactionId: string;
+  sequence: number;
+  proposedByUserId: string;
+  quantityKwh: unknown;
+  pricePerKwh: unknown;
+  totalAmountCop: unknown;
+  createdAt: Date;
+};
+
+type TransactionRevisionCreation = Omit<TransactionRevisionRecord, 'id' | 'createdAt' | 'quantityKwh' | 'pricePerKwh' | 'totalAmountCop'> & {
+  quantityKwh: string;
+  pricePerKwh: string;
+  totalAmountCop: string;
+};
+
 type TransactionCreation = {
   proposedByUserId: string;
   offerId: string;
@@ -45,6 +62,8 @@ type TransactionCreation = {
   deliveryDate: Date;
   status: EnergyTransactionStatus;
   matchingExecutionId: string | null;
+  sellerAcceptedAt: Date | null;
+  buyerAcceptedAt: Date | null;
 };
 
 type LockedStore = {
@@ -55,11 +74,12 @@ type LockedStore = {
   activeDuplicate(quantityKwh: string): Promise<TransactionRecord | null>;
   expire?(today: string): Promise<void>;
   create(data: TransactionCreation): Promise<TransactionRecord>;
+  createRevision?(data: TransactionRevisionCreation): Promise<TransactionRevisionRecord>;
 };
 
 type TransactionStore = {
   transaction(): Promise<TransactionRecord | null>;
-  update(data: Partial<Pick<TransactionRecord, 'quantityKwh' | 'totalAmountCop' | 'status' | 'sellerAcceptedAt' | 'buyerAcceptedAt' | 'confirmedAt' | 'cancelledAt'>>): Promise<TransactionRecord>;
+  update(data: Partial<Pick<TransactionRecord, 'quantityKwh' | 'pricePerKwh' | 'totalAmountCop' | 'status' | 'sellerAcceptedAt' | 'buyerAcceptedAt' | 'confirmedAt' | 'cancelledAt'>>): Promise<TransactionRecord>;
   reservedOfferQuantity(): Promise<string>;
   reservedDemandQuantity(): Promise<string>;
   confirmedOfferQuantity(): Promise<string>;
@@ -68,6 +88,8 @@ type TransactionStore = {
   demand(): Promise<MarketRecord | null>;
   setOfferStatus(status: EnergyMarketStatus): Promise<void>;
   setDemandStatus(status: EnergyMarketStatus): Promise<void>;
+  latestRevision?(): Promise<TransactionRevisionRecord | null>;
+  createRevision?(data: TransactionRevisionCreation): Promise<TransactionRevisionRecord>;
 };
 
 export interface EnergyTransactionRepository {
@@ -75,6 +97,7 @@ export interface EnergyTransactionRepository {
   withLockedTransaction<T>(id: string, action: (store: TransactionStore) => Promise<T>): Promise<T>;
   findMine(userId: string, status?: EnergyTransactionStatus): Promise<TransactionRecord[]>;
   findForParticipant(id: string, userId: string): Promise<TransactionRecord | null>;
+  findRevisions?(transactionId: string): Promise<TransactionRevisionRecord[]>;
 }
 
 export class EnergyTransactionError extends Error {
@@ -123,10 +146,10 @@ function quantity(value: unknown): string {
 function createInput(body: unknown) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacción no es válida.');
   const value = body as Record<string, unknown>;
-  if (Object.keys(value).some(key => !['offerId', 'demandId', 'quantityKwh', 'matchingExecutionId'].includes(key)) || typeof value.offerId !== 'string' || typeof value.demandId !== 'string' || (value.matchingExecutionId !== undefined && (typeof value.matchingExecutionId !== 'string' || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value.matchingExecutionId)))) {
+  if (Object.keys(value).some(key => !['offerId', 'demandId', 'quantityKwh', 'pricePerKwh', 'matchingExecutionId'].includes(key)) || typeof value.offerId !== 'string' || typeof value.demandId !== 'string' || (value.matchingExecutionId !== undefined && (typeof value.matchingExecutionId !== 'string' || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value.matchingExecutionId)))) {
     throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacción no es válida.');
   }
-  return { offerId: value.offerId, demandId: value.demandId, quantityKwh: quantity(value.quantityKwh), matchingExecutionId: value.matchingExecutionId ?? null };
+  return { offerId: value.offerId, demandId: value.demandId, quantityKwh: quantity(value.quantityKwh), pricePerKwh: price(value.pricePerKwh), matchingExecutionId: value.matchingExecutionId ?? null };
 }
 
 function editInput(body: unknown) {
@@ -134,6 +157,13 @@ function editInput(body: unknown) {
   const value = body as Record<string, unknown>;
   if (Object.keys(value).length !== 1 || !Object.hasOwn(value, 'quantityKwh')) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'Solo se permite modificar quantityKwh.');
   return { quantityKwh: quantity(value.quantityKwh) };
+}
+
+function counterInput(body: unknown) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de contrapropuesta no es válida.');
+  const value = body as Record<string, unknown>;
+  if (Object.keys(value).length !== 2 || !Object.hasOwn(value, 'quantityKwh') || !Object.hasOwn(value, 'pricePerKwh')) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La contrapropuesta requiere cantidad y precio.');
+  return { quantityKwh: quantity(value.quantityKwh), pricePerKwh: price(value.pricePerKwh) };
 }
 
 function dto(value: TransactionRecord) {
@@ -156,8 +186,13 @@ function dto(value: TransactionRecord) {
   };
 }
 
-function participantDto(value: TransactionRecord, userId: string) {
-  return { ...dto(value), role: value.sellerUserId === userId ? 'SELLER' as const : 'BUYER' as const, proposalOwnership: value.proposedByUserId === null ? 'LEGACY_UNKNOWN' as const : value.proposedByUserId === userId ? 'CREATED_BY_ME' as const : 'RECEIVED' as const };
+function participantDto(value: TransactionRecord, userId: string, revision?: TransactionRevisionRecord | null) {
+  return { ...dto(value), role: value.sellerUserId === userId ? 'SELLER' as const : 'BUYER' as const, proposalOwnership: value.proposedByUserId === null ? 'LEGACY_UNKNOWN' as const : value.proposedByUserId === userId ? 'CREATED_BY_ME' as const : 'RECEIVED' as const,
+    latestRevisionSequence: revision?.sequence ?? null, latestRevisionProposedByRole: revision ? revision.proposedByUserId === value.sellerUserId ? 'SELLER' as const : 'BUYER' as const : null };
+}
+
+function revisionDto(value: TransactionRevisionRecord, transaction: TransactionRecord) {
+  return { sequence: value.sequence, quantityKwh: decimalString(value.quantityKwh), pricePerKwh: decimalString(value.pricePerKwh), totalAmountCop: decimalString(value.totalAmountCop), proposedByRole: value.proposedByUserId === transaction.sellerUserId ? 'SELLER' as const : 'BUYER' as const, createdAt: value.createdAt.toISOString() };
 }
 
 function prismaStore(transaction: Prisma.TransactionClient, offerId: string, demandId: string): LockedStore {
@@ -179,6 +214,7 @@ function prismaStore(transaction: Prisma.TransactionClient, offerId: string, dem
       ]);
     },
     create: async data => toRecord(await transaction.energyTransaction.create({ data })),
+    createRevision: async data => transaction.energyTransactionRevision.create({ data }),
   };
 }
 
@@ -210,11 +246,14 @@ const repository: EnergyTransactionRepository = {
       demand: () => transaction.energyDemand.findUnique({ where: { id: row.demandId } }),
       setOfferStatus: async status => { await transaction.energyOffer.update({ where: { id: row.offerId }, data: { status } }); },
       setDemandStatus: async status => { await transaction.energyDemand.update({ where: { id: row.demandId }, data: { status } }); },
+      latestRevision: async () => transaction.energyTransactionRevision.findFirst({ where: { transactionId: id }, orderBy: { sequence: 'desc' } }),
+      createRevision: async data => transaction.energyTransactionRevision.create({ data }),
     };
     return action(store);
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }),
   findMine: async (userId, status) => (await prisma.energyTransaction.findMany({ where: { OR: [{ sellerUserId: userId }, { buyerUserId: userId }], ...(status ? { status } : {}) }, orderBy: { createdAt: 'desc' } })) as TransactionRecord[],
   findForParticipant: async (id, userId) => (await prisma.energyTransaction.findFirst({ where: { id, OR: [{ sellerUserId: userId }, { buyerUserId: userId }] } })) as TransactionRecord | null,
+  findRevisions: async transactionId => (await prisma.energyTransactionRevision.findMany({ where: { transactionId }, orderBy: { sequence: 'asc' } })) as TransactionRevisionRecord[],
 };
 
 async function ensureConfirmedPublicationStatuses(store: TransactionStore, record: TransactionRecord) {
@@ -238,16 +277,18 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
         if (offer.userId === demand.userId) throw new EnergyTransactionError(409, 'SAME_TRANSACTION_PARTICIPANT', 'La oferta y demanda deben pertenecer a usuarios distintos.');
         if (userId !== offer.userId && userId !== demand.userId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede proponer la transacción.');
         if (dateOnly(offer.deliveryDate) !== dateOnly(demand.deliveryDate)) throw new EnergyTransactionError(409, 'DELIVERY_DATE_MISMATCH', 'La fecha de entrega debe coincidir.');
-        const price = decimalString(offer.pricePerKwh);
-        if (compare(price, decimalString(demand.maxPricePerKwh!)) > 0) throw new EnergyTransactionError(409, 'PRICE_NOT_COMPATIBLE', 'El precio de la oferta supera el máximo de la demanda.');
         if (duplicate) throw new EnergyTransactionError(409, 'DUPLICATE_ACTIVE_PROPOSAL', 'Ya existe una propuesta activa equivalente.');
         const offerAvailable = subtract(decimalString(offer.quantityKwh), reservedOffer);
         const demandAvailable = subtract(decimalString(demand.quantityKwh), reservedDemand);
         if (compare(input.quantityKwh, offerAvailable) > 0) throw new EnergyTransactionError(409, 'OFFER_QUANTITY_UNAVAILABLE', 'La cantidad supera el saldo disponible de la oferta.');
         if (compare(input.quantityKwh, demandAvailable) > 0) throw new EnergyTransactionError(409, 'DEMAND_QUANTITY_UNAVAILABLE', 'La cantidad supera el saldo pendiente de la demanda.');
-        return store.create({ offerId: offer.id, demandId: demand.id, sellerUserId: offer.userId, buyerUserId: demand.userId, proposedByUserId: userId, quantityKwh: input.quantityKwh, pricePerKwh: price, totalAmountCop: multiply(input.quantityKwh, price), deliveryDate: offer.deliveryDate, status: 'PENDING_ACCEPTANCE', matchingExecutionId: input.matchingExecutionId });
+        const acceptedAt = now();
+        const totalAmountCop = multiply(input.quantityKwh, input.pricePerKwh);
+        const created = await store.create({ offerId: offer.id, demandId: demand.id, sellerUserId: offer.userId, buyerUserId: demand.userId, proposedByUserId: userId, quantityKwh: input.quantityKwh, pricePerKwh: input.pricePerKwh, totalAmountCop, deliveryDate: offer.deliveryDate, status: 'PENDING_ACCEPTANCE', matchingExecutionId: input.matchingExecutionId, sellerAcceptedAt: userId === offer.userId ? acceptedAt : null, buyerAcceptedAt: userId === demand.userId ? acceptedAt : null });
+        const revision = await store.createRevision?.({ transactionId: created.id, sequence: 1, proposedByUserId: userId, quantityKwh: input.quantityKwh, pricePerKwh: input.pricePerKwh, totalAmountCop });
+        return { transaction: created, revision };
       });
-      return participantDto(created, userId);
+      return participantDto(created.transaction, userId, created.revision);
     },
     async edit(userId: string, id: string, body: unknown) {
       const input = editInput(body);
@@ -257,6 +298,7 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
         if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite edición.');
         if (current.proposedByUserId === null) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta histórica no tiene creador verificable y no puede editarse.');
         if (current.proposedByUserId !== userId) throw new EnergyTransactionError(403, 'TRANSACTION_PROPOSER_REQUIRED', 'Solo quien creó la propuesta puede editarla.');
+        if (await store.latestRevision?.()) throw new EnergyTransactionError(409, 'TRANSACTION_NEGOTIATION_IMMUTABLE', 'Una negociación versionada debe cambiarse mediante contrapropuesta.');
         const [offer, demand, reservedOffer, reservedDemand] = await Promise.all([store.offer(), store.demand(), store.reservedOfferQuantity(), store.reservedDemandQuantity()]);
         if (!offer || !demand) throw new EnergyTransactionError(409, 'TRANSACTION_PUBLICATION_UNAVAILABLE', 'La propuesta referencia una publicación no disponible.');
         const ownQuantity = decimalString(current.quantityKwh);
@@ -266,6 +308,30 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
         if (compare(input.quantityKwh, demandAvailable) > 0) throw new EnergyTransactionError(409, 'DEMAND_QUANTITY_UNAVAILABLE', 'La cantidad supera el saldo pendiente de la demanda.');
         return store.update({ quantityKwh: input.quantityKwh, totalAmountCop: multiply(input.quantityKwh, decimalString(current.pricePerKwh)), sellerAcceptedAt: null, buyerAcceptedAt: null });
       }), userId);
+    },
+    async counter(userId: string, id: string, body: unknown) {
+      const input = counterInput(body);
+      const countered = await repo.withLockedTransaction(id, async store => {
+        const current = await store.transaction();
+        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
+        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite contrapropuestas.');
+        if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede realizar una contrapropuesta.');
+        const latest = await store.latestRevision?.();
+        if (!latest) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta histórica no admite contrapropuestas.');
+        if (latest.proposedByUserId === userId) throw new EnergyTransactionError(409, 'COUNTERPARTY_REQUIRED', 'La contrapropuesta debe ser realizada por la contraparte.');
+        const [offer, demand, reservedOffer, reservedDemand] = await Promise.all([store.offer(), store.demand(), store.reservedOfferQuantity(), store.reservedDemandQuantity()]);
+        if (!offer || !demand) throw new EnergyTransactionError(409, 'TRANSACTION_PUBLICATION_UNAVAILABLE', 'La propuesta referencia una publicación no disponible.');
+        const ownQuantity = decimalString(current.quantityKwh);
+        const offerAvailable = subtract(subtract(decimalString(offer.quantityKwh), reservedOffer), `-${ownQuantity}`);
+        const demandAvailable = subtract(subtract(decimalString(demand.quantityKwh), reservedDemand), `-${ownQuantity}`);
+        if (compare(input.quantityKwh, offerAvailable) > 0) throw new EnergyTransactionError(409, 'OFFER_QUANTITY_UNAVAILABLE', 'La cantidad supera el saldo disponible de la oferta.');
+        if (compare(input.quantityKwh, demandAvailable) > 0) throw new EnergyTransactionError(409, 'DEMAND_QUANTITY_UNAVAILABLE', 'La cantidad supera el saldo pendiente de la demanda.');
+        const totalAmountCop = multiply(input.quantityKwh, input.pricePerKwh);
+        const revision = await store.createRevision?.({ transactionId: current.id, sequence: latest.sequence + 1, proposedByUserId: userId, quantityKwh: input.quantityKwh, pricePerKwh: input.pricePerKwh, totalAmountCop });
+        const acceptedAt = now();
+        return { transaction: await store.update({ quantityKwh: input.quantityKwh, pricePerKwh: input.pricePerKwh, totalAmountCop, sellerAcceptedAt: userId === current.sellerUserId ? acceptedAt : null, buyerAcceptedAt: userId === current.buyerUserId ? acceptedAt : null }), revision };
+      });
+      return participantDto(countered.transaction, userId, countered.revision);
     },
     async accept(userId: string, id: string) {
       return participantDto(await repo.withLockedTransaction(id, async store => {
@@ -286,7 +352,9 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
         if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
         if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacción ya no admite rechazo.');
         if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede rechazar la transacción.');
-        if (current.proposedByUserId !== null && current.proposedByUserId === userId) throw new EnergyTransactionError(403, 'TRANSACTION_RECIPIENT_REQUIRED', 'Quien creó la propuesta debe cancelarla, no rechazarla.');
+        const latest = await store.latestRevision?.();
+        const proposerId = latest?.proposedByUserId ?? current.proposedByUserId;
+        if (proposerId !== null && proposerId === userId) throw new EnergyTransactionError(403, 'TRANSACTION_RECIPIENT_REQUIRED', 'Quien propuso el término vigente debe cancelarlo, no rechazarlo.');
         return store.update({ status: 'REJECTED' });
       }), userId);
     },
@@ -302,12 +370,25 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
     },
     async findMine(userId: string, status?: string) {
       if (status && !Object.values(EnergyTransactionStatus).includes(status as EnergyTransactionStatus)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_STATUS', 'El estado de transacción no es válido.');
-      return (await repo.findMine(userId, status as EnergyTransactionStatus | undefined)).map(value => participantDto(value, userId));
+      return Promise.all((await repo.findMine(userId, status as EnergyTransactionStatus | undefined)).map(async value => participantDto(value, userId, (await repo.findRevisions?.(value.id))?.at(-1))));
     },
     async findOne(userId: string, id: string) {
       const value = await repo.findForParticipant(id, userId);
       if (!value) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
-      return participantDto(value, userId);
+      return participantDto(value, userId, (await repo.findRevisions?.(id))?.at(-1));
+    },
+    async revisions(userId: string, id: string) {
+      const transaction = await repo.findForParticipant(id, userId);
+      if (!transaction) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacción no existe.');
+      return (await repo.findRevisions?.(id) ?? []).map(value => revisionDto(value, transaction));
     },
   };
+}
+
+function price(value: unknown): string {
+  const text = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : '';
+  if (!/^(?:0|[1-9]\d*)(?:\.\d{1,5})?$/.test(text) || compare(text, '0') <= 0) {
+    throw new EnergyTransactionError(400, 'INVALID_NEGOTIATION_PRICE', 'El precio debe ser decimal positivo con máximo cinco decimales.');
+  }
+  return text;
 }

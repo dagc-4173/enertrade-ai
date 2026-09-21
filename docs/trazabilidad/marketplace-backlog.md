@@ -263,6 +263,14 @@ No se recalcula la velocidad completa de S2 porque para ello deben revisarse tod
 - **Regla de estado:** una publicación sigue `ACTIVE` mientras la suma confirmada sea menor a su cantidad original; las reservas pendientes descuentan saldo pero no la completan.
 - **Límite:** no incluye pagos, negociación de precio, migración de datos ni modificación del matching informativo.
 
+## 9.3 Propuesta provisional C21b
+
+- **Título:** Negociar términos de una transacción energética simulada.
+- **Estado:** Implementado y probado automatizadamente; formalización académica pendiente.
+- **Criterios:** iniciar una negociación aunque no exista match de precio automático; proponer cantidad y precio; emitir contrapropuestas alternadas; conservar historial inmutable; mantener una reserva vigente; aceptar el último término; y conservar el saldo parcial final de las publicaciones.
+- **Límites:** no asigna una HU oficial ni altera la numeración vigente. No incluye pagos, liquidación, entrega física, cambios de frontend ni modificación de matching-v1.
+- **Evidencia pendiente:** prueba real de concurrencia PostgreSQL para contrapropuestas simultáneas.
+
 ## 10. Pendientes documentales
 
 - Incorporar HU-21 y HU-22 al Product Backlog de TG-II.

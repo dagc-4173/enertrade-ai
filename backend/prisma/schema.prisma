@@ -269,6 +269,7 @@ model User {
   sales EnergyTransaction[] @relation("EnergyTransactionSeller")
   purchases EnergyTransaction[] @relation("EnergyTransactionBuyer")
   proposedTransactions EnergyTransaction[] @relation("EnergyTransactionProposer")
+  transactionRevisions EnergyTransactionRevision[] @relation("EnergyTransactionRevisionProposer")
 }
 model AuthSession {
   tokenHash String @id @db.Char(64)
@@ -346,6 +347,7 @@ model EnergyTransaction {
   buyer               User                    @relation("EnergyTransactionBuyer", fields: [buyerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   proposedBy          User?                   @relation("EnergyTransactionProposer", fields: [proposedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   matchingExecution   MatchingExecution?      @relation(fields: [matchingExecutionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  revisions           EnergyTransactionRevision[]
 
   @@index([offerId, status])
   @@index([demandId, status])
@@ -353,4 +355,21 @@ model EnergyTransaction {
   @@index([buyerUserId, createdAt])
   @@index([proposedByUserId, createdAt])
   @@index([matchingExecutionId])
+}
+
+model EnergyTransactionRevision {
+  id                String            @id @default(uuid()) @db.Uuid
+  transactionId     String            @db.Uuid
+  sequence          Int
+  proposedByUserId  String            @db.Uuid
+  quantityKwh       Decimal           @db.Decimal(20, 2)
+  pricePerKwh       Decimal           @db.Decimal(18, 5)
+  totalAmountCop    Decimal           @db.Decimal(38, 7)
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  transaction       EnergyTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  proposedBy        User              @relation("EnergyTransactionRevisionProposer", fields: [proposedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([transactionId, sequence])
+  @@index([transactionId, createdAt])
+  @@index([proposedByUserId, createdAt])
 }

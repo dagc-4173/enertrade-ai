@@ -2,6 +2,15 @@ export type TransactionStatus = 'PENDING_ACCEPTANCE' | 'CONFIRMED' | 'REJECTED' 
 export type TransactionRole = 'BUYER' | 'SELLER'
 export type ProposalOwnership = 'CREATED_BY_ME' | 'RECEIVED' | 'LEGACY_UNKNOWN'
 
+export interface TransactionRevision {
+  sequence: number
+  quantityKwh: string
+  pricePerKwh: string
+  totalAmountCop: string
+  proposedByRole: TransactionRole
+  createdAt: string
+}
+
 export interface EnergyTransaction {
   id: string
   offerId: string
@@ -20,4 +29,6 @@ export interface EnergyTransaction {
   matchingExecutionId: string | null
   role: TransactionRole
   proposalOwnership: ProposalOwnership
+  latestRevisionSequence: number | null
+  latestRevisionProposedByRole: TransactionRole | null
 }

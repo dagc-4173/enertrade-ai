@@ -3,18 +3,18 @@ import process from 'node:process'
 import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { CompatibilityAction, Marketplace, PublicationActions, PublicationQuantity, PublicationStatus } from '../src/pages/Marketplace'
-import { canAccept, canCancel, canEdit, canReject } from '../src/utils/transactionActions'
+import { canAccept, canCancel, canCounter, canEdit, canReject } from '../src/utils/transactionActions'
 import { availablePublicationQuantity, errorMessage, selectProposal } from '../src/utils/marketplaceActions'
 import { ApiError } from '../src/services/apiClient'
 import { createDemand, createOffer, getMyDemands, getMyOffers, updateDemand } from '../src/services/marketplaceService'
-import { acceptTransaction, cancelTransaction, createTransaction, listMyTransactions, rejectTransaction, updateTransaction } from '../src/services/transactionService'
+import { acceptTransaction, cancelTransaction, counterTransaction, createTransaction, listMyTransactions, listTransactionRevisions, rejectTransaction, updateTransaction } from '../src/services/transactionService'
 import { formatCopPerKwh, formatEnergy } from '../src/utils/numberFormat'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
 const date = '2026-09-18'
 const offer = { id: 'offer-1', quantityKwh: 9851831.89, confirmedQuantityKwh: 0, reservedQuantityKwh: 0, availableQuantityKwh: 9851831.89, pricePerKwh: 412.5, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
 const demand = { id: 'demand-1', quantityKwh: 252444558.83, confirmedQuantityKwh: 0, reservedQuantityKwh: 0, availableQuantityKwh: 252444558.83, maxPricePerKwh: 960.71104, deliveryDate: date, status: 'ACTIVE', createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z' }
-const transaction = { id: 'transaction-1', offerId: 'external-offer', demandId: 'own-demand', quantityKwh: '21000', pricePerKwh: '950', totalAmountCop: '19950000', deliveryDate: '2026-09-25', status: 'PENDING_ACCEPTANCE', role: 'BUYER', proposalOwnership: 'RECEIVED' as const, sellerAcceptedAt: null, buyerAcceptedAt: null, createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z', confirmedAt: null, cancelledAt: null, matchingExecutionId: null }
+const transaction = { id: 'transaction-1', offerId: 'external-offer', demandId: 'own-demand', quantityKwh: '21000', pricePerKwh: '950', totalAmountCop: '19950000', deliveryDate: '2026-09-25', status: 'PENDING_ACCEPTANCE', role: 'BUYER', proposalOwnership: 'RECEIVED' as const, sellerAcceptedAt: null, buyerAcceptedAt: null, createdAt: '2026-09-17T00:00:00.000Z', updatedAt: '2026-09-17T00:00:00.000Z', confirmedAt: null, cancelledAt: null, matchingExecutionId: null, latestRevisionSequence: null, latestRevisionProposedByRole: null }
 const originalFetch = globalThis.fetch
 afterEach(() => { globalThis.fetch = originalFetch })
 function respond(body: unknown, status = 200) {
@@ -72,7 +72,8 @@ test('la página no ejecuta POST automáticamente y no muestra resultados mock d
   expect(source).toContain('Mercado activo')
   expect(source).toContain('listMarketOffers')
   expect(source).toContain('listMarketDemands')
-  expect(source).toContain('Crear propuesta')
+  expect(source).toContain('Crear negociación')
+  expect(source).toContain('Precio propuesto (COP/kWh)')
   expect(source).toContain("message: 'Actualizando emparejamientos…'")
   expect(source).toContain('refreshRequest.rematch')
   expect(source).toContain('suggestMatches(controller.signal)')
@@ -150,25 +151,32 @@ test('demanda ACTIVE se actualiza por PATCH con el contrato esperado', async () 
   expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({ quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' })
 })
 
-test('compatibilidad 900 frente a 950 deja el CTA visible, deshabilitado y sin POST', () => {
+test('compatibilidad 900 frente a 950 deja el CTA de negociación habilitado y sin POST', () => {
   const fetch = spyOn(globalThis, 'fetch')
   const html = renderToStaticMarkup(<CompatibilityAction ownDemand={{ ...demand, id: 'own-demand', quantityKwh: 21_000, maxPricePerKwh: 900, deliveryDate: '2026-09-25' }} externalOffer={{ id: 'external-offer', availableQuantityKwh: '21000', pricePerKwh: '950', deliveryDate: '2026-09-25', status: 'ACTIVE' }} onSelect={() => { throw new Error('No debe seleccionarse una combinación incompatible.') }} />)
   expect(html).toContain('precio no compatible')
-  expect(html).toContain('Esta combinación no puede proponerse porque el precio de la oferta supera el máximo de tu demanda.')
-  expect(html).toMatch(/disabled=""[^>]*>Proponer con mi demanda/)
+  expect(html).toContain('El precio no cumple el criterio de matching automático, pero puedes iniciar una negociación.')
+  expect(html).not.toMatch(/disabled=""[^>]*>Negociar con mi demanda/)
+  expect(html).toContain('Negociar con mi demanda')
   expect(fetch).not.toHaveBeenCalled()
+})
+
+test('fecha distinta deshabilita la negociación aunque exista saldo y precio compatible', () => {
+  const html = renderToStaticMarkup(<CompatibilityAction ownDemand={{ ...demand, id: 'own-demand', quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' }} externalOffer={{ id: 'external-offer', availableQuantityKwh: '21000', pricePerKwh: '950', deliveryDate: '2026-09-26', status: 'ACTIVE' }} onSelect={() => { throw new Error('No debe negociar con fechas distintas.') }} />)
+  expect(html).toContain('La negociación no está disponible porque las fechas de entrega no coinciden.')
+  expect(html).toMatch(/disabled=""[^>]*>Negociar con mi demanda/)
 })
 
 test('compatibilidad de precio y fecha habilita cantidades parciales negociables', async () => {
   const html = renderToStaticMarkup(<CompatibilityAction ownDemand={{ ...demand, id: 'own-demand', quantityKwh: 21_000, maxPricePerKwh: 1_000, deliveryDate: '2026-09-25' }} externalOffer={{ id: 'external-offer', availableQuantityKwh: '21000', pricePerKwh: '950', deliveryDate: '2026-09-25', status: 'ACTIVE' }} onSelect={() => {}} />)
   expect(html).toContain('Cantidad negociable hasta 21.000,00 kWh.')
   expect(html).toContain('precio compatible')
-  expect(html).not.toMatch(/disabled=""[^>]*>Proponer con mi demanda/)
+  expect(html).not.toMatch(/disabled=""[^>]*>Negociar con mi demanda/)
   const fetch = respond({ transaction }, 201)
-  expect(await createTransaction({ offerId: 'external-offer', demandId: 'own-demand', quantityKwh: 21_000 })).toMatchObject({ status: 'PENDING_ACCEPTANCE', offerId: 'external-offer', demandId: 'own-demand' })
+  expect(await createTransaction({ offerId: 'external-offer', demandId: 'own-demand', quantityKwh: 21_000, pricePerKwh: 435 })).toMatchObject({ status: 'PENDING_ACCEPTANCE', offerId: 'external-offer', demandId: 'own-demand' })
   expect(fetch).toHaveBeenCalledTimes(1)
   expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions')
-  expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({ offerId: 'external-offer', demandId: 'own-demand', quantityKwh: 21_000 })
+  expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({ offerId: 'external-offer', demandId: 'own-demand', quantityKwh: 21_000, pricePerKwh: 435 })
 })
 
 test('una demanda mayor que la oferta disponible sigue siendo parcialmente negociable', () => {
@@ -239,6 +247,18 @@ test('respuestas válidas de editar, aceptar, rechazar y cancelar conservan el D
   expect(await cancelTransaction('transaction-1')).toMatchObject({ role: 'BUYER', proposalOwnership: 'CREATED_BY_ME' })
 })
 
+test('counter e historial usan contratos C21b sin identidades privadas', async () => {
+  const negotiated = { ...transaction, latestRevisionSequence: 2, latestRevisionProposedByRole: 'SELLER' as const }
+  let fetch = respond({ transaction: negotiated })
+  expect(await counterTransaction('transaction-1', { quantityKwh: 20_000, pricePerKwh: 435 })).toMatchObject({ latestRevisionSequence: 2, latestRevisionProposedByRole: 'SELLER' })
+  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions/transaction-1/counter')
+  expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({ quantityKwh: 20_000, pricePerKwh: 435 })
+  fetch.mockRestore()
+  fetch = respond({ revisions: [{ sequence: 1, quantityKwh: '21000', pricePerKwh: '420', totalAmountCop: '8820000', proposedByRole: 'BUYER', createdAt: '2026-09-17T00:00:00.000Z' }, { sequence: 2, quantityKwh: '20000', pricePerKwh: '435', totalAmountCop: '8700000', proposedByRole: 'SELLER', createdAt: '2026-09-17T01:00:00.000Z' }] })
+  expect(await listTransactionRevisions('transaction-1')).toMatchObject([{ sequence: 1, proposedByRole: 'BUYER' }, { sequence: 2, proposedByRole: 'SELLER' }])
+  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/transactions/transaction-1/revisions')
+})
+
 test('permisos separan creador, receptor, aceptación previa y legado', () => {
   const created = { ...transaction, role: 'SELLER' as const, proposalOwnership: 'CREATED_BY_ME' as const }
   expect(canEdit(created)).toBe(true)
@@ -262,6 +282,15 @@ test('permisos separan creador, receptor, aceptación previa y legado', () => {
   expect(canEdit(legacy)).toBe(false)
   expect(canCancel(legacy)).toBe(false)
   expect(canReject(legacy)).toBe(false)
+  const receivedRevision = { ...transaction, latestRevisionSequence: 3, latestRevisionProposedByRole: 'SELLER' as const }
+  expect(canAccept(receivedRevision)).toBe(true)
+  expect(canCounter(receivedRevision)).toBe(true)
+  expect(canReject(receivedRevision)).toBe(true)
+  expect(canEdit(receivedRevision)).toBe(false)
+  const authoredRevision = { ...receivedRevision, latestRevisionProposedByRole: 'BUYER' as const, buyerAcceptedAt: '2026-09-18T00:00:00.000Z' }
+  expect(canCounter(authoredRevision)).toBe(false)
+  expect(canReject(authoredRevision)).toBe(false)
+  expect(canCancel({ ...authoredRevision, proposalOwnership: 'CREATED_BY_ME' })).toBe(true)
 })
 
 test('el éxito muestra los datos de la propuesta y el acceso a Transacciones', () => {
@@ -270,6 +299,21 @@ test('el éxito muestra los datos de la propuesta y el acceso a Transacciones', 
   expect(source).toContain('Estado: Pendiente')
   expect(source).toContain('Ver mis transacciones')
   expect(source).toContain('setSelected(null)')
+})
+
+test('la UI C21b precarga el precio propio y presenta término, acciones e historial sin IDs', () => {
+  const marketplaceSource = readFileSync(new URL('../src/pages/Marketplace.tsx', import.meta.url), 'utf8')
+  const transactionsSource = readFileSync(new URL('../src/pages/Transactions.tsx', import.meta.url), 'utf8')
+  expect(marketplaceSource).toContain('select(offer, demand, demand.maxPricePerKwh)')
+  expect(marketplaceSource).toContain('}, offer.pricePerKwh)')
+  expect(marketplaceSource).toContain('Precio propuesto (COP/kWh)')
+  expect(transactionsSource).toContain('Término vigente')
+  expect(transactionsSource).toContain('Contraproponer')
+  expect(transactionsSource).toContain('Ver historial')
+  expect(transactionsSource).toContain('Cancelar negociación')
+  expect(transactionsSource).not.toContain('proposedByUserId')
+  expect(transactionsSource).not.toContain('sellerUserId')
+  expect(transactionsSource).not.toContain('buyerUserId')
 })
 
 test('errores reales de edición o propuesta conservan mensaje, código y estado seguro', async () => {

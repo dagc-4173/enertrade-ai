@@ -10,6 +10,8 @@
 
 **Extensión C21a.3:** Aceptada para visibilidad de saldos propios y edición acotada.
 
+**Extensión C21b:** Aceptada para negociación bilateral con revisiones inmutables.
+
 ## Contexto
 
 HU-10 y HU-11 producen sugerencias y trazas, pero no crean operaciones comerciales ni modifican publicaciones. El cambio de alcance TG-II autorizado incorpora un nucleo de transacciones energeticas simuladas, sin pagos, liquidacion financiera ni entrega fisica.
@@ -125,6 +127,24 @@ el saldo operativo. `/offers/mine` y `/demands/mine` devuelven además
 derivados respectivamente de transacciones `CONFIRMED`,
 `PENDING_ACCEPTANCE` y de la resta no negativa contra `quantityKwh`.
 `REJECTED` y `CANCELLED` no participan en esos agregados.
+
+## Extensión C21b: negociación bilateral con revisiones inmutables
+
+Una negociación manual necesita conservar cada término propuesto sin confundirla con el matching informativo. El precio de una transacción negociada puede diferir tanto de `EnergyOffer.pricePerKwh` como de `EnergyDemand.maxPricePerKwh`; esas publicaciones no se modifican y matching-v1 conserva su regla automática de compatibilidad.
+
+Se evaluaron tres alternativas:
+
+- **Alternativa A, sobrescribir `EnergyTransaction`:** simplifica la escritura, pero elimina el historial de cantidad, precio y autor de cada término.
+- **Alternativa B, tabla de revisiones:** registra términos inmutables y mantiene una fila vigente para reservas, aceptaciones y consultas operativas.
+- **Alternativa C, crear una `EnergyTransaction` por contrapropuesta:** conserva historia, pero fragmenta la reserva, el ciclo de aceptación y la identidad de una misma negociación.
+
+Se adopta la alternativa B: `EnergyTransactionRevision` con secuencia única por transacción y `EnergyTransaction` como snapshot vigente. La creación escribe la revisión 1; una contrapropuesta solo puede ser emitida por la contraparte del autor de la última revisión, crea la secuencia siguiente, recalcula el total decimal y deja aceptado solo a su autor. La aceptación de la contraparte confirma el snapshot vigente.
+
+Las operaciones de contrapropuesta comparten la transacción serializable y los bloqueos de transacción, oferta y demanda. El saldo se calcula excluyendo la reserva propia antes de reemplazar la cantidad vigente. Cancelación y rechazo liberan reserva al cambiar el estado, pero no eliminan revisiones. El cancelador sigue siendo el iniciador original; quien rechaza es el receptor del término vigente.
+
+Las filas anteriores sin revisiones se conservan como legacy: su historial es vacío y no se inventa una revisión retrospectiva. Los DTO solo exponen roles y secuencias, nunca IDs internos o correos de participantes.
+
+La prueba unitaria usa un repositorio serializado en memoria. La prueba de concurrencia contra PostgreSQL real para dos `counter` simultáneos permanece pendiente y no se presenta como evidencia ejecutada.
 
 La interfaz consume esos saldos del backend en cada carga o refresh y conserva
 `quantityKwh` al editar. Una publicación `ACTIVE` puede modificar su término
