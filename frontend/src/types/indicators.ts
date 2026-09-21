@@ -4,6 +4,7 @@ export interface EngineIndicators {
   matchingSuggestions: number
   patternsIdentified: number
   errors: { total: number }
+  executions: { total: number; succeeded: number; empty: number; failed: number; successRate: number | null }
   averageResponseTimeMs: number | null
   capabilities: {
     active: number

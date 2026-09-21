@@ -13,14 +13,20 @@ function store(traces: Trace[] = [], prices = 0, matching = 0, patterns = 0): In
   const selected = (where: Record<string, unknown>) => traces.filter(trace => Object.entries(where).every(([key, value]) => key === 'capability' && typeof value === 'object' ? trace.capability !== (value as { not: string }).not : trace[key as keyof Trace] === value));
   let aggregateQuery = 0;
   return {
-    aiQueryTrace: { count: async ({ where }) => selected(where as Record<string, unknown>).length, aggregate: async ({ where }) => { const rows = selected(where as Record<string, unknown>); return { _count: rows.length, _avg: { durationMs: rows.length ? rows.reduce((sum, row) => sum + row.durationMs, 0) / rows.length : null } }; } },
+    aiQueryTrace: {
+      count: async ({ where }) => selected(where as Record<string, unknown>).length,
+      groupBy: async ({ where }) => (['succeeded', 'empty', 'failed'] as const)
+        .map(executionStatus => selected({ ...(where as Record<string, unknown>), executionStatus }))
+        .filter(rows => rows.length > 0)
+        .map(rows => ({ executionStatus: rows[0]!.executionStatus as 'succeeded' | 'empty' | 'failed', _count: rows.length, _sum: { durationMs: rows.reduce((sum, row) => sum + row.durationMs, 0) } })),
+    },
     priceForecastExecution: { count: async ({ where }) => (where as { status: string }).status === 'succeeded' ? prices : 0 },
     $queryRaw: async <T>() => [{ total: BigInt(aggregateQuery++ === 0 ? matching : patterns) }] as T,
   };
 }
 
 test('IND-01 e IND-10: sin datos devuelve ceros, null y warnings objetivos', async () => {
-  expect(await createIndicatorsService(store()).get()).toMatchObject({ indicators: { forecasts: { supply: 0, demand: 0, total: 0 }, priceEstimates: 0, matchingSuggestions: 0, patternsIdentified: 0, errors: { total: 0 }, averageResponseTimeMs: null }, sample: { traceCount: 0 }, warnings: ['NO_TRACE_DATA', 'NO_FUNCTIONAL_RECORDS'] });
+  expect(await createIndicatorsService(store()).get()).toMatchObject({ indicators: { forecasts: { supply: 0, demand: 0, total: 0 }, priceEstimates: 0, matchingSuggestions: 0, patternsIdentified: 0, errors: { total: 0 }, executions: { total: 0, succeeded: 0, empty: 0, failed: 0, successRate: null }, averageResponseTimeMs: null }, sample: { traceCount: 0 }, warnings: ['NO_TRACE_DATA', 'NO_FUNCTIONAL_RECORDS'] });
 });
 
 test('IND-02 a IND-09: consolida fuentes canónicas, empty/failed y excluye engine_indicators', async () => {
@@ -28,7 +34,18 @@ test('IND-02 a IND-09: consolida fuentes canónicas, empty/failed y excluye engi
     { capability: 'forecasts_supply', executionStatus: 'succeeded', durationMs: 10 }, { capability: 'forecasts_demand', executionStatus: 'succeeded', durationMs: 20 },
     { capability: 'forecasts_supply', executionStatus: 'empty', durationMs: 30 }, { capability: 'models', executionStatus: 'failed', durationMs: 40 }, { capability: 'engine_indicators', executionStatus: 'failed', durationMs: 999 },
   ], 1, 3, 5));
-  expect(await service.get()).toMatchObject({ indicators: { forecasts: { supply: 1, demand: 1, total: 2 }, priceEstimates: 1, matchingSuggestions: 3, patternsIdentified: 5, errors: { total: 1 }, averageResponseTimeMs: 25, capabilities: { active: 5, total: 5, byArtifactType: { mlModel: 2, deterministicRule: 1, deterministicMethod: 2 } } }, sample: { traceCount: 4 }, warnings: [] });
+  expect(await service.get()).toMatchObject({ indicators: { forecasts: { supply: 1, demand: 1, total: 2 }, priceEstimates: 1, matchingSuggestions: 3, patternsIdentified: 5, errors: { total: 1 }, executions: { total: 4, succeeded: 2, empty: 1, failed: 1, successRate: 50 }, averageResponseTimeMs: 25, capabilities: { active: 5, total: 5, byArtifactType: { mlModel: 2, deterministicRule: 1, deterministicMethod: 2 } } }, sample: { traceCount: 4 }, warnings: [] });
+});
+
+test('IND-EXEC-01: calcula total, tasa de éxito redondeada a 2 decimales y coherencia con errors.total', async () => {
+  const service = createIndicatorsService(store([
+    { capability: 'forecasts_supply', executionStatus: 'succeeded', durationMs: 10 },
+    { capability: 'matching', executionStatus: 'empty', durationMs: 10 },
+    { capability: 'patterns_analyze', executionStatus: 'failed', durationMs: 10 },
+  ]));
+  const result = await service.get();
+  expect(result.indicators.executions).toEqual({ total: 3, succeeded: 1, empty: 1, failed: 1, successRate: 33.33 });
+  expect(result.indicators.errors.total).toBe(result.indicators.executions.failed);
 });
 
 test('IND-11: la misma fuente produce respuesta determinística', async () => {

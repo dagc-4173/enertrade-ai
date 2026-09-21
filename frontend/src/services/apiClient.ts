@@ -21,7 +21,8 @@ export interface ApiResponse<T> {
   data: T | null
 }
 
-export type ApiRequestOptions = Omit<RequestInit, 'body'> & { json?: unknown }
+/** acceptStatuses opts a caller into treating specific non-2xx codes as valid business responses (e.g. GET /health returning 503 for a degraded but parseable state). */
+export type ApiRequestOptions = Omit<RequestInit, 'body'> & { json?: unknown; acceptStatuses?: number[] }
 
 function requestUrl(path: string): string {
   const base: unknown = import.meta.env.VITE_API_BASE_URL
@@ -46,7 +47,7 @@ function requestUrl(path: string): string {
 /** T describes the expected JSON contract; it does not perform runtime validation. */
 export async function apiRequest<T = unknown>(path: string, options: ApiRequestOptions = {}): Promise<ApiResponse<T>> {
   const url = requestUrl(path)
-  const { json, ...init } = options
+  const { json, acceptStatuses, ...init } = options
   let headers: Headers
   let body: string | undefined
   try {
@@ -86,7 +87,7 @@ export async function apiRequest<T = unknown>(path: string, options: ApiRequestO
       validJson = false
     }
   }
-  if (!response.ok) {
+  if (!response.ok && !acceptStatuses?.includes(response.status)) {
     // Only retain the bounded plain-text message from a structured error envelope.
     // Raw bodies, stack fields and fetch internals are never exposed.
     const candidate = data !== null && typeof data === 'object' && 'error' in data ? data.error : null
