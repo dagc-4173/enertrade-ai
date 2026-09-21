@@ -113,10 +113,11 @@ function subtractDecimal(a: string, b: string): string {
   return formatDecimal(left - right, scale);
 }
 
-function formatDecimal(value: bigint, scale: number): string {
+export function formatDecimal(value: bigint, scale: number): string {
   const negative = value < 0n;
   const absolute = negative ? -value : value;
   const digits = absolute.toString();
+  if (scale === 0) return `${negative ? '-' : ''}${digits}`;
   const padded = digits.padStart(scale + 1, '0');
   const whole = padded.slice(0, padded.length - scale) || '0';
   const fraction = padded.slice(-scale).padEnd(scale, '0');

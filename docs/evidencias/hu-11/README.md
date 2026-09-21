@@ -48,6 +48,16 @@ Si falla iniciar o completar la persistencia, el resultado tecnico de matching s
 
 La prueba usa repositorio y almacenamiento en memoria inyectados; no afirma integracion PostgreSQL real. Se complementa con la regresion HU-10 y Marketplace.
 
+## Correccion PE-11: resumen entero con escala cero
+
+Se identifico un defecto de serializacion en `formatDecimal` del motor HU-10/HU-11: cuando la escala era cero, `slice(-0)` se evaluaba como `slice(0)`. Por ello, una suma entera como `10000` podia serializarse incorrectamente como `10000.10000` en el resumen de demanda y, en consecuencia, en `resultSnapshot`.
+
+La asignacion greedy nunca estuvo incorrecta: `matches[].suggestedQuantityKwh` conservaba la cantidad asignada correcta. La correccion retorna exclusivamente la parte entera cuando `scale === 0`; no altera criterios de fecha o precio, orden de asignacion, compatibilidades FULL/PARTIAL/NO_MATCH, ni contratos HTTP o persistencia.
+
+Las regresiones automatizadas cubren `10000/10000` con resultado FULL, resumen y match en `"10000"`, pendiente en `"0"`, persistencia de ese resumen en `MatchingExecution.resultSnapshot`, un caso PARTIAL existente y cantidades decimales `10000.10` sin redondeo.
+
+PE-11 permanece pendiente de aprobacion final: se requiere repetir el matching manual y conservar la evidencia visual del resumen corregido antes de marcarlo como validado.
+
 ## Limitaciones
 
 - Puede quedar una ejecucion `pending` si falla el cierre de persistencia.

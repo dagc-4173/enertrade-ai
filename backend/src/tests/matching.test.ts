@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 import express from 'express';
 import { createMatchingRouter } from '@/controllers/matching.controller';
-import { buildMatchingSuggestions, createMatchingService, type MatchingOfferLike, type MatchingDemandLike, type MatchingReadRepository } from '@/services/matching.service';
+import { buildMatchingSuggestions, createMatchingService, formatDecimal, type MatchingOfferLike, type MatchingDemandLike, type MatchingReadRepository } from '@/services/matching.service';
 import { AuthError, type AuthUser } from '@/services/auth.service';
 import { requireAuth } from '@/middlewares/auth.middleware';
 
@@ -36,6 +36,27 @@ function at<T>(items: T[], index: number): T {
 }
 
 describe('buildMatchingSuggestions', () => {
+  test('MATCH-DECIMAL-01: formatDecimal conserva enteros y escalas decimales', () => {
+    expect(formatDecimal(10000n, 0)).toBe('10000');
+    expect(formatDecimal(0n, 0)).toBe('0');
+    expect(formatDecimal(123n, 2)).toBe('1.23');
+    expect(formatDecimal(12345n, 3)).toBe('12.345');
+  });
+
+  test('MATCH-00: cantidades enteras completas conservan el resumen sin fraccion espuria', () => {
+    const result = buildMatchingSuggestions(
+      [{ id: 'offer-10000', quantityKwh: decimal('10000'), pricePerKwh: decimal('950'), deliveryDate: isoDate('2026-09-23'), createdAt: isoDate('2026-09-16T10:00:00Z'), status: 'ACTIVE' }],
+      [{ id: 'demand-10000', quantityKwh: decimal('10000'), maxPricePerKwh: decimal('1000'), deliveryDate: isoDate('2026-09-23'), createdAt: isoDate('2026-09-15T08:00:00Z'), status: 'ACTIVE' }],
+    );
+    expect(first(result.matches).suggestedQuantityKwh).toBe('10000');
+    expect(first(result.demands)).toMatchObject({
+      suggestedQuantityKwh: '10000',
+      unmatchedQuantityKwh: '0',
+      compatibility: 'FULL',
+    });
+    expect(result.summary.matchedQuantityKwh).toBe('10000');
+  });
+
   test('MATCH-01: una oferta cubre una demanda completamente', () => {
     const offers: MatchingOfferLike[] = [{
       id: 'offer-1',
@@ -77,6 +98,7 @@ describe('buildMatchingSuggestions', () => {
     expect(result.status).toBe('partial');
     expect(first(result.matches).suggestedQuantityKwh).toBe('30.00');
     expect(first(result.demands).compatibility).toBe('PARTIAL');
+    expect(first(result.demands).suggestedQuantityKwh).toBe('30.00');
     expect(first(result.demands).unmatchedQuantityKwh).toBe('30.00');
   });
 
@@ -168,6 +190,16 @@ describe('buildMatchingSuggestions', () => {
       [{ id: 'demand-1', quantityKwh: decimal('12.345'), maxPricePerKwh: decimal('500.00000'), deliveryDate: isoDate('2026-09-18'), createdAt: isoDate('2026-09-15T00:00:00Z'), status: 'ACTIVE' }],
     );
     expect(first(result.matches).suggestedQuantityKwh).toBe('12.345');
+  });
+
+  test('MATCH-11A: Decimal conserva ceros significativos en cantidades decimales', () => {
+    const result = buildMatchingSuggestions(
+      [{ id: 'offer-1', quantityKwh: decimal('10000.10'), pricePerKwh: decimal('950'), deliveryDate: isoDate('2026-09-23'), createdAt: isoDate('2026-09-16T10:00:00Z'), status: 'ACTIVE' }],
+      [{ id: 'demand-1', quantityKwh: decimal('10000.10'), maxPricePerKwh: decimal('1000'), deliveryDate: isoDate('2026-09-23'), createdAt: isoDate('2026-09-15T08:00:00Z'), status: 'ACTIVE' }],
+    );
+    expect(first(result.matches).suggestedQuantityKwh).toBe('10000.10');
+    expect(first(result.demands)).toMatchObject({ suggestedQuantityKwh: '10000.10', unmatchedQuantityKwh: '0.00', compatibility: 'FULL' });
+    expect(result.summary.matchedQuantityKwh).toBe('10000.10');
   });
 
   test('MATCH-12: createdAt desempata ofertas con mismo precio', () => {

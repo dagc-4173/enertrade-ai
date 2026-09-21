@@ -60,6 +60,22 @@ describe('HU11 matching execution trace', () => {
     expect(row(h.rows, result.trace.executionId).matchingStatus).toBe('partial');
   });
 
+  test('TRACE-MATCH-02A: el snapshot conserva resumen entero exacto', async () => {
+    const h = harness(
+      {},
+      [offer({ id: 'offer-10000', quantityKwh: '10000', pricePerKwh: '950', deliveryDate: date('2026-09-23') })],
+      [demand({ id: 'demand-10000', quantityKwh: '10000', maxPricePerKwh: '1000', deliveryDate: date('2026-09-23') })],
+    );
+    const result = await h.service.suggest();
+    const snapshot = row(h.rows, result.trace.executionId).resultSnapshot as { matches: Array<{ suggestedQuantityKwh: string }>; demands: Array<{ suggestedQuantityKwh: string; unmatchedQuantityKwh: string; compatibility: string }> };
+    expect(snapshot.matches[0]?.suggestedQuantityKwh).toBe('10000');
+    expect(snapshot.demands[0]).toMatchObject({
+      suggestedQuantityKwh: '10000',
+      unmatchedQuantityKwh: '0',
+      compatibility: 'FULL',
+    });
+  });
+
   test('TRACE-MATCH-03: NO_MATCH se persiste como succeeded/no_matches', async () => {
     const h = harness({}, [], [demand()]);
     const result = await h.service.suggest();
