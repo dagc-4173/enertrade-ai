@@ -26,8 +26,8 @@ export async function listMyTransactions(status?: TransactionStatus, signal?: Ab
 export async function getTransaction(id: string) { return one(await apiRequest<unknown>(`/transactions/${encodeURIComponent(id)}`, { credentials: 'include' }), 200) }
 export async function updateTransaction(id: string, input: { quantityKwh: number }) { return one(await apiRequest<unknown>(`/transactions/${encodeURIComponent(id)}`, { method: 'PATCH', json: { quantityKwh: input.quantityKwh }, credentials: 'include' }), 200) }
 export async function counterTransaction(id: string, input: { quantityKwh: number; pricePerKwh: number }) { return one(await postJson<unknown>(`/transactions/${encodeURIComponent(id)}/counter`, input, { credentials: 'include' }), 200) }
-export async function listTransactionRevisions(id: string) {
-  const response = await apiRequest<unknown>(`/transactions/${encodeURIComponent(id)}/revisions`, { credentials: 'include' })
+export async function listTransactionRevisions(id: string, signal?: AbortSignal) {
+  const response = await apiRequest<unknown>(`/transactions/${encodeURIComponent(id)}/revisions`, { credentials: 'include', signal })
   if (response.status !== 200 || !object(response.data) || !Array.isArray(response.data.revisions) || !response.data.revisions.every(revision)) throw new ApiError('response', 'La API devolvió revisiones con formato inesperado.', response.status)
   return response.data.revisions
 }

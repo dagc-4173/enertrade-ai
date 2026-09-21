@@ -113,6 +113,8 @@
 }
 
 .marketplace-list { display: grid; gap: 10px; }
+.publication-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: -4px 0 18px; }
+.publication-filters button { min-height: 42px; }
 .marketplace-item { display: grid; gap: 7px; padding: 14px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface-alt); }
 .marketplace-item span { color: var(--color-muted); font-size: 14px; }
 .marketplace-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -131,5 +133,9 @@
 
   .marketplace-section .data-table {
     min-width: 620px;
+  }
+
+  .publication-filters button {
+    flex: 1 1 130px;
   }
 }

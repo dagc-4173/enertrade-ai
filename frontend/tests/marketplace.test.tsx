@@ -9,6 +9,8 @@ import { ApiError } from '../src/services/apiClient'
 import { createDemand, createOffer, getMyDemands, getMyOffers, updateDemand } from '../src/services/marketplaceService'
 import { acceptTransaction, cancelTransaction, counterTransaction, createTransaction, listMyTransactions, listTransactionRevisions, rejectTransaction, updateTransaction } from '../src/services/transactionService'
 import { formatCopPerKwh, formatEnergy } from '../src/utils/numberFormat'
+import { formatLocalizedDecimal, parseLocalizedDecimal } from '../src/utils/localizedDecimal'
+import { filteredPublications, marketFingerprint, publicationEmptyLabel } from '../src/utils/marketplaceSync'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
 const date = '2026-09-18'
@@ -54,6 +56,40 @@ test('formatos numéricos es-CO cumplen precisión de energía y precio', () => 
   expect(formatCopPerKwh(960.71104)).toBe('960,71104 COP/kWh')
 })
 
+test('decimales localizados separan display es-CO y payload canónico', () => {
+  expect(parseLocalizedDecimal('50.325', 'quantity')).toMatchObject({ canonicalValue: '50325', numberValue: 50325 })
+  expect(parseLocalizedDecimal('50.325,75', 'quantity')).toMatchObject({ canonicalValue: '50325.75', numberValue: 50325.75 })
+  expect(parseLocalizedDecimal('50.325,123', 'quantity').numberValue).toBeNull()
+  expect(parseLocalizedDecimal('1.125,12345', 'price')).toMatchObject({ canonicalValue: '1125.12345', numberValue: 1125.12345 })
+  expect(parseLocalizedDecimal('1.125,123456', 'price').numberValue).toBeNull()
+  expect(formatLocalizedDecimal('50325.75', 'quantity')).toBe('50.325,75')
+  expect(formatLocalizedDecimal(1125.12345, 'price')).toBe('1.125,12345')
+})
+
+test('filtros de publicaciones conservan estado, conteos y orden reciente', () => {
+  const publications = [
+    { ...offer, id: 'active-old', updatedAt: '2026-09-17T00:00:00.000Z' },
+    { ...offer, id: 'active-new', updatedAt: '2026-09-18T00:00:00.000Z' },
+    { ...offer, id: 'fulfilled-1', status: 'FULFILLED' as const },
+    { ...offer, id: 'fulfilled-2', status: 'FULFILLED' as const },
+    { ...offer, id: 'fulfilled-3', status: 'FULFILLED' as const },
+    { ...offer, id: 'expired', status: 'EXPIRED' as const },
+    { ...offer, id: 'cancelled', status: 'CANCELLED' as const },
+  ]
+  expect(filteredPublications(publications, 'ACTIVE').map(value => value.id)).toEqual(['active-new', 'active-old'])
+  expect(filteredPublications(publications, 'FULFILLED')).toHaveLength(3)
+  expect(filteredPublications(publications, 'EXPIRED')).toHaveLength(1)
+  expect(filteredPublications(publications, 'CANCELLED')).toHaveLength(1)
+  expect(filteredPublications(publications, 'ALL')).toHaveLength(7)
+  expect(publicationEmptyLabel('ofertas', 'ACTIVE')).toBe('No tienes ofertas activas.')
+})
+
+test('fingerprint detecta cambios de dominio del mercado sin ejecutar matching', () => {
+  const marketOffers = [{ id: 'market-offer', availableQuantityKwh: '100', pricePerKwh: '450', deliveryDate: date, status: 'ACTIVE' as const }]
+  const marketDemands = [{ id: 'market-demand', availableQuantityKwh: '100', maxPricePerKwh: '500', deliveryDate: date, status: 'ACTIVE' as const }]
+  expect(marketFingerprint(marketOffers, marketDemands)).not.toBe(marketFingerprint([{ ...marketOffers[0], pricePerKwh: '451' }], marketDemands))
+})
+
 test('la página no ejecuta POST automáticamente y no muestra resultados mock de matching', () => {
   const fetch = spyOn(globalThis, 'fetch')
   const html = renderToStaticMarkup(<Marketplace />)
@@ -65,8 +101,7 @@ test('la página no ejecuta POST automáticamente y no muestra resultados mock d
   expect(source).toContain('Publicar demanda')
   expect(source).toContain('setOffers(current => [offer, ...current])')
   expect(source).toContain('setDemands(current => [demand, ...current])')
-  expect(source).toContain('No tienes ofertas registradas.')
-  expect(source).toContain('No tienes demandas registradas.')
+  expect(source).toContain('publicationEmptyLabel')
   expect(html).toContain('Emparejamientos sugeridos')
   expect(html).toContain('Solicita sugerencias')
   expect(source).toContain('Mercado activo')
@@ -74,9 +109,11 @@ test('la página no ejecuta POST automáticamente y no muestra resultados mock d
   expect(source).toContain('listMarketDemands')
   expect(source).toContain('Crear negociación')
   expect(source).toContain('Precio propuesto (COP/kWh)')
-  expect(source).toContain("message: 'Actualizando emparejamientos…'")
-  expect(source).toContain('refreshRequest.rematch')
-  expect(source).toContain('suggestMatches(controller.signal)')
+  expect(source).toContain('useVisiblePolling')
+  expect(source).toContain('marketFingerprint')
+  expect(source).toContain('matchingStale')
+  expect(source).toContain('Actualizar sugerencias')
+  expect(source).not.toContain('suggestMatches(controller.signal)')
   expect(source).not.toMatch(/Pagar|Checkout|Tarjeta|Pago exitoso|Liquidado/)
 })
 

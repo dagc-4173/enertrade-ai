@@ -1,30 +1,26 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useEffectEvent, useState, type FormEvent } from 'react'
+import { LocalizedDecimalInput } from '../components/forms/LocalizedDecimalInput'
 import { SectionHeader } from '../components/ui/SectionHeader'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { useVisiblePolling } from '../hooks/useVisiblePolling'
 import { ApiError } from '../services/apiClient'
 import { acceptTransaction, cancelTransaction, counterTransaction, listMyTransactions, listTransactionRevisions, rejectTransaction, updateTransaction } from '../services/transactionService'
 import type { EnergyTransaction, TransactionRevision, TransactionStatus } from '../types/transactions'
+import { parseLocalizedDecimal } from '../utils/localizedDecimal'
 import { formatCurrencyCOP, formatDeliveryDate, formatEnergyKWh, formatPriceCOPPerKWh } from '../utils/numberFormat'
 import { canAccept, canCancel, canCounter, canEdit, canReject, hasRevisions } from '../utils/transactionActions'
 import './Transactions.css'
 
-const filters: Array<{ label: string; value: TransactionStatus | undefined }> = [{ label: 'Todas', value: undefined }, { label: 'Pendientes', value: 'PENDING_ACCEPTANCE' }, { label: 'Confirmadas', value: 'CONFIRMED' }, { label: 'Rechazadas', value: 'REJECTED' }, { label: 'Canceladas', value: 'CANCELLED' }]
+const filters: Array<{ label: string; value: TransactionStatus | undefined }> = [
+  { label: 'Todas', value: undefined }, { label: 'Pendientes', value: 'PENDING_ACCEPTANCE' }, { label: 'Confirmadas', value: 'CONFIRMED' }, { label: 'Rechazadas', value: 'REJECTED' }, { label: 'Canceladas', value: 'CANCELLED' },
+]
 const statusLabel: Record<TransactionStatus, string> = { PENDING_ACCEPTANCE: 'Pendiente', CONFIRMED: 'Confirmada', REJECTED: 'Rechazada', CANCELLED: 'Cancelada' }
 const tone = (status: TransactionStatus) => status === 'CONFIRMED' ? 'success' : status === 'PENDING_ACCEPTANCE' ? 'warning' : 'neutral'
 const roleLabel = (role: 'BUYER' | 'SELLER') => role === 'BUYER' ? 'comprador' : 'vendedor'
+const number = (value: string, mode: 'quantity' | 'price') => parseLocalizedDecimal(value, mode).numberValue
 function message(error: unknown) { return error instanceof ApiError ? error.serverMessage ?? 'No fue posible completar la operación.' : 'No fue posible completar la operación.' }
-function acceptanceMessage(item: EnergyTransaction) {
-  if (item.status === 'CONFIRMED') return 'Transacción energética simulada confirmada.'
-  if (item.status !== 'PENDING_ACCEPTANCE') return null
-  if (hasRevisions(item) && item.latestRevisionProposedByRole === item.role) return `Esperando respuesta del ${roleLabel(item.role === 'BUYER' ? 'SELLER' : 'BUYER')}.`
-  if (item.sellerAcceptedAt && !item.buyerAcceptedAt) return 'Esperando aceptación del comprador.'
-  if (item.buyerAcceptedAt && !item.sellerAcceptedAt) return 'Esperando aceptación del vendedor.'
-  return 'Pendiente de aceptación de comprador y vendedor.'
-}
-function ownershipLabel(item: EnergyTransaction) {
-  if (hasRevisions(item)) return `Negociación con revisión ${item.latestRevisionSequence}`
-  return item.proposalOwnership === 'CREATED_BY_ME' ? 'Propuesta creada por ti' : item.proposalOwnership === 'RECEIVED' ? 'Propuesta recibida' : 'Propuesta histórica'
-}
+function acceptanceMessage(item: EnergyTransaction) { if (item.status === 'CONFIRMED') return 'Transacción energética simulada confirmada.'; if (item.status !== 'PENDING_ACCEPTANCE') return null; if (hasRevisions(item) && item.latestRevisionProposedByRole === item.role) return `Esperando respuesta del ${roleLabel(item.role === 'BUYER' ? 'SELLER' : 'BUYER')}.`; if (item.sellerAcceptedAt && !item.buyerAcceptedAt) return 'Esperando aceptación del comprador.'; if (item.buyerAcceptedAt && !item.sellerAcceptedAt) return 'Esperando aceptación del vendedor.'; return 'Pendiente de aceptación de comprador y vendedor.' }
+function ownershipLabel(item: EnergyTransaction) { return hasRevisions(item) ? `Negociación con revisión ${item.latestRevisionSequence}` : item.proposalOwnership === 'CREATED_BY_ME' ? 'Propuesta creada por ti' : item.proposalOwnership === 'RECEIVED' ? 'Propuesta recibida' : 'Propuesta histórica' }
 
 export function Transactions() {
   const [filter, setFilter] = useState<TransactionStatus | undefined>()
@@ -42,11 +38,29 @@ export function Transactions() {
   const [historyId, setHistoryId] = useState<string | null>(null)
   const [history, setHistory] = useState<TransactionRevision[]>([])
 
+  async function refreshTransactions(signal?: AbortSignal) {
+    try {
+      const loaded = await listMyTransactions(filter, signal)
+      if (signal?.aborted) return
+      setItems(loaded)
+      setError('')
+      if (historyId) setHistory(await listTransactionRevisions(historyId, signal))
+    } catch (reason) {
+      if (!signal?.aborted) setError(message(reason))
+    }
+  }
+
+  const refreshInitially = useEffectEvent((signal: AbortSignal) => refreshTransactions(signal))
+
   useEffect(() => {
     const controller = new AbortController()
-    listMyTransactions(filter, controller.signal).then(setItems).catch(reason => { if (!controller.signal.aborted) setError(message(reason)) }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
-    return () => controller.abort()
+    const task = window.setTimeout(() => {
+      void refreshInitially(controller.signal).finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    }, 0)
+    return () => { window.clearTimeout(task); controller.abort() }
   }, [filter, refreshVersion])
+
+  useVisiblePolling(signal => refreshTransactions(signal), 5000, true)
 
   function refresh() { setLoading(true); setError(''); setRefreshVersion(value => value + 1) }
   async function act(id: string, action: 'accept' | 'reject' | 'cancel') {
@@ -60,14 +74,18 @@ export function Transactions() {
     } catch (reason) { setError(message(reason)) } finally { setBusy(null) }
   }
   async function saveEdit(event: FormEvent<HTMLFormElement>, id: string) {
-    event.preventDefault(); const quantityKwh = Number(editQuantity)
-    if (!Number.isFinite(quantityKwh) || quantityKwh <= 0) { setError('Ingresa una cantidad mayor que cero.'); return }
+    event.preventDefault()
+    const quantityKwh = number(editQuantity, 'quantity')
+    if (quantityKwh === null || quantityKwh <= 0) { setError('Ingresa una cantidad válida mayor que cero.'); return }
     setBusy(id); setError('')
     try { await updateTransaction(id, { quantityKwh }); setEditingId(null); setNotice('Propuesta actualizada. Las aceptaciones deben realizarse nuevamente.'); refresh() } catch (reason) { setError(message(reason)) } finally { setBusy(null) }
   }
   async function saveCounter(event: FormEvent<HTMLFormElement>, id: string) {
-    event.preventDefault(); const quantityKwh = Number(counterQuantity); const pricePerKwh = Number(counterPrice)
-    if (!Number.isFinite(quantityKwh) || quantityKwh <= 0 || !Number.isFinite(pricePerKwh) || pricePerKwh <= 0 || !/^\d+(?:\.\d{1,5})?$/.test(counterPrice)) { setError('Ingresa cantidad positiva y precio positivo con máximo cinco decimales.'); return }
+    event.preventDefault()
+    const quantityKwh = number(counterQuantity, 'quantity')
+    const pricePerKwh = number(counterPrice, 'price')
+    if (quantityKwh === null || quantityKwh <= 0) { setError('Ingresa una cantidad válida mayor que cero.'); return }
+    if (pricePerKwh === null || pricePerKwh <= 0) { setError('Ingresa un precio válido mayor que cero.'); return }
     setBusy(id); setError('')
     try { await counterTransaction(id, { quantityKwh, pricePerKwh }); setCounterId(null); setNotice('Contrapropuesta enviada.'); refresh() } catch (reason) { setError(message(reason)) } finally { setBusy(null) }
   }
@@ -89,11 +107,10 @@ export function Transactions() {
     {!loading && !error && <div className="transaction-list">{items.map(item => <article className="panel transaction-item" key={item.id}>
       <div className="row-between"><strong>Referencia {item.id.slice(0, 8)} · {item.role === 'SELLER' ? 'Vendedor' : 'Comprador'}</strong><StatusBadge tone={tone(item.status)}>{statusLabel[item.status]}</StatusBadge></div>
       <p className="transaction-ownership">{ownershipLabel(item)}</p>
-      {hasRevisions(item) && <><h3>Término vigente</h3><p>Cantidad: {formatEnergyKWh(Number(item.quantityKwh))}</p><p>Precio: {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p><p>Total: {formatCurrencyCOP(Number(item.totalAmountCop))}</p><p>Propuesto por {roleLabel(item.latestRevisionProposedByRole!)}.</p></>}
-      {!hasRevisions(item) && <p>{formatEnergyKWh(Number(item.quantityKwh))} a {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p>}
+      {hasRevisions(item) ? <><h3>Término vigente</h3><p>Cantidad: {formatEnergyKWh(Number(item.quantityKwh))}</p><p>Precio: {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p><p>Total: {formatCurrencyCOP(Number(item.totalAmountCop))}</p><p>Propuesto por {roleLabel(item.latestRevisionProposedByRole!)}.</p></> : <p>{formatEnergyKWh(Number(item.quantityKwh))} a {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p>}
       <p>Entrega: {formatDeliveryDate(item.deliveryDate)}</p><p>Comprador: {item.buyerAcceptedAt ? 'Aceptado' : 'Pendiente'} · Vendedor: {item.sellerAcceptedAt ? 'Aceptado' : 'Pendiente'}</p><p>{acceptanceMessage(item)}</p>
-      {editingId === item.id && <form className="transaction-edit-form" onSubmit={event => { void saveEdit(event, item.id) }}><label>Cantidad (kWh)<input type="number" min="0.01" step="0.01" value={editQuantity} onChange={event => setEditQuantity(event.target.value)} disabled={busy === item.id} required /></label><div className="marketplace-actions"><button type="submit" className="primary-button" disabled={busy === item.id}>Guardar cambios</button><button type="button" className="secondary-button" onClick={() => setEditingId(null)}>Cancelar edición</button></div></form>}
-      {counterId === item.id && <form className="transaction-edit-form" onSubmit={event => { void saveCounter(event, item.id) }}><label>Cantidad (kWh)<input type="number" min="0.01" step="0.01" value={counterQuantity} onChange={event => setCounterQuantity(event.target.value)} disabled={busy === item.id} required /></label><label>Precio (COP/kWh)<input type="number" min="0.00001" step="0.00001" value={counterPrice} onChange={event => setCounterPrice(event.target.value)} disabled={busy === item.id} required /></label><div className="marketplace-actions"><button type="submit" className="primary-button" disabled={busy === item.id}>Enviar contrapropuesta</button><button type="button" className="secondary-button" onClick={() => setCounterId(null)}>Cancelar</button></div></form>}
+      {editingId === item.id && <form className="transaction-edit-form" onSubmit={event => { void saveEdit(event, item.id) }}><label>Cantidad (kWh)<LocalizedDecimalInput mode="quantity" value={editQuantity} onValueChange={value => setEditQuantity(value.displayValue)} disabled={busy === item.id} required /></label><div className="marketplace-actions"><button type="submit" className="primary-button" disabled={busy === item.id}>Guardar cambios</button><button type="button" className="secondary-button" onClick={() => setEditingId(null)}>Cancelar edición</button></div></form>}
+      {counterId === item.id && <form className="transaction-edit-form" onSubmit={event => { void saveCounter(event, item.id) }}><label>Cantidad (kWh)<LocalizedDecimalInput mode="quantity" value={counterQuantity} onValueChange={value => setCounterQuantity(value.displayValue)} disabled={busy === item.id} required /></label><label>Precio (COP/kWh)<LocalizedDecimalInput mode="price" value={counterPrice} onValueChange={value => setCounterPrice(value.displayValue)} disabled={busy === item.id} required /></label><div className="marketplace-actions"><button type="submit" className="primary-button" disabled={busy === item.id}>Enviar contrapropuesta</button><button type="button" className="secondary-button" onClick={() => setCounterId(null)}>Cancelar</button></div></form>}
       {historyId === item.id && <ol className="transaction-history" aria-label="Historial de negociación">{history.map(entry => <li key={entry.sequence}><strong>#{entry.sequence} · {roleLabel(entry.proposedByRole)}</strong><span>{formatEnergyKWh(Number(entry.quantityKwh))} · {formatPriceCOPPerKWh(Number(entry.pricePerKwh))} · {formatCurrencyCOP(Number(entry.totalAmountCop))}</span><span>{new Date(entry.createdAt).toLocaleString('es-CO')}</span></li>)}</ol>}
       <div className="marketplace-actions">
         {hasRevisions(item) && <button type="button" className="secondary-button" onClick={() => { void showHistory(item.id) }} disabled={busy === item.id}>{historyId === item.id ? 'Ocultar historial' : 'Ver historial'}</button>}
