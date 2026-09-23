@@ -54,3 +54,142 @@
 .dataset-quality > button {
   margin-bottom: 16px;
 }
+
+.dataset-registration {
+  min-width: 0;
+}
+
+.dataset-registration .stack-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dataset-flow-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style-position: inside;
+}
+
+.dataset-flow-summary li {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-alt);
+  font-weight: 700;
+}
+
+.dataset-flow-summary .status-badge {
+  display: table;
+  margin-top: 10px;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.dataset-result-heading {
+  margin-top: 8px;
+}
+
+.dataset-metadata--primary {
+  gap: 20px;
+  margin: 8px 0;
+}
+
+.dataset-metadata--primary dd {
+  font-weight: 700;
+  color: var(--color-forest-dark);
+}
+
+.dataset-secondary {
+  min-width: 0;
+  padding: 16px 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.dataset-secondary-label {
+  margin: 8px 0;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dataset-editor {
+  margin-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.dataset-editor summary {
+  padding: 16px 0;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.dataset-editor summary:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 2px;
+}
+
+.dataset-editor-content {
+  display: grid;
+  gap: 12px;
+}
+
+.dataset-editor-content > p {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.dataset-registration .dataset-issue {
+  background: var(--color-surface-alt);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dataset-issue > .status-badge {
+  justify-self: start;
+}
+
+.dataset-registration .dataset-issue-message {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.dataset-issue-context {
+  display: grid;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.dataset-blocked {
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .dataset-flow-summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .dataset-flow-summary li {
+    padding: 12px;
+  }
+
+  .dataset-flow-summary .status-badge {
+    display: inline-block;
+    margin: 0 0 0 12px;
+  }
+
+  .dataset-registration .hero-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

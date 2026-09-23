@@ -1,0 +1,166 @@
+[
+  {
+    "ok": true,
+    "scenario": "initial",
+    "width": 1440,
+    "checks": [
+      "initial: no page overflow",
+      "no summary before registration"
+    ],
+    "calls": []
+  },
+  {
+    "ok": true,
+    "scenario": "approved",
+    "width": 1440,
+    "checks": [
+      "initial: no page overflow",
+      "no summary before registration",
+      "no completion while registering",
+      "JSON editor collapses after confirmation",
+      "registration evidence remains visible",
+      "registered: no page overflow",
+      "real validation loading state",
+      "editor locked during validation",
+      "validated: no page overflow",
+      "validation permits preparation",
+      "no premature preparation success",
+      "preparation summary shows success",
+      "correct preparation origin",
+      "completed action does not repeat request",
+      "validation and preparation retain bodyless POST",
+      "prepared: no page overflow"
+    ],
+    "calls": [
+      {
+        "url": "http://enertrade.test/datasets",
+        "method": "POST",
+        "body": "{\"source\":\"Simulación académica HU-01\",\"dataType\":\"generacion\",\"columns\":[{\"name\":\"fecha\",\"optional\":false},{\"name\":\"energia_kwh\",\"optional\":false},{\"name\":\"zona\",\"optional\":true}],\"records\":[{\"fecha\":\"2026-09-10T12:00:00Z\",\"energia_kwh\":12.5,\"zona\":\"norte\"}]}"
+      },
+      {
+        "url": "http://enertrade.test/datasets/12/validate",
+        "method": "POST"
+      },
+      {
+        "url": "http://enertrade.test/datasets/12/prepare",
+        "method": "POST"
+      }
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "warning",
+    "width": 390,
+    "checks": [
+      "initial: no page overflow",
+      "no summary before registration",
+      "no completion while registering",
+      "JSON editor collapses after confirmation",
+      "registration evidence remains visible",
+      "registered: no page overflow",
+      "real validation loading state",
+      "editor locked during validation",
+      "validated: no page overflow",
+      "validation permits preparation",
+      "no premature preparation success",
+      "preparation summary shows success",
+      "correct preparation origin",
+      "completed action does not repeat request",
+      "validation and preparation retain bodyless POST",
+      "prepared: no page overflow"
+    ],
+    "calls": [
+      {
+        "url": "http://enertrade.test/datasets",
+        "method": "POST",
+        "body": "{\"source\":\"Simulación académica HU-01\",\"dataType\":\"generacion\",\"columns\":[{\"name\":\"fecha\",\"optional\":false},{\"name\":\"energia_kwh\",\"optional\":false},{\"name\":\"zona\",\"optional\":true}],\"records\":[{\"fecha\":\"2026-09-10T12:00:00Z\",\"energia_kwh\":12.5,\"zona\":\"norte\"}]}"
+      },
+      {
+        "url": "http://enertrade.test/datasets/12/validate",
+        "method": "POST"
+      },
+      {
+        "url": "http://enertrade.test/datasets/12/prepare",
+        "method": "POST"
+      }
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "rejected",
+    "width": 320,
+    "checks": [
+      "initial: no page overflow",
+      "no summary before registration",
+      "no completion while registering",
+      "JSON editor collapses after confirmation",
+      "registration evidence remains visible",
+      "registered: no page overflow",
+      "real validation loading state",
+      "editor locked during validation",
+      "validated: no page overflow",
+      "rejection offers no preparation action",
+      "rejection explains block",
+      "rejection sends no preparation request"
+    ],
+    "calls": [
+      {
+        "url": "http://enertrade.test/datasets",
+        "method": "POST",
+        "body": "{\"source\":\"Simulación académica HU-01\",\"dataType\":\"generacion\",\"columns\":[{\"name\":\"fecha\",\"optional\":false},{\"name\":\"energia_kwh\",\"optional\":false},{\"name\":\"zona\",\"optional\":true}],\"records\":[{\"fecha\":\"2026-09-10T12:00:00Z\",\"energia_kwh\":12.5,\"zona\":\"norte\"}]}"
+      },
+      {
+        "url": "http://enertrade.test/datasets/12/validate",
+        "method": "POST"
+      }
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "reused",
+    "width": 390,
+    "checks": [
+      "initial: no page overflow",
+      "no summary before registration",
+      "no completion while registering",
+      "JSON editor collapses after confirmation",
+      "registration evidence remains visible",
+      "registered: no page overflow",
+      "real validation loading state",
+      "editor locked during validation",
+      "validated: no page overflow",
+      "validation permits preparation",
+      "no premature preparation success",
+      "preparation summary shows success",
+      "correct preparation origin",
+      "completed action does not repeat request",
+      "validation and preparation retain bodyless POST",
+      "prepared: no page overflow"
+    ],
+    "calls": [
+      {
+        "url": "http://enertrade.test/datasets",
+        "method": "POST",
+        "body": "{\"source\":\"Simulación académica HU-01\",\"dataType\":\"generacion\",\"columns\":[{\"name\":\"fecha\",\"optional\":false},{\"name\":\"energia_kwh\",\"optional\":false},{\"name\":\"zona\",\"optional\":true}],\"records\":[{\"fecha\":\"2026-09-10T12:00:00Z\",\"energia_kwh\":12.5,\"zona\":\"norte\"}]}"
+      },
+      {
+        "url": "http://enertrade.test/datasets/12/validate",
+        "method": "POST"
+      },
+      {
+        "url": "http://enertrade.test/datasets/12/prepare",
+        "method": "POST"
+      }
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "initial",
+    "width": 320,
+    "checks": [
+      "initial: no page overflow",
+      "no summary before registration"
+    ],
+    "calls": []
+  }
+]

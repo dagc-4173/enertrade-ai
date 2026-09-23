@@ -62,7 +62,7 @@ test('preparation UI renders loading, result metadata and safe errors', () => {
   const common = { datasetId: 12, onPrepare: () => {} }
   expect(renderToStaticMarkup(<DatasetPreparationContent {...common} state={{ kind: 'loading' }} />)).toContain('Preparando dataset en el servidor…')
   const success = renderToStaticMarkup(<DatasetPreparationContent {...common} state={{ kind: 'success', prepared: { datasetId: 12, preparedDatasetId: 71, profileId: 'xm_gene_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_gene_base', sourceRulesetVersion: '1.0.0', preparedAt: '2026-09-18T10:00:00.000Z', recordCount: 48, reused: false } }} />)
-  expect(success).toContain('PreparedDataset ID')
+  expect(success).toContain('ID de dataset preparado')
   expect(success).toContain('xm_gene_preparacion_base')
   expect(success).toContain('sus selectores consultan nuevamente el catálogo del backend')
   expect(renderToStaticMarkup(<DatasetPreparationContent {...common} state={{ kind: 'error', status: 409, code: 'DATASET_NOT_VALIDATED', message: 'El dataset debe completar validación antes de prepararse.' }} />)).toContain('role="alert"')
