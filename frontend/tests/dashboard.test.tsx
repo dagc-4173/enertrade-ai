@@ -42,8 +42,8 @@ const capabilities: CapabilityVersion[] = [
   { capability: 'supply_forecast', artifactType: 'ml_model', id: 'xm-gene-ridge', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
   { capability: 'demand_forecast', artifactType: 'ml_model', id: 'xm-demandasin-ridge', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
   { capability: 'price_estimation', artifactType: 'deterministic_rule', id: 'xm-preciobolsnaci-b1', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
-  { capability: 'matching', artifactType: 'deterministic_method', id: 'market-matching', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
-  { capability: 'pattern_recognition', artifactType: 'deterministic_method', id: 'pattern-analysis', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
+  { capability: 'matching', artifactType: 'deterministic_method', id: 'matching-v1', version: 'v1', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
+  { capability: 'pattern_recognition', artifactType: 'deterministic_method', id: 'energy-pattern-descriptive', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
 ]
 
 test('health service requests the real endpoint and accepts both ok and degraded HTTP codes', async () => {
@@ -187,6 +187,8 @@ test('un fallo de capabilities no hace desaparecer las métricas de indicadores'
   expect(html).toContain('Total de ejecuciones')
   expect(html).toContain('No fue posible cargar las capacidades activas.')
   expect(html).toContain('Reintentar capacidades')
+  expect(html).not.toContain('Capacidades, runtime y evidencia')
+  expect(html).not.toContain('Promovido técnicamente')
 })
 
 test('Dashboard renders backend capability taxonomy on success', () => {

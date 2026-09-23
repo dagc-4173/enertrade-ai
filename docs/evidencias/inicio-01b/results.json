@@ -1,0 +1,347 @@
+[
+  {
+    "ok": true,
+    "scenario": "loaded",
+    "width": 1440,
+    "checks": [
+      "one catalog and three unique details after capabilities",
+      "expanded limitation has visible controlled target",
+      "expanded limitation has visible controlled target",
+      "expanded limitation has visible controlled target",
+      "backend price limitation retained exactly",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models",
+      "/models/xm-gene-ridge",
+      "/models/xm-demandasin-ridge",
+      "/models/xm-preciobolsnaci-b1"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "loading",
+    "width": 1440,
+    "checks": [
+      "technical metadata loading is visible",
+      "no invented maturity while loading",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "error",
+    "width": 1440,
+    "checks": [
+      "catalog failure has explicit message",
+      "no detail requests after catalog failure",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "detail-error",
+    "width": 1440,
+    "checks": [
+      "one catalog and three unique details after capabilities",
+      "failed detail is isolated",
+      "other rows retain metadata",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models",
+      "/models/xm-gene-ridge",
+      "/models/xm-demandasin-ridge",
+      "/models/xm-preciobolsnaci-b1"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "loaded",
+    "width": 390,
+    "checks": [
+      "one catalog and three unique details after capabilities",
+      "expanded limitation has visible controlled target",
+      "expanded limitation has visible controlled target",
+      "expanded limitation has visible controlled target",
+      "backend price limitation retained exactly",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models",
+      "/models/xm-gene-ridge",
+      "/models/xm-demandasin-ridge",
+      "/models/xm-preciobolsnaci-b1"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "loading",
+    "width": 390,
+    "checks": [
+      "technical metadata loading is visible",
+      "no invented maturity while loading",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "error",
+    "width": 390,
+    "checks": [
+      "catalog failure has explicit message",
+      "no detail requests after catalog failure",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "error-recovered",
+    "checks": [
+      "catalog failure has explicit message",
+      "no detail requests after catalog failure",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests",
+      "retry does not repeat successful requests or double submit",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models",
+      "/models",
+      "/models/xm-gene-ridge",
+      "/models/xm-demandasin-ridge",
+      "/models/xm-preciobolsnaci-b1"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "detail-error",
+    "width": 390,
+    "checks": [
+      "one catalog and three unique details after capabilities",
+      "failed detail is isolated",
+      "other rows retain metadata",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models",
+      "/models/xm-gene-ridge",
+      "/models/xm-demandasin-ridge",
+      "/models/xm-preciobolsnaci-b1"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "detail-error-recovered",
+    "checks": [
+      "one catalog and three unique details after capabilities",
+      "failed detail is isolated",
+      "other rows retain metadata",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests",
+      "retry does not repeat successful requests or double submit",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models",
+      "/models/xm-gene-ridge",
+      "/models/xm-demandasin-ridge",
+      "/models/xm-preciobolsnaci-b1",
+      "/models/xm-gene-ridge"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "loaded",
+    "width": 320,
+    "checks": [
+      "one catalog and three unique details after capabilities",
+      "expanded limitation has visible controlled target",
+      "expanded limitation has visible controlled target",
+      "expanded limitation has visible controlled target",
+      "backend price limitation retained exactly",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models",
+      "/models/xm-gene-ridge",
+      "/models/xm-demandasin-ridge",
+      "/models/xm-preciobolsnaci-b1"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "loading",
+    "width": 320,
+    "checks": [
+      "technical metadata loading is visible",
+      "no invented maturity while loading",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "error",
+    "width": 320,
+    "checks": [
+      "catalog failure has explicit message",
+      "no detail requests after catalog failure",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models"
+    ]
+  },
+  {
+    "ok": true,
+    "scenario": "detail-error",
+    "width": 320,
+    "checks": [
+      "one catalog and three unique details after capabilities",
+      "failed detail is isolated",
+      "other rows retain metadata",
+      "all five capabilities remain",
+      "no horizontal page overflow",
+      "mobile capability heading uses full card width",
+      "matching-v1: academic metadata not invented",
+      "matching-v1: neutral presentation",
+      "energy-pattern-descriptive: academic metadata not invented",
+      "energy-pattern-descriptive: neutral presentation",
+      "no metrics or method detail requests"
+    ],
+    "calls": [
+      "/capabilities/versions",
+      "/models",
+      "/models/xm-gene-ridge",
+      "/models/xm-demandasin-ridge",
+      "/models/xm-preciobolsnaci-b1"
+    ]
+  }
+]

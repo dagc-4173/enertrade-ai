@@ -11,7 +11,7 @@ export interface PredictiveArtifactSummary {
   activeInRuntime: boolean
 }
 
-export interface PredictiveArtifactMetadata extends PredictiveArtifactSummary {
+export interface PredictiveArtifactMetadata extends Omit<PredictiveArtifactSummary, 'activeInRuntime'> {
   horizon: { value: number; unit: 'periods' | 'days' }
   data: {
     source: string

@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { MetricCard } from '../components/cards/MetricCard'
 import { DatasetRegistration } from '../components/datasets/DatasetRegistration'
 import { ExternalDataSources } from '../components/external-data/ExternalDataSources'
-import { DataTable, type DataTableColumn } from '../components/tables/DataTable'
-import { SectionHeader } from '../components/ui/SectionHeader'
+import { ActiveArtifacts } from '../components/capabilities/ActiveArtifacts'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { getCapabilityVersions } from '../services/capabilityVersionsService'
 import { getHealth } from '../services/healthService'
@@ -29,26 +28,6 @@ export type CapabilitiesState =
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
   | { kind: 'success'; capabilities: CapabilityVersion[] }
-
-const capabilityLabels: Record<CapabilityVersion['capability'], string> = {
-  supply_forecast: 'Pronóstico de oferta',
-  demand_forecast: 'Pronóstico de demanda',
-  price_estimation: 'Estimación de precio',
-  matching: 'Emparejamiento',
-  pattern_recognition: 'Reconocimiento de patrones',
-}
-const capabilityTypes: Record<CapabilityVersion['artifactType'], string> = {
-  ml_model: 'Modelo de ML',
-  deterministic_rule: 'Regla determinista',
-  deterministic_method: 'Método determinista',
-}
-const capabilityColumns: DataTableColumn<CapabilityVersion>[] = [
-  { header: 'Capacidad', render: row => <strong>{capabilityLabels[row.capability]}</strong> },
-  { header: 'Tipo', render: row => capabilityTypes[row.artifactType] },
-  { header: 'Artefacto', render: row => row.id },
-  { header: 'Versión', render: row => row.version },
-  { header: 'Estado', render: () => <StatusBadge tone="success">Activa</StatusBadge> },
-]
 
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof ApiError ? error.serverMessage ?? error.message : fallback
@@ -174,10 +153,7 @@ export function DashboardContent({ healthState, indicatorsState, capabilitiesSta
 
       {capabilitiesState.kind === 'loading' && <p role="status">Cargando capacidades activas…</p>}
       {capabilitiesState.kind === 'error' && <section className="panel" role="alert"><p>{capabilitiesState.message}</p><button type="button" className="secondary-button" onClick={onRetryCapabilities}>Reintentar capacidades</button></section>}
-      {capabilitiesState.kind === 'success' && <section className="panel">
-        <SectionHeader eyebrow="Capacidades" title="Artefactos activos" description="Tipos y versiones reportados por el backend." />
-        <DataTable columns={capabilityColumns} rows={capabilitiesState.capabilities} getRowKey={row => row.capability} />
-      </section>}
+      {capabilitiesState.kind === 'success' && <ActiveArtifacts capabilities={capabilitiesState.capabilities} />}
     </div>
   )
 }

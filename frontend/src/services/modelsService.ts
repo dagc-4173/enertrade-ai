@@ -7,9 +7,13 @@ const finite = (value: unknown): value is number => typeof value === 'number' &&
 const range = (value: unknown) => object(value) && text(value.start) && text(value.end)
 const metric = (value: unknown) => object(value) && finite(value.value) && text(value.unit)
 
-function summary(value: unknown): value is PredictiveArtifactSummary {
+function artifact(value: unknown): boolean {
   return object(value) && text(value.id) && text(value.version) && (value.kind === 'model' || value.kind === 'rule') && text(value.type) &&
-    text(value.target) && text(value.unit) && text(value.forecastType) && typeof value.activeInRuntime === 'boolean'
+    text(value.target) && text(value.unit) && text(value.forecastType)
+}
+
+function summary(value: unknown): value is PredictiveArtifactSummary {
+  return object(value) && artifact(value) && typeof value.activeInRuntime === 'boolean'
 }
 
 export function parseModels(value: unknown): PredictiveArtifactSummary[] {
@@ -18,12 +22,17 @@ export function parseModels(value: unknown): PredictiveArtifactSummary[] {
 }
 
 export function parseModel(value: unknown): PredictiveArtifactMetadata {
-  if (!object(value) || !summary(value) || !object(value.horizon) || !finite(value.horizon.value) || (value.horizon.unit !== 'periods' && value.horizon.unit !== 'days') ||
+  if (!object(value) || !artifact(value) || !object(value.horizon) || !finite(value.horizon.value) || (value.horizon.unit !== 'periods' && value.horizon.unit !== 'days') ||
     !object(value.data) || !text(value.data.source) || !object(value.method) || !text(value.method.equation) || !Array.isArray(value.method.features) ||
     !value.method.features.every(text) || !object(value.method.parameters) || !object(value.quality) || typeof value.quality.metricsAvailable !== 'boolean' ||
     (value.quality.confidenceStatus !== undefined && !text(value.quality.confidenceStatus)) || !Array.isArray(value.limitations) || !value.limitations.every(text) ||
     !object(value.lifecycle) || typeof value.lifecycle.activeInRuntime !== 'boolean' || typeof value.lifecycle.promoted !== 'boolean' ||
     (value.lifecycle.academicValidation !== 'pending' && value.lifecycle.academicValidation !== 'validated')) throw new ApiError('response', 'La API devolvió un modelo con formato inesperado.')
+  const data = value.data
+  if (['profile', 'ruleset'].some(key => data[key] !== undefined && !text(data[key])) ||
+    ['trainingRange', 'effectiveTrainingRange', 'externalHoldoutRange'].some(key => data[key] !== undefined && !range(data[key]))) {
+    throw new ApiError('response', 'La API devolvió un modelo con formato inesperado.')
+  }
   return value as unknown as PredictiveArtifactMetadata
 }
 
