@@ -1,0 +1,73 @@
+{
+  "experimentId": "hu-08-price-multihorizon-v1",
+  "provider": "XM/SINERGOX",
+  "source": {
+    "consolidatedDatasetId": 12,
+    "energyDatasetId": 208,
+    "contentHash": "d30c2e24afd18576f8cc34a233e11d4fd59eb488a86f9697f5dd6e52f24b68b5",
+    "sourceWindowIds": [
+      3,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      106,
+      108
+    ],
+    "validationStatus": "aprobado",
+    "validationReport": {
+      "issues": [],
+      "rulesetId": "xm_preciobolsnaci_base",
+      "errorCount": 0,
+      "recordCount": 24048,
+      "warningCount": 0,
+      "rulesetVersion": "1.0.0"
+    }
+  },
+  "extractedAt": "2026-10-01T15:35:05.179Z",
+  "corpus": {
+    "file": "docs/evidencias/hu-08-price-multihorizon-v1/corpus/xm-preciobolsnaci-2024-01-01_2026-09-28.csv",
+    "sha256": "2aca8e5868eaff50909c8154a842bfbe8a8db873976a90145e73e02aa7c9b02e",
+    "range": {
+      "start": "2024-01-01",
+      "end": "2026-09-28"
+    },
+    "observations": 24048,
+    "completeDays": 1002,
+    "periodsPerDay": 24,
+    "unit": "COP/kWh",
+    "gaps": 0,
+    "duplicates": 0,
+    "missingValues": 0,
+    "incompleteDays": 0
+  }
+}
