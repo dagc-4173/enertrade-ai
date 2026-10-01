@@ -22,13 +22,18 @@ export interface SupplyForecast extends SupplyForecastRequest {
   predictions: { hora_xm: number; energia_kwh: number }[]
 }
 
-export interface DemandForecast extends ForecastBase {
+export interface DemandForecast extends SupplyForecastRequest {
+  status: 'available'
+  sourceArtifacts: { preparedDatasetId: number; sourceDatasetId: number }[]
+  forecastOriginDate: string
   forecastType: 'aggregate_demand_proxy'
   target: 'demanda_kwh'
   unit: 'kWh'
   horizonDays: 1
   modelId: string
   modelVersion: string
+  modelStatus: 'experimental'
+  academicValidation: 'pending'
   prediction: { demanda_kwh: number }
   confidence: null
   confidenceStatus: 'not_defined'
@@ -62,7 +67,7 @@ interface ModelMetricsBase {
     effectiveRange: DateRange
   }
   evaluation: {
-    type: 'external_temporal_holdout'
+    type: 'external_temporal_holdout' | 'retrospective_technical'
     range: DateRange
     snapshotSha256: string
     evaluable: number
@@ -83,10 +88,15 @@ export interface SupplyMetrics extends ModelMetricsBase {
   baselineReference: 'B_ORIGIN_0' | 'B_ORIGIN_6' | 'B_HISTORICAL_MEAN'
 }
 export interface DemandMetrics extends ModelMetricsBase {
+  modelStatus: 'experimental'
+  academicValidation: 'pending'
+  evaluationType: 'retrospective_technical'
+  validationRange: DateRange
+  retrospectiveEvaluationRange: DateRange
+  baselineReference: string
   forecastType: 'aggregate_demand_proxy'
   target: 'demanda_kwh'
   horizonDays: 1
-  training: ModelMetricsBase['training'] & { effectiveRows: number }
   scope: { aggregation: 'SIN'; personalized: false; zonalFallback: false; confidenceStatus: 'not_defined' }
 }
 export type ModelMetrics = SupplyMetrics | DemandMetrics

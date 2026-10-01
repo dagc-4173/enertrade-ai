@@ -1,5 +1,5 @@
-import {getDemandForecastMetrics} from '@/services/demand-forecast-metrics.service';
-import { forecastDemand } from '@/services/demand-forecast.service';
+import {getDirectDemandMetrics} from '@/services/demand-direct-metrics.service';
+import { forecastDirectDemand } from '@/services/demand-direct-forecast.service';
 import express, { Router, type ErrorRequestHandler, type Request, type Response, type NextFunction } from 'express';
 import { forecastSupply } from '@/services/forecast.service';
 import { ForecastError, messages } from '@/services/forecast.contract';
@@ -7,7 +7,7 @@ import {getForecastMetrics} from '@/services/forecast-metrics.service';
 import { forecastPrice } from '@/services/price-forecast.service';
 import { priceForecastTrace, type TraceState } from '@/services/price-forecast-trace.service';
 import { logUnexpectedError, safeLogger, type SafeLogger } from '@/lib/safe-logger';
-export function createForecastRouter(service = forecastSupply, metrics = getForecastMetrics, demand = forecastDemand, demandMetrics = getDemandForecastMetrics, price = forecastPrice, trace = priceForecastTrace, logger: SafeLogger = safeLogger) {
+export function createForecastRouter(service = forecastSupply, metrics = getForecastMetrics, demand: (input: unknown) => Promise<unknown> = forecastDirectDemand, demandMetrics: (horizonDays: number) => unknown = getDirectDemandMetrics, price = forecastPrice, trace = priceForecastTrace, logger: SafeLogger = safeLogger) {
   const router = Router();
   router.get('/supply/metrics',async(req,res)=>{
     try{
@@ -25,8 +25,9 @@ export function createForecastRouter(service = forecastSupply, metrics = getFore
     try{
       let hasBody=Number(req.get('Content-Length') ?? 0)>0 || req.get('Transfer-Encoding')!==undefined;
       if(!hasBody)for await(const chunk of req)if(chunk.length){hasBody=true;break;}
-      if(hasBody||Object.keys(req.query).length){res.status(400).json({error:'INVALID_FORECAST_REQUEST',message:messages.INVALID_FORECAST_REQUEST});return;}
-      res.json(demandMetrics());
+      const keys=Object.keys(req.query),raw=req.query.horizonDays,horizonDays=typeof raw==='string'?Number(raw):NaN;
+      if(hasBody||keys.length!==1||keys[0]!=='horizonDays'||!Number.isInteger(horizonDays)||horizonDays<1){res.status(400).json({error:'INVALID_FORECAST_REQUEST',message:messages.INVALID_FORECAST_REQUEST});return;}
+      res.json(demandMetrics(horizonDays));
     }catch(error){
       if(error instanceof ForecastError){res.status(error.status).json({status:'unavailable',error:error.code,message:error.message});}
       else { logUnexpectedError(logger, req, error, 'FORECAST_FAILED'); res.status(500).json({error:'FORECAST_FAILED',message:messages.FORECAST_FAILED}); }

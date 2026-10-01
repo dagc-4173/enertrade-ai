@@ -1,0 +1,131 @@
+{
+  "modelId": "xm-demandasin-ridge-direct-h2-v2",
+  "modelVersion": "1.0.0-experimental",
+  "modelFamily": "ridge_direct_demand_v2_semantic",
+  "status": "experimental",
+  "academicValidation": "pending",
+  "horizonDays": 2,
+  "orderedFeatures": [
+    "demand_at_origin",
+    "demand_1_day_before_origin",
+    "demand_2_days_before_origin",
+    "demand_6_days_before_origin",
+    "demand_7_days_before_origin",
+    "demand_13_days_before_origin",
+    "demand_14_days_before_origin",
+    "demand_27_days_before_origin",
+    "demand_28_days_before_origin",
+    "demand_mean_7d_ending_at_origin",
+    "demand_mean_14d_ending_at_origin",
+    "demand_mean_28d_ending_at_origin",
+    "demand_std_7d_ending_at_origin",
+    "demand_std_14d_ending_at_origin",
+    "sin_2pi_target_weekday_over7",
+    "cos_2pi_target_weekday_over7"
+  ],
+  "scaler": {
+    "ddof": 0,
+    "means": [
+      228410912.52407876,
+      228424344.91446,
+      228419863.36872935,
+      228292582.9331258,
+      228310445.9111563,
+      228218728.83322746,
+      228203595.84658197,
+      227874456.59290984,
+      227845225.92167732,
+      228378214.30144823,
+      228337801.1277237,
+      228218711.96142256,
+      11179391.161296053,
+      11618662.895798912,
+      0,
+      0.002855120208027277
+    ],
+    "standardDeviations": [
+      13501161.531335186,
+      13499886.638754556,
+      13497076.668619988,
+      13438776.863896312,
+      13439844.41557999,
+      13387994.072978178,
+      13372211.97476077,
+      13301453.507780485,
+      13290668.232316686,
+      7316123.48933206,
+      6614780.87988251,
+      5631638.540775262,
+      1748973.4868284352,
+      1439953.2028056688,
+      0.7068574267638611,
+      0.707350285585136
+    ]
+  },
+  "coefficients": [
+    1471078.5748839336,
+    779833.1246746477,
+    1840623.6644058046,
+    -191080.73572066787,
+    -3084886.1099381335,
+    -3027206.381626406,
+    -2307516.1376152383,
+    -1088218.2295457898,
+    -1094322.71066102,
+    2609191.4913856178,
+    1739834.2793116968,
+    3419418.837871064,
+    1803764.051283732,
+    263646.0058575187,
+    5447494.325628771,
+    -10177036.632698925
+  ],
+  "intercept": 228459462.24500632,
+  "alpha": 10,
+  "corpusHash": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+  "trainingRange": {
+    "start": "2024-02-04",
+    "end": "2026-03-31"
+  },
+  "validationRange": {
+    "start": "2026-04-01",
+    "end": "2026-05-31"
+  },
+  "retrospectiveEvaluationRange": {
+    "start": "2026-06-01",
+    "end": "2026-09-29"
+  },
+  "evaluationType": "retrospective_technical",
+  "semanticEligibilityRule": {
+    "id": "demandasin_severe_drop_vs_trailing_median_v1",
+    "reference": "median_previous_valid_days",
+    "historicalWindowDays": 14,
+    "minimumHistoryDays": 7,
+    "minimumRatio": 0.2
+  },
+  "baselineReference": "B_ORIGIN_MINUS_6",
+  "metrics": {
+    "validation": {
+      "evaluable": 61,
+      "unavailable": 0,
+      "MAE": 9469101.496998006,
+      "RMSE": 11344837.169186614,
+      "bias": -3270392.4460657802,
+      "WAPE": 3.881336600624465,
+      "numeratorAbsoluteErrorKwh": 577615191.3168784,
+      "denominatorAbsoluteActualKwh": 14881862892.899998,
+      "maxAbsoluteErrorKwh": 32166091.75196764
+    },
+    "retrospectiveEvaluation": {
+      "evaluable": 108,
+      "unavailable": 0,
+      "MAE": 8079545.179165568,
+      "RMSE": 9945467.55333642,
+      "bias": -3194421.4018302797,
+      "WAPE": 3.2687772445530427,
+      "numeratorAbsoluteErrorKwh": 872590879.3498814,
+      "denominatorAbsoluteActualKwh": 26694718363.079998,
+      "maxAbsoluteErrorKwh": 26268786.952566504
+    }
+  }
+}

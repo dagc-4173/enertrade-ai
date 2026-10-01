@@ -6,10 +6,11 @@ import { XmProvider } from '@/integrations/providers/xm.provider';
 import { createXmConsolidatedDatasetService } from '@/integrations/xm-consolidated-dataset.service';
 import { createXmWindowIngestionService, type XmMetric } from '@/integrations/xm-window-ingestion.service';
 import { calendarNextDate, localCalendarDate, readXmCoverage, type XmCoverage } from './xm-coverage.service';
-import { demandD1FeatureDates, isDemandForecastSampleEligible, type DemandObservationEligibility } from './demand-semantic-eligibility';
+import { demandCompatibility, latestDirectDemandOrigin, mergeDemandPrepared, type Prepared } from './demand-direct-forecast.service';
+import { loadDirectDemandModel } from '@/models/xm-demandasin-ridge-direct-v2/model-loader';
 
 export type XmSyncMetric = XmMetric;
-export type ForecastAvailability = { series: XmSyncMetric; currentDate: string; latestObservationDate: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[]; eligibleFutureTargetDates: string[]; nextForecastDate: string; supportedHorizonDays: 1 | 7; modelMinTargetDate: string; modelMaxTargetDate: string; effectiveFutureMinDate: string | null; effectiveFutureMaxDate: string | null; hasFutureForecastWindow: boolean; dataFreshnessDays: number };
+export type ForecastAvailability = { series: XmSyncMetric; currentDate: string; latestObservationDate: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[]; eligibleFutureTargetDates: string[]; nextForecastDate: string; supportedHorizonDays: 1 | 6 | 7; supportedHorizonMinDays?: 1; supportedHorizonMaxDays?: 6; modelMinTargetDate: string; modelMaxTargetDate: string; effectiveFutureMinDate: string | null; effectiveFutureMaxDate: string | null; hasFutureForecastWindow: boolean; dataFreshnessDays: number };
 type ExternalRecord = { date: string; hour: number | null; value: number };
 type SyncWindow = { from: string; to: string; manifestId: number; energyDatasetId: number; reused: boolean };
 type Materialized = { consolidatedDatasetId: number; energyDatasetId: number };
@@ -24,6 +25,7 @@ export type XmDailySyncDependencies = {
   validate: (energyDatasetId: number) => Promise<Validation>;
   prepare: (energyDatasetId: number) => Promise<Preparation>;
   now: () => Date;
+  readDemandPrepared?: () => Promise<Prepared[]>;
 };
 
 export type XmMetricSyncResult = {
@@ -98,6 +100,7 @@ const defaultDependencies: XmDailySyncDependencies = {
     return { preparedDatasetId: result.preparedDatasetId, profileId: result.profileId, profileVersion: result.profileVersion };
   },
   now: () => new Date(),
+  readDemandPrepared: () => prisma.preparedDataset.findMany({ where: demandCompatibility, select: { id: true, sourceDatasetId: true, profileId: true, profileVersion: true, sourceRulesetId: true, sourceRulesetVersion: true, content: true } }),
 };
 
 function failure(metric: XmSyncMetric, error: unknown): XmMetricSyncResult {
@@ -111,19 +114,28 @@ export function createXmDailySyncService(dependencies: XmDailySyncDependencies =
   async function availability(metric: XmSyncMetric): Promise<ForecastAvailability> {
     const coverage = await dependencies.readCoverage(metric);
     if (!coverage) throw new XmDailySyncError(404, 'XM_SYNC_COVERAGE_MISSING', 'No existe cobertura XM consolidada para la métrica.');
-    const currentDate = localCalendarDate(dependencies.now()); const supportedHorizonDays = metric === 'Gene' ? 7 : 1;
+    const currentDate = localCalendarDate(dependencies.now()); const supportedHorizonDays = metric === 'Gene' ? 7 : metric === 'DemaSIN' ? 6 : 1;
     const latestObservationDate = coverage.latestIndividuallyUsableDate; let eligibleFutureTargetDates: string[] = [];
+    let demandOrigin: string | null = null;
     if (metric === 'DemaSIN') {
-      const excluded = new Set(coverage.semanticExcludedDates); const eligibility = new Map<string, DemandObservationEligibility>();
-      for (let date = coverage.historicalFrom; date <= coverage.latestReceivedDate; date = addDays(date, 1)) eligibility.set(date, { date, value: 0, reference: null, ratio: null, semanticStatus: excluded.has(date) ? 'SEMANTIC_REVIEW_REQUIRED' : 'USABLE', issueCode: excluded.has(date) ? 'WARNING_SEMANTIC_ANOMALY' : null });
-      for (let target = calendarNextDate(currentDate); target <= calendarNextDate(coverage.latestReceivedDate); target = addDays(target, 1)) if (isDemandForecastSampleEligible({ eligibility, ...demandD1FeatureDates(target) })) eligibleFutureTargetDates.push(target);
+      const values = new Map((coverage.demandObservations ?? []).map(row => [row.date, row.value]));
+      demandOrigin = latestDirectDemandOrigin(values, coverage.latestReceivedDate, addDays(coverage.latestReceivedDate, 7));
+      if (demandOrigin && dependencies.readDemandPrepared) {
+        const merged = mergeDemandPrepared(await dependencies.readDemandPrepared());
+        if (latestDirectDemandOrigin(merged.values, coverage.latestReceivedDate, addDays(coverage.latestReceivedDate, 7)) !== demandOrigin) demandOrigin = null;
+      }
+      if (demandOrigin) for (let horizon = 1; horizon <= 6; horizon++) {
+        try { loadDirectDemandModel(horizon); } catch { continue; }
+        const target = addDays(demandOrigin, horizon);
+        if (target > currentDate && target > coverage.latestReceivedDate) eligibleFutureTargetDates.push(target);
+      }
     } else {
       const min = calendarNextDate(currentDate) > calendarNextDate(latestObservationDate) ? calendarNextDate(currentDate) : calendarNextDate(latestObservationDate); const max = addDays(latestObservationDate, supportedHorizonDays);
       for (let target = min; target <= max; target = addDays(target, 1)) eligibleFutureTargetDates.push(target);
     }
-    const modelMinTargetDate = calendarNextDate(latestObservationDate); const modelMaxTargetDate = addDays(latestObservationDate, supportedHorizonDays);
+    const modelMinTargetDate = calendarNextDate(demandOrigin ?? latestObservationDate); const modelMaxTargetDate = addDays(demandOrigin ?? latestObservationDate, supportedHorizonDays);
     const effectiveFutureMinDate = eligibleFutureTargetDates[0] ?? null; const effectiveFutureMaxDate = eligibleFutureTargetDates.at(-1) ?? null;
-    return { series: metric, currentDate, latestObservationDate, latestReceivedDate: coverage.latestReceivedDate, latestIndividuallyUsableDate: latestObservationDate, semanticExcludedDates: [...coverage.semanticExcludedDates], eligibleFutureTargetDates, nextForecastDate: effectiveFutureMinDate ?? modelMinTargetDate, supportedHorizonDays, modelMinTargetDate, modelMaxTargetDate, effectiveFutureMinDate, effectiveFutureMaxDate, hasFutureForecastWindow: eligibleFutureTargetDates.length > 0, dataFreshnessDays: Math.max(0, Math.floor((Date.parse(`${currentDate}T00:00:00Z`) - Date.parse(`${latestObservationDate}T00:00:00Z`)) / 86_400_000)) };
+    return { series: metric, currentDate, latestObservationDate, latestReceivedDate: coverage.latestReceivedDate, latestIndividuallyUsableDate: latestObservationDate, semanticExcludedDates: [...coverage.semanticExcludedDates], eligibleFutureTargetDates, nextForecastDate: effectiveFutureMinDate ?? (metric === 'DemaSIN' && currentDate >= latestObservationDate ? calendarNextDate(currentDate) : modelMinTargetDate), supportedHorizonDays, ...(metric === 'DemaSIN' ? { supportedHorizonMinDays: 1 as const, supportedHorizonMaxDays: 6 as const } : {}), modelMinTargetDate, modelMaxTargetDate, effectiveFutureMinDate, effectiveFutureMaxDate, hasFutureForecastWindow: eligibleFutureTargetDates.length > 0, dataFreshnessDays: Math.max(0, Math.floor((Date.parse(`${currentDate}T00:00:00Z`) - Date.parse(`${latestObservationDate}T00:00:00Z`)) / 86_400_000)) };
   }
 
   async function availableUntil(metric: XmSyncMetric, nextDate: string, today: string) {

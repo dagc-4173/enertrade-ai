@@ -64,13 +64,19 @@ test('HU06-MH scaler uses TRAIN only, baseline/alpha use VALIDATION only, and ho
   }
 }, 15_000);
 
-test('HU06-MH V1/V2 metrics are finite and rejected horizons produce no model artifact', () => {
+test('HU06-MH original metrics remain finite; only semantic V2 later materializes h1..h6', () => {
   for (const stored of [resultsV1, resultsV2]) for (const result of Object.values(stored.results) as any[]) {
     const metrics = result.externalHoldout.ridge;
     expect([metrics.MAE, metrics.RMSE, metrics.bias, metrics.WAPE, metrics.maxAbsoluteErrorKwh].every(Number.isFinite)).toBe(true);
     expect(metrics.evaluable).toBe(121); expect(metrics.unavailable).toBe(0);
     const artifactUrl = new URL(`../models/${result.modelId}/1.0.0/model.json`, import.meta.url);
-    expect(existsSync(artifactUrl)).toBe(result.candidate);
+    if (!result.candidate && existsSync(artifactUrl)) {
+      expect(stored.experimentId).toBe('hu-06-multihorizon-v2');
+      expect(result.horizonDays).toBeLessThanOrEqual(6);
+      const semantic = JSON.parse(readFileSync(new URL('../../../docs/evidencias/hu-06-multihorizon-v3-semantic/results.json', import.meta.url), 'utf8')) as any;
+      expect(semantic.v2.results[String(result.horizonDays)].technicalCandidate).toBe(true);
+      expect(JSON.parse(readFileSync(artifactUrl, 'utf8')).modelFamily).toBe('ridge_direct_demand_v2_semantic');
+    } else expect(existsSync(artifactUrl)).toBe(result.candidate);
     if (!result.candidate) continue;
     const artifact = JSON.parse(readFileSync(artifactUrl, 'utf8')) as any;
     const row = stored.experimentId.endsWith('v1') ? samples(records, { start: '2026-06-01', end: '2026-06-01' }, result.horizonDays)[0]! : samplesV2(records, { start: '2026-06-01', end: '2026-06-01' }, result.horizonDays)[0]!;

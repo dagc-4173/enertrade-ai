@@ -10,16 +10,17 @@ import { ForecastAvailabilityView, ForecastPanel, ForecastRunOutcome, ResultView
 import { exceedsSupportedHorizon, horizonMessage, lastForecastDate, selectedHorizonDays } from '../src/utils/forecastAvailability'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
-// HU-06/HU-08 conservan preparedDatasetId; HU-04 (supply) migró a solo targetDate.
+// HU-04/HU-06 usan targetDate; Precio B1 conserva preparedDatasetId.
 const input = { preparedDatasetId: 49, targetDate: '2024-09-29' }
+const demandInput = { targetDate: '2026-09-24' }
 const supplyInput = { targetDate: '2026-09-24' }
 const base = { status: 'available', ...input, sourceDatasetId: 68 }
 const supply = { status: 'available', forecastOriginDate: '2026-09-20', targetDate: supplyInput.targetDate, horizonDays: 4,
   sourceArtifacts: [{ preparedDatasetId: 21, sourceDatasetId: 40 }, { preparedDatasetId: 22, sourceDatasetId: 41 }],
   forecastType: 'generation_availability_proxy', target: 'energia_kwh', unit: 'kWh', horizonPeriods: 24,
   modelId: 'xm-gene-ridge-direct-h4-v2', modelVersion: '1.0.0-experimental', modelStatus: 'experimental', academicValidation: 'pending', predictions: Array.from({ length: 24 }, (_, i) => ({ hora_xm: i + 1, energia_kwh: 10 + i / 100 })) }
-const demand = { ...base, forecastType: 'aggregate_demand_proxy', target: 'demanda_kwh', unit: 'kWh', horizonDays: 1,
-  modelId: 'xm-demandasin-ridge', modelVersion: '1.0.0', prediction: { demanda_kwh: 120.123 }, confidence: null, confidenceStatus: 'not_defined' }
+const demand = { status: 'available', ...demandInput, forecastOriginDate: '2026-09-20', sourceArtifacts: [{ preparedDatasetId: 49, sourceDatasetId: 68 }], forecastType: 'aggregate_demand_proxy', target: 'demanda_kwh', unit: 'kWh', horizonDays: 4,
+  modelId: 'xm-demandasin-ridge-direct-h4-v2', modelVersion: '1.0.0-experimental', modelStatus: 'experimental', academicValidation: 'pending', prediction: { demanda_kwh: 120.123 }, confidence: null, confidenceStatus: 'not_defined' }
 const price = { ...base, forecastType: 'market_reference_price', target: 'precio_cop_kwh', unit: 'COP/kWh', granularity: 'hourly', horizonDays: 1,
   rule: { id: 'xm-preciobolsnaci-b1', version: '1.0.0', type: 'deterministic_baseline', description: 'same period previous day' },
   predictions: Array.from({ length: 24 }, (_, i) => ({ periodo: i + 1, precio_cop_kwh: i === 0 ? 0 : i - 2.25 })),
@@ -32,11 +33,11 @@ const metrics = { status: 'available', modelId: 'xm-gene-ridge-direct-h4-v2', mo
   training: { trainedAt: null, trainedAtStatus: 'not_recorded', snapshotSha256: 'a'.repeat(64), sourceRange: range, effectiveRange: range },
   evaluation: { type: 'external_temporal_holdout', range, snapshotSha256: 'b'.repeat(64), evaluable: 720, unavailable: 0,
     MAE: { value: 2, unit: 'kWh' }, RMSE: { value: 3, unit: 'kWh' }, bias: { value: -1, unit: 'kWh' }, percentageError: { metric: 'WAPE', value: 1.5, unit: 'percent' } } }
-const demandMetrics = { ...metrics, modelId: 'xm-demandasin-ridge', forecastType: 'aggregate_demand_proxy', target: 'demanda_kwh', horizonDays: 1,
-  training: { ...metrics.training, effectiveRows: 337 }, scope: { aggregation: 'SIN', personalized: false, zonalFallback: false, confidenceStatus: 'not_defined' } }
+const demandMetrics = { ...metrics, modelId: 'xm-demandasin-ridge-direct-h4-v2', forecastType: 'aggregate_demand_proxy', target: 'demanda_kwh', horizonDays: 4,
+  evaluationType: 'retrospective_technical', validationRange: range, retrospectiveEvaluationRange: range, evaluation: { ...metrics.evaluation, type: 'retrospective_technical' }, scope: { aggregation: 'SIN', personalized: false, zonalFallback: false, confidenceStatus: 'not_defined' } }
 const availability = [
   { series: 'Gene', currentDate: '2026-09-20', latestObservationDate: '2026-09-20', latestReceivedDate: '2026-09-20', latestIndividuallyUsableDate: '2026-09-20', semanticExcludedDates: [], eligibleFutureTargetDates: ['2026-09-21','2026-09-22','2026-09-23','2026-09-24','2026-09-25','2026-09-26','2026-09-27'], nextForecastDate: '2026-09-21', supportedHorizonDays: 7, modelMinTargetDate: '2026-09-21', modelMaxTargetDate: '2026-09-27', effectiveFutureMinDate: '2026-09-21', effectiveFutureMaxDate: '2026-09-27', hasFutureForecastWindow: true, dataFreshnessDays: 0 },
-  { series: 'DemaSIN', currentDate: '2026-10-01', latestObservationDate: '2026-09-27', latestReceivedDate: '2026-09-29', latestIndividuallyUsableDate: '2026-09-27', semanticExcludedDates: ['2026-09-16','2026-09-28','2026-09-29'], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-28', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-28', modelMaxTargetDate: '2026-09-28', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 4 },
+  { series: 'DemaSIN', currentDate: '2026-10-01', latestObservationDate: '2026-09-27', latestReceivedDate: '2026-09-29', latestIndividuallyUsableDate: '2026-09-27', semanticExcludedDates: ['2026-09-16','2026-09-28','2026-09-29'], eligibleFutureTargetDates: [], nextForecastDate: '2026-10-02', supportedHorizonDays: 6, supportedHorizonMinDays: 1, supportedHorizonMaxDays: 6, modelMinTargetDate: '2026-09-28', modelMaxTargetDate: '2026-10-03', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 4 },
   { series: 'PrecBolsNaci', currentDate: '2026-09-20', latestObservationDate: '2026-09-15', latestReceivedDate: '2026-09-15', latestIndividuallyUsableDate: '2026-09-15', semanticExcludedDates: [], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-16', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-16', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 5 },
 ]
 const originalFetch = globalThis.fetch
@@ -52,7 +53,7 @@ test('HU-04: supply parsing and POST JSON send only targetDate', async () => {
   expect(url).toBe('http://enertrade.test/forecasts/supply')
   expect(init?.method).toBe('POST'); expect(JSON.parse(String(init?.body))).toEqual(supplyInput)
 })
-test('demand parsing preserves null confidence', async () => { respond(demand); expect(await forecastDemand(input)).toEqual(demand) })
+test('demand parsing preserves direct h4, null confidence and target-only POST', async () => { const fetch = respond(demand); expect(await forecastDemand(demandInput)).toEqual(demand); expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body))).toEqual(demandInput) })
 test('price parsing preserves trace, zero/negative prices and partial conditions', async () => { respond(price); expect(await forecastPrice(input)).toEqual(price) })
 test('trace failure does not discard a valid price result', async () => {
   const value = { ...price, trace: { executionId: null, persistence: 'failed' } }
@@ -73,11 +74,11 @@ test('supply metrics are GET without body; all evaluation fields are retained', 
   expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/forecasts/supply/metrics?horizonDays=4')
   expect(fetch.mock.calls[0]?.[1]?.body).toBeUndefined()
 })
-test('demand metrics retain effective rows and aggregated scope', async () => {
-  const fetch = respond(demandMetrics); expect(await getDemandMetrics()).toEqual(demandMetrics)
-  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/forecasts/demand/metrics')
+test('demand metrics select horizon and retain retrospective technical scope', async () => {
+  const fetch = respond(demandMetrics); expect(await getDemandMetrics(4)).toEqual(demandMetrics)
+  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/forecasts/demand/metrics?horizonDays=4')
 })
-test('forecast availability is authenticated and preserves Gene D+7 while Demand/Price remain D+1', async () => {
+test('forecast availability is authenticated and preserves Gene D+7, Demand D+6, Price D+1', async () => {
   const fetch = respond({ availability })
   expect(await getForecastAvailability()).toEqual(availability)
   expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/forecast-availability')
@@ -115,9 +116,9 @@ test('non-JSON and network failures are typed safely', async () => {
   const fetch = spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('<html>private</html>'))
   await expect(getSupplyMetrics(1)).rejects.toMatchObject({ kind: 'response' })
   fetch.mockRejectedValueOnce(new Error('internal host'))
-  await expect(getDemandMetrics()).rejects.toMatchObject({ kind: 'network', serverMessage: null })
+  await expect(getDemandMetrics(1)).rejects.toMatchObject({ kind: 'network', serverMessage: null })
 })
-test('Predictions initially renders fecha objetivo para Oferta y selector de dataset solo para Demanda/Precio', () => {
+test('Predictions initially renders fecha objetivo; only Precio requires prepared dataset', () => {
   const fetch = spyOn(globalThis, 'fetch')
   const html = renderToStaticMarkup(<Predictions />)
   expect(html).toContain('Oferta energética'); expect(html).toContain('Demanda energética'); expect(html).toContain('Precio de referencia')
@@ -128,21 +129,21 @@ test('Predictions initially renders fecha objetivo para Oferta y selector de dat
   expect(html).toContain('Baseline determinista de referencia')
   expect(html).not.toMatch(/xm-demandasin-ridge-direct-h[1-6]|xm-preciobolsnaci-ridge-direct|pendingProspectiveValidation/)
   expect(html.match(/disabled=""/g)?.length).toBeGreaterThanOrEqual(3)
-  expect(html.match(/Selecciona un dataset preparado/g)).toHaveLength(2)
+  expect(html.match(/Selecciona un dataset preparado/g)).toHaveLength(1)
   expect(html).not.toMatch(/Recomendaciones|Produccion|v1\.8\.2|DS-2026|915\.15174|value="17"|value="33"|value="49"/)
   expect(fetch).not.toHaveBeenCalled()
   for (const file of ['../src/pages/Predictions.tsx', '../src/components/forecasts/ForecastPanel.tsx']) {
     expect(readFileSync(new URL(file, import.meta.url), 'utf8')).not.toMatch(/mockData|resolveMock|aiRecommendations|forecastPoints|techStats|techTrace/)
   }
 })
-test('Oferta energética ya no exige seleccionar un PreparedDataset; Demanda y Precio sí', () => {
+test('Oferta y Demanda resuelven preparados automáticamente; Precio conserva selector', () => {
   const supplyHtml = renderToStaticMarkup(<ForecastPanel kind="supply" />)
   expect(supplyHtml).toContain('Fecha objetivo')
   expect(supplyHtml).toContain('Elige una fecha objetivo.')
   expect(supplyHtml).not.toContain('Dataset preparado compatible')
   expect(supplyHtml).not.toContain('Selecciona un dataset preparado')
   const demandHtml = renderToStaticMarkup(<ForecastPanel kind="demand" />)
-  expect(demandHtml).toContain('Dataset preparado compatible')
+  expect(demandHtml).not.toContain('Dataset preparado compatible')
   const priceHtml = renderToStaticMarkup(<ForecastPanel kind="price" />)
   expect(priceHtml).toContain('Dataset preparado compatible')
 })
@@ -164,6 +165,23 @@ test('Demanda availability distinguishes received XM data from semantically usab
   expect(html).toContain('Fechas en revisión semántica de EnerTrade AI')
   for (const date of ['16/09/2026','28/09/2026','29/09/2026']) expect(html).toContain(date)
   expect(html).toContain('todas sus observaciones fuente utilizables')
+  expect(html).toContain('1 a 6 días')
+  expect(html).toContain('Rango futuro disponible')
+})
+test('Demanda respeta target elegible con huecos y horizonte desde origen, no desde currentDate', () => {
+  const demandAvailability = { ...availability[1]!, currentDate: '2026-09-20', latestObservationDate: '2026-09-20', latestReceivedDate: '2026-09-20', latestIndividuallyUsableDate: '2026-09-20', modelMinTargetDate: '2026-09-21', modelMaxTargetDate: '2026-09-26', nextForecastDate: '2026-09-21', eligibleFutureTargetDates: ['2026-09-21', '2026-09-24', '2026-09-26'], effectiveFutureMinDate: '2026-09-21', effectiveFutureMaxDate: '2026-09-26', hasFutureForecastWindow: true }
+  expect(selectedHorizonDays('2026-09-24', demandAvailability)).toBe(4)
+  expect(selectedHorizonDays('2026-09-26', demandAvailability)).toBe(6)
+  expect(exceedsSupportedHorizon('2026-09-23', demandAvailability)).toBe(true)
+  expect(exceedsSupportedHorizon('2026-09-26', demandAvailability)).toBe(false)
+  expect(exceedsSupportedHorizon('2026-09-27', demandAvailability)).toBe(true)
+  expect(renderToStaticMarkup(<ForecastAvailabilityView state={{ kind: 'success', availability: demandAvailability }} />)).toContain('Fechas objetivo elegibles')
+})
+test('Demanda consulta métricas h6 sin reutilizar h4', async () => {
+  const value = { ...demandMetrics, modelId: 'xm-demandasin-ridge-direct-h6-v2', horizonDays: 6 }
+  const fetch = respond(value)
+  expect(await getDemandMetrics(6)).toEqual(value)
+  expect(fetch.mock.calls[0]?.[0]).toBe('http://enertrade.test/forecasts/demand/metrics?horizonDays=6')
 })
 test('ForecastRunOutcome expresa loading, éxito con 24 predicciones y trazabilidad, e insuficiencia/inconsistencia sin ocultar el código', () => {
   const loadingHtml = renderToStaticMarkup(<ForecastRunOutcome title="Oferta energética" state={{ kind: 'loading' }} />)
@@ -185,14 +203,16 @@ test('ForecastRunOutcome expresa loading, éxito con 24 predicciones y trazabili
   expect(successHtml).toContain('#21 (dataset 40)'); expect(successHtml).toContain('#22 (dataset 41)')
   expect(successHtml).toContain('xm-gene-ridge-direct-h4-v2'); expect(successHtml).toContain('Experimental'); expect(successHtml).toContain('Pendiente'); expect(successHtml).toContain('4 días')
 })
-test('ResultView de demanda/precio conserva el rótulo preparado/dataset fuente único', () => {
+test('ResultView Demanda usa fuentes trazables, origen, h4 y estado experimental', () => {
   const html = renderToStaticMarkup(<ResultView result={demand} />)
-  expect(html).toContain('Preparado / dataset fuente'); expect(html).toContain('49 / 68')
-  expect(html).toContain('xm-demandasin-ridge'); expect(html).toContain('1.0.0')
-  expect(html).toContain('Experimental'); expect(html).toContain('No informada')
+  expect(html).toContain('Datasets preparados fuente'); expect(html).toContain('#49 (dataset 68)')
+  expect(html).toContain('xm-demandasin-ridge-direct-h4-v2'); expect(html).toContain('1.0.0-experimental')
+  expect(html).toContain('20/09/2026'); expect(html).toContain('4 días')
+  expect(html).toContain('Experimental'); expect(html).toContain('Pendiente')
   expect(html).toContain('Día XM'); expect(html).toContain('Demanda estimada (kWh)')
   expect(html.match(/<tr/g)).toHaveLength(2)
-  expect(html).not.toContain('xm-demandasin-ridge-direct-h')
+  expect(html).not.toContain('xm-demandasin-ridge-direct-h7')
+  expect(html).not.toContain('<dd>xm-demandasin-ridge</dd>')
 })
 test('Precio B1 presenta versión real, origen D-1, 24 periodos y ningún modelo HU-08 offline', () => {
   const html = renderToStaticMarkup(<ResultView result={price} />)

@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import type { XmMetric } from '@/integrations/xm-window-ingestion.service';
 import { evaluateXmDemaSin } from './dataset-validation-xm-demandasin.rules';
 
-export type XmCoverage = { historicalFrom: string; persistedUntil: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[] };
+export type XmCoverage = { historicalFrom: string; persistedUntil: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[]; demandObservations?: { date: string; value: number }[] };
 
 export function localCalendarDate(now = new Date()) {
   const year = now.getFullYear(); const month = String(now.getMonth() + 1).padStart(2, '0'); const day = String(now.getDate()).padStart(2, '0');
@@ -43,7 +43,8 @@ export function coverageFromConsolidated(metric: XmMetric, rows: { energyDataset
     latestIndividuallyUsableDate = evaluation.report.semanticValidation.latestIndividuallyUsableDate ?? dates[0]!;
     semanticExcludedDates = [...evaluation.report.semanticValidation.semanticExcludedDates];
   }
-  return { historicalFrom: dates[0]!, persistedUntil: latestReceivedDate, latestReceivedDate, latestIndividuallyUsableDate, semanticExcludedDates };
+  return { historicalFrom: dates[0]!, persistedUntil: latestReceivedDate, latestReceivedDate, latestIndividuallyUsableDate, semanticExcludedDates,
+    ...(metric === 'DemaSIN' ? { demandObservations: dates.map(date => ({ date, value: Number(recordsByDate.get(date)!.demanda_kwh) })) } : {}) };
 }
 
 export async function readXmCoverage(metric: XmMetric): Promise<XmCoverage | null> {

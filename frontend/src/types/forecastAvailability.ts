@@ -9,7 +9,9 @@ export interface ForecastAvailability {
   eligibleFutureTargetDates: string[]
   currentDate: string
   nextForecastDate: string
-  supportedHorizonDays: 1 | 7
+  supportedHorizonDays: 1 | 6 | 7
+  supportedHorizonMinDays?: 1
+  supportedHorizonMaxDays?: 6
   modelMinTargetDate: string
   modelMaxTargetDate: string
   effectiveFutureMinDate: string | null

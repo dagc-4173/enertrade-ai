@@ -29,9 +29,9 @@ function supply(v: unknown, request: SupplyForecastRequest): v is SupplyForecast
     identity(v) && v.forecastType === 'generation_availability_proxy' && v.target === 'energia_kwh' &&
     v.unit === 'kWh' && v.horizonPeriods === 24 && v.modelStatus === 'experimental' && v.academicValidation === 'pending' && periods(v.predictions, 'hora_xm', 'energia_kwh')
 }
-function demand(v: unknown, request: ForecastRequest): v is DemandForecast {
-  return base(v, request) && identity(v) && v.forecastType === 'aggregate_demand_proxy' && v.target === 'demanda_kwh' &&
-    v.unit === 'kWh' && v.horizonDays === 1 && object(v.prediction) && finite(v.prediction.demanda_kwh) &&
+function demand(v: unknown, request: SupplyForecastRequest): v is DemandForecast {
+  return object(v) && v.status === 'available' && date(v.targetDate) && v.targetDate === request.targetDate && date(v.forecastOriginDate) && sourceArtifacts(v.sourceArtifacts) && identity(v) && v.modelStatus === 'experimental' && v.academicValidation === 'pending' && v.forecastType === 'aggregate_demand_proxy' && v.target === 'demanda_kwh' &&
+    v.unit === 'kWh' && count(v.horizonDays) && v.horizonDays >= 1 && v.horizonDays <= 6 && v.forecastOriginDate < v.targetDate && (Date.parse(`${v.targetDate}T00:00:00Z`) - Date.parse(`${v.forecastOriginDate}T00:00:00Z`)) / 86_400_000 === v.horizonDays && object(v.prediction) && finite(v.prediction.demanda_kwh) &&
     v.confidence === null && v.confidenceStatus === 'not_defined'
 }
 function price(v: unknown, request: ForecastRequest): v is PriceForecast {
@@ -50,16 +50,16 @@ function metrics(v: unknown): v is Record<string, unknown> {
   const t = v.training, e = v.evaluation
   const measure = (x: unknown, nonnegative: boolean) => object(x) && finite(x.value) && (!nonnegative || x.value >= 0) && x.unit === 'kWh'
   return t.trainedAt === null && t.trainedAtStatus === 'not_recorded' && hash(t.snapshotSha256) && range(t.sourceRange) && range(t.effectiveRange) &&
-    e.type === 'external_temporal_holdout' && range(e.range) && hash(e.snapshotSha256) && count(e.evaluable) && count(e.unavailable) &&
+    (e.type === 'external_temporal_holdout' || e.type === 'retrospective_technical') && range(e.range) && hash(e.snapshotSha256) && count(e.evaluable) && count(e.unavailable) &&
     measure(e.MAE, true) && measure(e.RMSE, true) && measure(e.bias, false) && object(e.percentageError) &&
     e.percentageError.metric === 'WAPE' && finite(e.percentageError.value) && e.percentageError.value >= 0 && e.percentageError.unit === 'percent'
 }
 function supplyMetrics(v: unknown): v is SupplyMetrics {
-  return metrics(v) && v.forecastType === 'generation_availability_proxy' && v.target === 'energia_kwh' && v.horizonPeriods === 24 && count(v.horizonDays) && v.horizonDays >= 1 && v.horizonDays <= 7 && v.modelStatus === 'experimental' && v.academicValidation === 'pending' && ['B_ORIGIN_0','B_ORIGIN_6','B_HISTORICAL_MEAN'].includes(v.baselineReference as string)
+  return metrics(v) && object(v.evaluation) && v.evaluation.type === 'external_temporal_holdout' && v.forecastType === 'generation_availability_proxy' && v.target === 'energia_kwh' && v.horizonPeriods === 24 && count(v.horizonDays) && v.horizonDays >= 1 && v.horizonDays <= 7 && v.modelStatus === 'experimental' && v.academicValidation === 'pending' && ['B_ORIGIN_0','B_ORIGIN_6','B_HISTORICAL_MEAN'].includes(v.baselineReference as string)
 }
 function demandMetrics(v: unknown): v is DemandMetrics {
-  return metrics(v) && v.forecastType === 'aggregate_demand_proxy' && v.target === 'demanda_kwh' && v.horizonDays === 1 &&
-    object(v.training) && id(v.training.effectiveRows) && object(v.scope) && v.scope.aggregation === 'SIN' &&
+  return metrics(v) && object(v.evaluation) && v.modelStatus === 'experimental' && v.academicValidation === 'pending' && v.evaluationType === 'retrospective_technical' && v.evaluation.type === 'retrospective_technical' && range(v.validationRange) && range(v.retrospectiveEvaluationRange) && JSON.stringify(v.evaluation.range) === JSON.stringify(v.retrospectiveEvaluationRange) && text(v.baselineReference) && v.forecastType === 'aggregate_demand_proxy' && v.target === 'demanda_kwh' && count(v.horizonDays) && v.horizonDays >= 1 && v.horizonDays <= 6 &&
+    object(v.training) && object(v.scope) && v.scope.aggregation === 'SIN' &&
     v.scope.personalized === false && v.scope.zonalFallback === false && v.scope.confidenceStatus === 'not_defined'
 }
 function parsed<T>(response: { status: number; data: unknown }, check: (v: unknown) => v is T): T {
@@ -69,7 +69,7 @@ function parsed<T>(response: { status: number; data: unknown }, check: (v: unkno
 export async function forecastSupply(request: SupplyForecastRequest, signal?: AbortSignal) {
   return parsed(await postJson<unknown>('/forecasts/supply', request, { signal }), (v): v is SupplyForecast => supply(v, request))
 }
-export async function forecastDemand(request: ForecastRequest, signal?: AbortSignal) {
+export async function forecastDemand(request: SupplyForecastRequest, signal?: AbortSignal) {
   return parsed(await postJson<unknown>('/forecasts/demand', request, { signal }), (v): v is DemandForecast => demand(v, request))
 }
 export async function forecastPrice(request: ForecastRequest, signal?: AbortSignal) {
@@ -78,6 +78,6 @@ export async function forecastPrice(request: ForecastRequest, signal?: AbortSign
 export async function getSupplyMetrics(horizonDays: number, signal?: AbortSignal) {
   return parsed(await apiRequest<unknown>(`/forecasts/supply/metrics?horizonDays=${horizonDays}`, { signal }), supplyMetrics)
 }
-export async function getDemandMetrics(signal?: AbortSignal) {
-  return parsed(await apiRequest<unknown>('/forecasts/demand/metrics', { signal }), demandMetrics)
+export async function getDemandMetrics(horizonDays: number, signal?: AbortSignal) {
+  return parsed(await apiRequest<unknown>(`/forecasts/demand/metrics?horizonDays=${horizonDays}`, { signal }), demandMetrics)
 }

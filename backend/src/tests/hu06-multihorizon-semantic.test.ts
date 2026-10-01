@@ -4,6 +4,7 @@ import { demandEligibilityIndex, isDemandForecastSampleEligible } from '@/servic
 import { parseCsv, partitions, samples, sha256 } from '@/experiments/hu06-multihorizon';
 import { samplesV2 } from '@/experiments/hu06-multihorizon-v2';
 import { eligibleDemandSamples, semanticExperimentV1, semanticExperimentV2 } from '@/experiments/hu06-multihorizon-semantic';
+import { buildDemandDirectFeatures } from '@/services/demand-direct-features';
 
 const root = new URL('../../../docs/evidencias/hu-06-multihorizon-v3-semantic/', import.meta.url);
 const corpusText = readFileSync(new URL('../hu-06-multihorizon/corpus/xm-demandasin-2024-01-01_2026-09-29.csv', root), 'utf8');
@@ -56,4 +57,15 @@ test('V3 script has no Prisma boundary and creates no runtime model artifact', (
   const script = readFileSync(new URL('../../scripts/hu06-multihorizon-semantic.ts', import.meta.url), 'utf8');
   expect(script).not.toMatch(/prisma|src\/models|backend\/src\/models|model\.json/);
   for (let horizonDays = 1; horizonDays <= 7; horizonDays++) expect(existsSync(new URL(`../models/xm-demandasin-ridge-direct-h${horizonDays}-v3-semantic/1.0.0/model.json`, import.meta.url))).toBe(false);
+});
+
+test('runtime V2 feature vector matches frozen sample without reading its target', () => {
+  const sample = samplesV2(records, { start: '2026-05-20', end: '2026-05-20' }, 6)[0]!;
+  const values = new Map(records.filter(row => row.fecha_xm <= sample.forecastOriginDate).map(row => [row.fecha_xm, row.demanda_kwh]));
+  const built = buildDemandDirectFeatures(values, sample.forecastOriginDate, sample.targetDate);
+  expect(built?.values).toEqual(sample.features);
+  expect(built?.featureDates.every(date => date <= sample.forecastOriginDate)).toBe(true);
+  expect(values.has(sample.targetDate)).toBe(false);
+  const all = new Map(records.map(row => [row.fecha_xm, row.demanda_kwh]));
+  expect(buildDemandDirectFeatures(all, '2026-09-27', '2026-10-03')).toBeNull();
 });

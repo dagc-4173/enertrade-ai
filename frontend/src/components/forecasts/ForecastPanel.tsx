@@ -19,12 +19,12 @@ const profiles: Record<'demand' | 'price', PreparedDatasetCompatibility> = {
   demand: { profileId: 'xm_demandasin_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_demandasin_base', sourceRulesetVersion: '1.0.0' },
   price: { profileId: 'xm_preciobolsnaci_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_preciobolsnaci_base', sourceRulesetVersion: '1.0.0' },
 }
-// HU-04 solo exige targetDate: el backend resuelve los PreparedDataset compatibles. HU-06/HU-08 conservan su contrato.
+// Oferta y Demanda resuelven datasets en backend; Precio B1 conserva preparedDatasetId.
 const forecasts = {
   supply: { title: 'Oferta energética', source: 'XM Gene', series: 'Gene' as const, description: 'Generación como proxy de disponibilidad energética. No equivale a oferta transaccional.', requiresPreparedDataset: false,
     run: (input: RunInput, signal?: AbortSignal) => forecastSupply({ targetDate: input.targetDate }, signal), metrics: null },
-  demand: { title: 'Demanda energética', source: 'XM DemaSIN', series: 'DemaSIN' as const, description: 'Demanda diaria agregada del SIN. No representa consumo individual ni por zona.', requiresPreparedDataset: true,
-    run: (input: RunInput, signal?: AbortSignal) => forecastDemand({ preparedDatasetId: input.preparedDatasetId!, targetDate: input.targetDate }, signal), metrics: getDemandMetrics },
+  demand: { title: 'Demanda energética', source: 'XM DemaSIN', series: 'DemaSIN' as const, description: 'Demanda diaria agregada del SIN. No representa consumo individual ni por zona.', requiresPreparedDataset: false,
+    run: (input: RunInput, signal?: AbortSignal) => forecastDemand({ targetDate: input.targetDate }, signal), metrics: null },
   price: { title: 'Precio de referencia', source: 'XM PrecBolsNaci', series: 'PrecBolsNaci' as const, description: 'Regla determinista B1, no modelo ML. No realiza negociación ni liquidación financiera.', requiresPreparedDataset: true,
     run: (input: RunInput, signal?: AbortSignal) => forecastPrice({ preparedDatasetId: input.preparedDatasetId!, targetDate: input.targetDate }, signal), metrics: null },
 }
@@ -41,7 +41,7 @@ function MetricsView({ metrics, result }: { metrics: ModelMetrics; result: Forec
     <p>{metrics.modelId} · versión {metrics.modelVersion}</p>
     {'modelStatus' in metrics && <p>Estado: <strong>Experimental</strong> · Validación académica: <strong>Pendiente</strong></p>}
     {mismatch && <p role="alert">Estas métricas corresponden a otra versión que el pronóstico mostrado.</p>}
-    <p className="section-description">Holdout temporal: {formatDateCO(e.range.start)} — {formatDateCO(e.range.end)}. Describe ese periodo; no es una garantía futura.</p>
+    <p className="section-description">{metrics.forecastType === 'aggregate_demand_proxy' ? 'Evaluación retrospectiva técnica' : 'Holdout temporal'}: {formatDateCO(e.range.start)} — {formatDateCO(e.range.end)}. Describe ese periodo; no es una garantía futura.</p>
     <dl className="forecast-metadata">
       <div><dt>MAE</dt><dd>{formatEnergyKWh(e.MAE.value)}</dd></div>
       <div><dt>RMSE</dt><dd>{formatEnergyKWh(e.RMSE.value)}</dd></div>
@@ -49,6 +49,7 @@ function MetricsView({ metrics, result }: { metrics: ModelMetrics; result: Forec
       <div><dt>WAPE</dt><dd>{formatPercentCO(e.percentageError.value)}</dd></div>
       <div><dt>Observaciones evaluables / no disponibles</dt><dd>{formatNumberCO(e.evaluable)} / {formatNumberCO(e.unavailable)}</dd></div>
       <div><dt>Datos de entrenamiento</dt><dd>{formatDateCO(metrics.training.sourceRange.start)} — {formatDateCO(metrics.training.sourceRange.end)}</dd></div>
+      {metrics.forecastType === 'aggregate_demand_proxy' && <><div><dt>Validación</dt><dd>{formatDateCO(metrics.validationRange.start)} — {formatDateCO(metrics.validationRange.end)}</dd></div><div><dt>Evaluación retrospectiva</dt><dd>{formatDateCO(metrics.retrospectiveEvaluationRange.start)} — {formatDateCO(metrics.retrospectiveEvaluationRange.end)}</dd></div></>}
       <div><dt>Fecha de entrenamiento</dt><dd>No registrada</dd></div>
       {'baselineReference' in metrics && <div><dt>Baseline de referencia</dt><dd>{metrics.baselineReference}</dd></div>}
     </dl>
@@ -81,7 +82,7 @@ export function ResultView({ result }: { result: ForecastResult }) {
       <div><dt>Fecha objetivo</dt><dd>{formatDateCO(result.targetDate)}</dd></div>
       <div><dt>Última observación / origen</dt><dd>{'forecastOriginDate' in result ? formatDateCO(result.forecastOriginDate) : priceOrigin ? formatDateCO(priceOrigin.toISOString().slice(0, 10)) : 'No informado por el resultado'}</dd></div>
       <div><dt>Unidad</dt><dd>{result.unit}</dd></div>
-      <div><dt>Horizonte</dt><dd>{result.forecastType === 'aggregate_demand_proxy' ? '1 día' : result.forecastType === 'generation_availability_proxy' ? `${result.horizonDays} día${result.horizonDays === 1 ? '' : 's'} · 24 periodos del día objetivo` : '1 día · 24 periodos'}</dd></div>
+      <div><dt>Horizonte</dt><dd>{result.forecastType === 'aggregate_demand_proxy' ? `${result.horizonDays} día${result.horizonDays === 1 ? '' : 's'}` : result.forecastType === 'generation_availability_proxy' ? `${result.horizonDays} día${result.horizonDays === 1 ? '' : 's'} · 24 periodos del día objetivo` : '1 día · 24 periodos'}</dd></div>
     </dl>
     {result.forecastType === 'aggregate_demand_proxy' ? <>
       <div className="forecast-daily-result"><DataTable columns={[{ header: 'Día XM', render: (row: { date: string; value: number }) => formatDateCO(row.date) }, { header: 'Demanda estimada (kWh)', render: (row: { date: string; value: number }) => formatEnergyKWh(row.value) }]} rows={[{ date: result.targetDate, value: result.prediction.demanda_kwh }]} getRowKey={row => row.date} /></div>
@@ -139,8 +140,8 @@ export function ForecastAvailabilityView({ state }: { state: ForecastAvailabilit
       <div><dt>Fecha actual</dt><dd>{formatDateCO(availability.currentDate)}</dd></div>
       <div><dt>{demand ? 'Últimos datos recibidos' : 'Últimos datos disponibles'}</dt><dd>{formatDateCO(demand ? availability.latestReceivedDate : availability.latestObservationDate)}</dd></div>
       {demand && <div><dt>Última observación utilizable</dt><dd>{formatDateCO(availability.latestIndividuallyUsableDate)}</dd></div>}
-      <div><dt>{availability.series === 'Gene' ? 'Horizonte experimental soportado' : 'Horizonte activo'}</dt><dd>{availability.series === 'Gene' ? `1 a ${availability.supportedHorizonDays} días` : '1 día'}</dd></div>
-      {availability.series !== 'DemaSIN' && <div><dt>Rango futuro disponible</dt><dd>{range ? `${formatDateCO(range.min)} — ${formatDateCO(range.max)}` : 'No disponible'}</dd></div>}
+      <div><dt>{availability.series === 'PrecBolsNaci' ? 'Horizonte activo' : 'Horizonte experimental soportado'}</dt><dd>{availability.series === 'PrecBolsNaci' ? '1 día' : `1 a ${availability.supportedHorizonDays} días`}</dd></div>
+      <div><dt>Rango futuro disponible</dt><dd>{range ? `${formatDateCO(range.min)} — ${formatDateCO(range.max)}` : 'No disponible'}</dd></div>
     </dl>
     {demand && availability.semanticExcludedDates.length > 0 && <p className="forecast-semantic-note" role="note">Fechas en revisión semántica de EnerTrade AI: {availability.semanticExcludedDates.map(formatDateCO).join(', ')}.</p>}
     {demand && eligible.length > 0 && <p className="forecast-range">Fechas objetivo elegibles: {eligible.map(formatDateCO).join(', ')}.</p>}
@@ -156,18 +157,17 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
   const [availabilityState, setAvailabilityState] = useState<ForecastAvailabilityState>({ kind: 'loading' })
   const request = useRef<AbortController | null>(null)
   const [metrics, setMetrics] = useState<ModelMetrics | null>(null)
-  const [metricsLoading, setMetricsLoading] = useState(Boolean(config.metrics))
+  const [metricsLoading, setMetricsLoading] = useState(false)
   const [metricsError, setMetricsError] = useState('')
   const [retry, setRetry] = useState(0)
   useEffect(() => {
-    const load = config.metrics
-    if (!load) return
+    if (kind !== 'demand' || availabilityState.kind !== 'success' || !availabilityState.availability.eligibleFutureTargetDates.includes(targetDate)) return
     const controller = new AbortController()
-    load(controller.signal).then(value => { if (!controller.signal.aborted) setMetrics(value) })
+    getDemandMetrics(selectedHorizonDays(targetDate, availabilityState.availability), controller.signal).then(value => { if (!controller.signal.aborted) setMetrics(value) })
       .catch(reason => { if (!controller.signal.aborted) setMetricsError(errorMessage(reason)) })
       .finally(() => { if (!controller.signal.aborted) setMetricsLoading(false) })
     return () => controller.abort()
-  }, [config.metrics, retry])
+  }, [kind, availabilityState, targetDate, retry])
   useEffect(() => () => request.current?.abort(), [])
   useEffect(() => {
     const controller = new AbortController()
@@ -220,8 +220,8 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
       if (request.current === controller) request.current = null
     }
   }
-  function clear() { setRunState({ kind: 'idle' }); if (kind === 'supply') { setMetrics(null); setMetricsError('') } }
-  const unavailable = availabilityState.kind !== 'success' || !availabilityState.availability.hasFutureForecastWindow || (kind !== 'supply' && availabilityState.availability.eligibleFutureTargetDates.length === 0)
+  function clear() { setRunState({ kind: 'idle' }); if (kind !== 'price') { setMetrics(null); setMetricsError(''); if (kind === 'demand') setMetricsLoading(true) } }
+  const unavailable = availabilityState.kind !== 'success' || !availabilityState.availability.hasFutureForecastWindow || (kind !== 'supply' && !availabilityState.availability.eligibleFutureTargetDates.includes(targetDate))
   const dates = availabilityState.kind === 'success' && kind !== 'supply' ? availabilityState.availability.eligibleFutureTargetDates : []
   const range = availabilityState.kind === 'success' && kind === 'supply' ? effectiveRange(availabilityState.availability) : null
   return <section className="panel forecast-panel" aria-label={config.title}>
@@ -239,14 +239,16 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
           max={range?.max ?? dates.at(-1)}
           onChange={e => { setTargetDate(e.target.value); clear() }} /></label>
       </fieldset>
-      <p className="section-description forecast-horizon">Horizonte seleccionado: <strong>{kind === 'supply' && availabilityState.kind === 'success' && range && targetDate >= range.min && targetDate <= range.max ? `${selectedHorizonDays(targetDate, availabilityState.availability)} días` : kind === 'supply' ? 'Selecciona una fecha' : '1 día'}</strong></p>
+      <p className="section-description forecast-horizon">Horizonte seleccionado: <strong>{kind !== 'price' && availabilityState.kind === 'success' && availabilityState.availability.eligibleFutureTargetDates.includes(targetDate) ? `${selectedHorizonDays(targetDate, availabilityState.availability)} días` : kind === 'price' ? '1 día' : 'Selecciona una fecha'}</strong></p>
       <button className="primary-button" disabled={runState.kind === 'loading' || unavailable} type="submit">{runState.kind === 'loading' ? 'Cargando...' : runState.kind === 'error' ? 'Reintentar consulta' : 'Generar pronóstico'}</button>
     </form>
     {kind === 'price' && <p className="section-description">Cada solicitud registra una nueva ejecución HU-09, incluso si repites la misma fecha.</p>}
     <ForecastRunOutcome title={config.title} state={runState} />
     {metricsLoading && <p role="status">Cargando métricas del modelo…</p>}
     {metricsError && <div role="alert"><p>{metricsError}</p><button type="button" className="secondary-button" onClick={() => {
-      setMetricsError(''); setMetricsLoading(true); setRetry(n => n + 1)
+      setMetricsError(''); setMetricsLoading(true)
+      if (kind === 'demand') setRetry(n => n + 1)
+      else if (runState.kind === 'success' && runState.result.forecastType === 'generation_availability_proxy') getSupplyMetrics(runState.result.horizonDays).then(setMetrics).catch(reason => setMetricsError(errorMessage(reason))).finally(() => setMetricsLoading(false))
     }}>Reintentar métricas</button></div>}
     {metrics && <MetricsView metrics={metrics} result={runState.kind === 'success' ? runState.result : null} />}
     {kind === 'price' && <div className="forecast-metrics"><h3>Métricas</h3><p className="section-description">Baseline determinista de referencia. El runtime B1 no publica métricas históricas en este contrato.</p></div>}

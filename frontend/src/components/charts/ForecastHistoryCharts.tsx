@@ -34,14 +34,14 @@ export function SupplyHistoryChart({ result }: { result: SupplyForecast }) {
 }
 
 export function DemandHistoryChart({ result }: { result: DemandForecast }) {
-  const from = offsetDate(result.targetDate, -30), to = offsetDate(result.targetDate, -1)
+  const from = offsetDate(result.forecastOriginDate, -29), to = result.forecastOriginDate
   const state = useRealSeries({ metric: 'demand', from, to, granularity: 'daily' })
   let chart: ChartState = state.kind === 'loading' ? state : state.kind === 'error' ? state : { kind: 'empty', message: 'No hay observaciones recientes de demanda para comparar.' }
   if (state.kind === 'success' && state.value.points.length > 0) chart = { kind: 'success', lines: [
     { id: 'observed', label: 'OBSERVADO · histórico SIN', color: '#00652e', points: state.value.points.map(point => ({ key: point.date, label: formatDateCO(point.date), value: point.value, detail: `${formatDateCO(point.date)}: ${formatEnergyKWh(point.value)}` })) },
-    { id: 'forecast', label: `PRONÓSTICO · ${formatDateCO(result.targetDate)}`, color: '#b17800', dash: '2 3', points: [{ key: result.targetDate, label: formatDateCO(result.targetDate), value: result.prediction.demanda_kwh, detail: `${formatDateCO(result.targetDate)}: ${formatEnergyKWh(result.prediction.demanda_kwh)}` }] },
+    { id: 'forecast', label: `PRONÓSTICO DIRECTO · ${formatDateCO(result.targetDate)}`, color: '#b17800', dash: '2 3', points: [{ key: result.targetDate, label: formatDateCO(result.targetDate), value: result.prediction.demanda_kwh, detail: `${formatDateCO(result.targetDate)}: ${formatEnergyKWh(result.prediction.demanda_kwh)}` }] },
   ] }
-  return <SeriesChart title="Demanda reciente y pronóstico" description="Últimos 30 días disponibles de demanda SIN y el único valor pronosticado para el día objetivo." unit="kWh" state={chart} />
+  return <SeriesChart title="Demanda observada y pronóstico directo" description="Historia real hasta el origen y un único valor para el día objetivo, sin trayectoria intermedia." unit="kWh" state={chart} />
 }
 
 export function PriceHistoryChart({ result }: { result: PriceForecast }) {
