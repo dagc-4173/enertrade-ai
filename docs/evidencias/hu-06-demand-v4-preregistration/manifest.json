@@ -1,0 +1,116 @@
+{
+  "experimentId": "hu-06-demand-v4-direct-semantic-gap",
+  "version": "1.0.0-preregistered",
+  "state": "pendingExperiment",
+  "preregistrationCutoff": "2026-10-01T18:37:55.275Z",
+  "baselineCommit": "4f8a24c",
+  "hypothesis": "Direct demand models using individually usable point observations recover future origin coverage after isolated semantic gaps without imputing, recursion, or leakage.",
+  "scope": {
+    "horizonDays": [1, 2, 3, 4, 5, 6],
+    "excludedHorizonDays": [7],
+    "modelFamily": "independent_direct_ridge_per_horizon",
+    "runtimeIntegration": false,
+    "trained": false,
+    "evaluationPerformed": false
+  },
+  "corpus": {
+    "file": "docs/evidencias/hu-06-multihorizon/corpus/xm-demandasin-2024-01-01_2026-09-29.csv",
+    "sha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+    "range": { "start": "2024-01-01", "end": "2026-09-29" },
+    "observations": 1003,
+    "retainedExcludedDates": ["2026-09-16", "2026-09-28", "2026-09-29"]
+  },
+  "partitions": {
+    "train": { "start": "2024-02-04", "end": "2026-03-31" },
+    "validation": { "start": "2026-04-01", "end": "2026-05-31" },
+    "retrospectiveEvaluation": { "start": "2026-06-01", "end": "2026-09-29", "virginHoldout": false }
+  },
+  "semanticPolicy": {
+    "id": "demandasin_severe_drop_vs_trailing_median_v1",
+    "reference": "median_previous_valid_days",
+    "historicalWindowDays": 14,
+    "minimumHistoryDays": 7,
+    "minimumRatio": 0.2,
+    "sourceEligibility": "isDemandForecastSampleEligible; origin and every mandatory source date USABLE; target observation required only when evaluating, never for future inference"
+  },
+  "variants": {
+    "A": {
+      "role": "sole_primary_candidate",
+      "orderedFeatures": ["demand_at_origin", "demand_6_days_before_origin", "demand_13_days_before_origin", "demand_27_days_before_origin", "sin_2pi_target_weekday_over7", "cos_2pi_target_weekday_over7"],
+      "sourceOffsetsFromOriginDays": [0, 6, 13, 27],
+      "requiresContinuousWindow": false
+    },
+    "B": {
+      "role": "frozen_v2_continuous_comparator_only",
+      "orderedFeatures": ["demand_at_origin", "demand_1_day_before_origin", "demand_2_days_before_origin", "demand_6_days_before_origin", "demand_7_days_before_origin", "demand_13_days_before_origin", "demand_14_days_before_origin", "demand_27_days_before_origin", "demand_28_days_before_origin", "demand_mean_7d_ending_at_origin", "demand_mean_14d_ending_at_origin", "demand_mean_28d_ending_at_origin", "demand_std_7d_ending_at_origin", "demand_std_14d_ending_at_origin", "sin_2pi_target_weekday_over7", "cos_2pi_target_weekday_over7"],
+      "calendarRollingDays": [7, 14, 28],
+      "requiresContinuousWindow": true
+    },
+    "C": {
+      "role": "separate_usable_statistics_comparator_only",
+      "orderedFeatures": ["demand_at_origin", "demand_1_day_before_origin", "demand_2_days_before_origin", "demand_6_days_before_origin", "demand_7_days_before_origin", "demand_13_days_before_origin", "demand_14_days_before_origin", "demand_27_days_before_origin", "demand_28_days_before_origin", "demand_mean_last_7_usable", "demand_mean_last_14_usable", "demand_mean_last_28_usable", "demand_std_last_7_usable", "demand_std_last_14_usable", "sin_2pi_target_weekday_over7", "cos_2pi_target_weekday_over7"],
+      "usableObservationsRequired": 28,
+      "maxCalendarLookbackDaysInclusive": 42,
+      "statistics": "most recent 7/14/28 individually USABLE observations from the final 28, population standard deviation for 7/14",
+      "provenance": ["actualSourceDates", "calendarSpanDays"],
+      "requiresContinuousWindow": false,
+      "fixedPointLagsStillMandatory": true
+    }
+  },
+  "independentAblation": {
+    "id": "A_plus_target_relative_points",
+    "role": "diagnostic_only_not_automatically_promotable",
+    "orderedAddedFeatures": ["demand_target_minus_7", "demand_target_minus_14", "demand_target_minus_21", "demand_target_minus_28"],
+    "requiresEachSourceOnOrBeforeOriginAndUSABLE": true,
+    "mayNotReplaceOrMixWithAAfterResults": true
+  },
+  "selection": {
+    "alphaGrid": [0.01, 0.1, 1, 10, 100],
+    "alphaSelection": "VALIDATION MAE, then RMSE, then smaller alpha; TRAIN-only scaler and fit",
+    "baselines": ["B_ORIGIN", "B_ORIGIN_MINUS_6", "B_TRAIN_TARGET_WEEKDAY_MEAN"],
+    "baselineSelection": "VALIDATION MAE, then RMSE, then lexicographic id; weekday mean computed on TRAIN only",
+    "primaryVariant": "A",
+    "retrospectiveEvaluationCannotSelectVariantAlphaOrBaseline": true
+  },
+  "promotionCriteria": {
+    "minimumMaeImprovementPercentAgainstSelectedBaseline": 1,
+    "maximumWapeMultiplierAgainstSelectedBaseline": 1,
+    "unavailableAttributableToModel": 0,
+    "requireFiniteMetricsAndParameters": true,
+    "maxAbsoluteErrorMultiplierOfEligibleTrainTargetSampleStdDev": 10,
+    "requireNoLeakage": true,
+    "requireGreaterOperationalCoverageThanV2": true,
+    "minimumAdditionalConstructibleOriginsAndFutureTargets": 1,
+    "minimumPairedEligibleTargetDaysPerHorizonForV2Comparison": 30,
+    "maximumPairedMaeMultiplierOfV2": 1.05,
+    "maximumPairedWapeMultiplierOfV2": 1.05,
+    "minimumProspectiveCompleteTargetDaysPerHorizonBeforeRuntimeReplacement": 60,
+    "allConditionsRequired": true
+  },
+  "coverageReporting": ["eligibleSamples", "constructibleOrigins", "constructibleFutureTargets", "MAE", "WAPE", "Bias"],
+  "observedSourceCapacity": {
+    "originRange": { "start": "2026-09-17", "end": "2026-09-27" },
+    "asOf": "2026-10-01",
+    "constructibleOrigins": {
+      "A": ["2026-09-17", "2026-09-18", "2026-09-19", "2026-09-20", "2026-09-21", "2026-09-23", "2026-09-24", "2026-09-25", "2026-09-26", "2026-09-27"],
+      "B": [],
+      "C": ["2026-09-19", "2026-09-20", "2026-09-21", "2026-09-24", "2026-09-25", "2026-09-26", "2026-09-27"]
+    },
+    "notPredictiveResults": true
+  },
+  "operationalCase": {
+    "asOf": "2026-10-01",
+    "candidateOrigin": "2026-09-27",
+    "targetsByHorizon": { "1": "2026-09-28", "2": "2026-09-29", "3": "2026-09-30", "4": "2026-10-01", "5": "2026-10-02", "6": "2026-10-03" },
+    "futureHorizonsAsOfDate": [5, 6],
+    "sourceConstruction": { "A": true, "B": false, "C": true },
+    "predictionGenerated": false
+  },
+  "limitations": [
+    "Prior semantic reevaluation used an observed retrospective block, not an untouched holdout.",
+    "Feature construction is not predictive validation or availability of a V4 runtime model.",
+    "C changes the calendar span of its statistics when there are semantic gaps; dates and spans must be reported.",
+    "A has not established technical suitability for h2 or h6; historical V1 candidates cannot be promoted to V4.",
+    "No V4 model is trained or integrated and no prospective forecast is generated by this preregistration."
+  ]
+}
