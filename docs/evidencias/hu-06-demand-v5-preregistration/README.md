@@ -1,0 +1,7 @@
+# HU-06 Demanda V5: preregistración prospectiva
+
+**Estado: `pendingProspectiveValidation`.** Cutoff `2026-10-01T19:02:43.949Z`; baseline `ac9454a`. No se entrenó V5, no se evaluó nuevamente el bloque retrospectivo, no se crearon predicciones ni se integró runtime. El [manifiesto](manifest.json) congela la hipótesis y los umbrales; el [protocolo](protocol.md) define emisión y comparación futuras.
+
+La variante C de V4 se convierte en una **nueva hipótesis primaria** V5, sin promover sus resultados retrospectivos. Conserva exactamente sus 16 features, nueve niveles puntuales obligatorios y estadísticas sobre las últimas 28 observaciones individualmente `USABLE` dentro de 42 días calendario. Cada muestra registra sus 28 fechas, la más antigua, la más reciente y la amplitud real. No es un rolling calendario continuo ni rellena observaciones excluidas.
+
+El caso 27/09 permite construir inputs con span 29 días, pero no demuestra precisión predictiva. h5→02/10 y h6→03/10 son targets calendáricos posteriores al 01/10; **no se ha emitido pronóstico V5** para ellos. Una futura captura exige modelo V5 congelado y valor target aún desconocido al cutoff y al momento de emisión. Los modelos V2 y el frontend permanecen intactos.

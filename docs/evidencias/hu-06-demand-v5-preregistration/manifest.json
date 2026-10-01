@@ -1,0 +1,106 @@
+{
+  "experimentId": "hu-06-demand-v5-usable-statistics-direct",
+  "modelVersion": "hu06-demand-v5-c-primary@1.0.0-preregistered",
+  "state": "pendingProspectiveValidation",
+  "preregistrationCutoff": "2026-10-01T19:02:43.949Z",
+  "baselineCommit": "ac9454a",
+  "hypothesis": "Independent direct demand models using V4 comparator C's exact features recover future constructible origins after isolated semantic gaps without materially degrading prospectively paired quality against V2.",
+  "historicalContext": {
+    "v4Preregistration": "docs/evidencias/hu-06-demand-v4-preregistration/manifest.json",
+    "v4ObservedExperiment": "docs/evidencias/hu-06-demand-v4-experiment/results.json",
+    "v4CWasComparator": true,
+    "v4RetrospectiveMetricsAreIndependentV5Evidence": false,
+    "noPromotionFromV4": true
+  },
+  "scope": {
+    "modelFamily": "independent_direct_ridge_per_horizon",
+    "horizonDays": [1, 2, 3, 4, 5, 6],
+    "excludedHorizonDays": [7],
+    "trained": false,
+    "evaluated": false,
+    "runtimeIntegration": false,
+    "noRecursion": true,
+    "noFallback": true,
+    "noImputation": true
+  },
+  "primaryVariant": {
+    "id": "C_from_V4_reframed_as_new_V5_hypothesis",
+    "orderedFeatures": ["demand_at_origin", "demand_1_day_before_origin", "demand_2_days_before_origin", "demand_6_days_before_origin", "demand_7_days_before_origin", "demand_13_days_before_origin", "demand_14_days_before_origin", "demand_27_days_before_origin", "demand_28_days_before_origin", "demand_mean_last_7_usable", "demand_mean_last_14_usable", "demand_mean_last_28_usable", "demand_std_last_7_usable", "demand_std_last_14_usable", "sin_2pi_target_weekday_over7", "cos_2pi_target_weekday_over7"],
+    "punctualOffsetsFromOriginDays": [0, 1, 2, 6, 7, 13, 14, 27, 28],
+    "usableStatisticObservationsRequired": 28,
+    "maxCalendarLookbackDaysInclusive": 42,
+    "statistics": "last 7/14/28 chronologically most recent USABLE observations within last 42 calendar days including origin; population standard deviation for 7/14",
+    "provenancePerSample": ["actualSourceDates", "oldestDate", "newestDate", "calendarSpanDays", "count"],
+    "continuousCalendarRolling28Days": false,
+    "fixedPointLagsMandatory": true,
+    "targetWeekdayConvention": "Monday=0; sin and cos of 2pi*weekday/7"
+  },
+  "corpus": {
+    "file": "docs/evidencias/hu-06-multihorizon/corpus/xm-demandasin-2024-01-01_2026-09-29.csv",
+    "sha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+    "range": { "start": "2024-01-01", "end": "2026-09-29" },
+    "observations": 1003,
+    "retainedSemanticReviewDates": ["2026-09-16", "2026-09-28", "2026-09-29"]
+  },
+  "partitions": {
+    "train": { "start": "2024-02-04", "end": "2026-03-31" },
+    "validation": { "start": "2026-04-01", "end": "2026-05-31" },
+    "retrospectiveEvaluation": { "start": "2026-06-01", "end": "2026-09-29", "use": "historical_reference_only_not_independent" }
+  },
+  "semanticPolicy": {
+    "id": "demandasin_severe_drop_vs_trailing_median_v1",
+    "reference": "median_previous_valid_days",
+    "historicalWindowDays": 14,
+    "minimumHistoryDays": 7,
+    "minimumRatio": 0.2,
+    "eligibility": "isDemandForecastSampleEligible on origin and each punctual/statistic source; historical observed target required only for evaluation; future target not required for inference"
+  },
+  "selection": {
+    "alphaGrid": [0.01, 0.1, 1, 10, 100],
+    "fitAndScaler": "TRAIN eligible only",
+    "alpha": "VALIDATION minimum MAE, then RMSE, then smaller alpha",
+    "baselines": ["B_ORIGIN", "B_ORIGIN_MINUS_6", "B_TRAIN_TARGET_WEEKDAY_MEAN"],
+    "baseline": "VALIDATION minimum MAE, then RMSE, then lexicographic id; weekday mean from TRAIN only",
+    "retrospectiveBlockCannotSelectFeaturesAlphaBaselineOrCriteria": true
+  },
+  "promotionCriteria": {
+    "minimumMaeImprovementPercentAgainstSelectedBaseline": 1,
+    "maximumWapeMultiplierAgainstSelectedBaseline": 1,
+    "requireFiniteMetricsAndParameters": true,
+    "unavailableAttributableToModel": 0,
+    "maxAbsoluteErrorMultiplierOfEligibleTrainTargetSampleStdDev": 10,
+    "requireNoLeakage": true,
+    "maximumProspectivelyPairedMaeMultiplierOfV2": 1.05,
+    "maximumProspectivelyPairedWapeMultiplierOfV2": 1.05,
+    "requireStrictlyGreaterOperationalCoverageThanV2": true,
+    "minimumPairedProspectiveTargetDaysPerHorizon": 30,
+    "minimumCompleteProspectiveTargetDaysPerHorizon": 60,
+    "allConditionsRequiredForReplacement": true
+  },
+  "coverage": {
+    "asOf": "2026-10-01",
+    "originRange": { "start": "2026-09-17", "end": "2026-09-27" },
+    "constructibleOriginsC": ["2026-09-19", "2026-09-20", "2026-09-21", "2026-09-24", "2026-09-25", "2026-09-26", "2026-09-27"],
+    "constructibleOriginsV2": [],
+    "originCase": { "forecastOriginDate": "2026-09-27", "count": 28, "oldestDate": "2026-08-30", "newestDate": "2026-09-27", "calendarSpanDays": 29, "candidateFutureTargets": { "h5": "2026-10-02", "h6": "2026-10-03" }, "featureCapacityOnly": true },
+    "reportSeparately": ["eligibleSamples", "constructibleOrigins", "constructibleFutureTargets", "MAE", "WAPE", "Bias"]
+  },
+  "prospectiveRegistry": {
+    "file": "docs/evidencias/hu-06-demand-v5-prospective/predictions.jsonl",
+    "format": "append-only JSONL, SHA-256 linked entries, exclusive writer",
+    "identity": ["modelVersion", "forecastOriginDate", "targetDate", "horizonDays"],
+    "requiredFields": ["generatedAt", "forecastOriginDate", "targetDate", "horizonDays", "modelVersion", "prediction", "featureSourceDates", "actualSourceDates", "oldestDate", "newestDate", "count", "calendarSpanDays", "featureSnapshotHash", "previousEntryHash", "entryHash"],
+    "targetMustBeUnknownAtCutoffAndGeneration": true,
+    "originDayMustBeClosedInAmericaBogota": true,
+    "sourcesMustBeFetchedBeforeGeneratedAt": true,
+    "observedTargetMustBeFetchedAfterCutoffAndGeneratedAt": true,
+    "predictionsPresentAtPreregistration": false
+  },
+  "limitations": [
+    "V4 comparator C's known retrospective results cannot validate or promote V5.",
+    "Historical retrospective evaluation was observed before V5 and is not a new independent holdout.",
+    "No V5 training, fitted parameters, predictions, runtime artifacts or academic validation exist at preregistration.",
+    "V5 prospective comparisons require frozen V2 predictions for the same future origin/target before target observation; retrospective recalculation is not a prospective comparator.",
+    "If sources or target knowledge cannot be verified at issue time, no prediction may be appended."
+  ]
+}
