@@ -38,8 +38,8 @@ export function DemandHistoryChart({ result }: { result: DemandForecast }) {
   const state = useRealSeries({ metric: 'demand', from, to, granularity: 'daily' })
   let chart: ChartState = state.kind === 'loading' ? state : state.kind === 'error' ? state : { kind: 'empty', message: 'No hay observaciones recientes de demanda para comparar.' }
   if (state.kind === 'success' && state.value.points.length > 0) chart = { kind: 'success', lines: [
-    { id: 'observed', label: 'Histórico XM', color: '#00652e', points: state.value.points.map(point => ({ key: point.date, label: formatDateCO(point.date), value: point.value, detail: `${formatDateCO(point.date)}: ${formatEnergyKWh(point.value)}` })) },
-    { id: 'forecast', label: `Pronóstico D · ${formatDateCO(result.targetDate)}`, color: '#b17800', dash: '2 3', points: [{ key: result.targetDate, label: formatDateCO(result.targetDate), value: result.prediction.demanda_kwh, detail: `${formatDateCO(result.targetDate)}: ${formatEnergyKWh(result.prediction.demanda_kwh)}` }] },
+    { id: 'observed', label: 'OBSERVADO · histórico SIN', color: '#00652e', points: state.value.points.map(point => ({ key: point.date, label: formatDateCO(point.date), value: point.value, detail: `${formatDateCO(point.date)}: ${formatEnergyKWh(point.value)}` })) },
+    { id: 'forecast', label: `PRONÓSTICO · ${formatDateCO(result.targetDate)}`, color: '#b17800', dash: '2 3', points: [{ key: result.targetDate, label: formatDateCO(result.targetDate), value: result.prediction.demanda_kwh, detail: `${formatDateCO(result.targetDate)}: ${formatEnergyKWh(result.prediction.demanda_kwh)}` }] },
   ] }
   return <SeriesChart title="Demanda reciente y pronóstico" description="Últimos 30 días disponibles de demanda SIN y el único valor pronosticado para el día objetivo." unit="kWh" state={chart} />
 }
@@ -51,9 +51,9 @@ export function PriceHistoryChart({ result }: { result: PriceForecast }) {
   if (state.kind === 'success') {
     const observed = state.value.points.filter(point => point.period !== undefined).map(point => ({ key: String(point.period), label: `P${point.period}`, value: point.value, detail: `${formatDateCO(point.date)}, periodo ${point.period}: ${formatPriceCOPPerKWh(point.value)}` }))
     const forecast = result.predictions.map(row => ({ key: String(row.periodo), label: `P${row.periodo}`, value: row.precio_cop_kwh, detail: `${formatDateCO(result.targetDate)}, periodo ${row.periodo}: ${formatPriceCOPPerKWh(row.precio_cop_kwh)}` }))
-    chart = observed.length === 24 ? { kind: 'success', lines: [{ id: 'observed', label: `Observado D-1 · ${formatDateCO(d1)}`, color: '#00652e', points: observed }, { id: 'forecast', label: `Estimado B1 · ${formatDateCO(result.targetDate)}`, color: '#b17800', dash: '6 4', points: forecast }] } : chart
+    chart = observed.length === 24 ? { kind: 'success', lines: [{ id: 'observed', label: `OBSERVADO · origen ${formatDateCO(d1)}`, color: '#00652e', points: observed }, { id: 'forecast', label: `ESTIMACIÓN B1 · ${formatDateCO(result.targetDate)}`, color: '#b17800', dash: '6 4', points: forecast }] } : chart
   }
-  return <SeriesChart title="Precio observado y estimado" description="Regla determinista B1: el precio estimado por periodo coincide con el observado del mismo periodo en D-1." unit="COP/kWh" state={chart} />
+  return <SeriesChart title="Precio observado y estimación B1" description="Regla determinista B1: el precio estimado por periodo coincide con el observado del mismo periodo en D-1." unit="COP/kWh" state={chart} />
 }
 
 export function ForecastHistoryChart({ result }: { result: SupplyForecast | DemandForecast | PriceForecast }) {

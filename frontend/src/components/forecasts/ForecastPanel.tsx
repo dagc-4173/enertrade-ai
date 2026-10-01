@@ -66,25 +66,29 @@ function historyChartKey(result: ForecastResult) {
 
 export function ResultView({ result }: { result: ForecastResult }) {
   const price = result.forecastType === 'market_reference_price'
-  return <div>
+  const status = price ? 'Determinista / baseline' : result.forecastType === 'aggregate_demand_proxy' ? 'Experimental' : result.modelStatus
+  const academicValidation = !price && ('academicValidation' in result ? result.academicValidation : null)
+  const priceOrigin = price ? new Date(`${result.targetDate}T00:00:00Z`) : null
+  if (priceOrigin) priceOrigin.setUTCDate(priceOrigin.getUTCDate() - 1)
+  return <div className="forecast-result">
     <p role="status">Resultado disponible para {formatDateCO(result.targetDate)}.</p>
-    <dl className="forecast-metadata">
+    <dl className="forecast-metadata forecast-result-metadata">
       <div><dt>{price ? 'Regla determinista' : 'Modelo'}</dt><dd>{price ? result.rule.id : result.modelId}</dd></div>
       <div><dt>Versión</dt><dd>{price ? result.rule.version : result.modelVersion}</dd></div>
-      {'modelStatus' in result && <div><dt>Estado</dt><dd>Experimental</dd></div>}
-      {'academicValidation' in result && <div><dt>Validación académica</dt><dd>Pendiente</dd></div>}
+      <div><dt>Estado</dt><dd>{status === 'experimental' ? 'Experimental' : status}</dd></div>
+      {!price && <div><dt>Validación académica</dt><dd>{academicValidation === 'pending' ? 'Pendiente' : academicValidation ?? 'No informada'}</dd></div>}
       <div><dt>{'sourceArtifacts' in result ? 'Datasets preparados fuente' : 'Preparado / dataset fuente'}</dt><dd>{sourceArtifactsLabel(result)}</dd></div>
       <div><dt>Fecha objetivo</dt><dd>{formatDateCO(result.targetDate)}</dd></div>
-      {'forecastOriginDate' in result && <div><dt>Última observación / origen</dt><dd>{formatDateCO(result.forecastOriginDate)}</dd></div>}
+      <div><dt>Última observación / origen</dt><dd>{'forecastOriginDate' in result ? formatDateCO(result.forecastOriginDate) : priceOrigin ? formatDateCO(priceOrigin.toISOString().slice(0, 10)) : 'No informado por el resultado'}</dd></div>
       <div><dt>Unidad</dt><dd>{result.unit}</dd></div>
-      <div><dt>Horizonte</dt><dd>{result.forecastType === 'aggregate_demand_proxy' ? '1 día' : result.forecastType === 'generation_availability_proxy' ? `${result.horizonDays} día${result.horizonDays === 1 ? '' : 's'} · 24 periodos del día objetivo` : '24 periodos del día objetivo'}</dd></div>
+      <div><dt>Horizonte</dt><dd>{result.forecastType === 'aggregate_demand_proxy' ? '1 día' : result.forecastType === 'generation_availability_proxy' ? `${result.horizonDays} día${result.horizonDays === 1 ? '' : 's'} · 24 periodos del día objetivo` : '1 día · 24 periodos'}</dd></div>
     </dl>
     {result.forecastType === 'aggregate_demand_proxy' ? <>
-      <p className="forecast-value">{formatEnergyKWh(result.prediction.demanda_kwh)}</p>
-      <p>Demanda estimada del SIN. Nivel de confianza no definido.</p>
+      <div className="forecast-daily-result"><DataTable columns={[{ header: 'Día XM', render: (row: { date: string; value: number }) => formatDateCO(row.date) }, { header: 'Demanda estimada (kWh)', render: (row: { date: string; value: number }) => formatEnergyKWh(row.value) }]} rows={[{ date: result.targetDate, value: result.prediction.demanda_kwh }]} getRowKey={row => row.date} /></div>
+      <p className="section-description">Demanda estimada del SIN. Nivel de confianza no definido.</p>
     </> : <DataTable columns={[
       { header: 'Periodo XM', render: (row: { period: number; value: number }) => row.period },
-      { header: `${price ? 'Precio de referencia' : 'Generación estimada'} (${result.unit})`, render: row => price ? formatPriceCOPPerKWh(row.value) : formatEnergyKWh(row.value) },
+      { header: `${price ? 'Precio estimado' : 'Generación estimada'} (${result.unit})`, render: row => price ? formatPriceCOPPerKWh(row.value) : formatEnergyKWh(row.value) },
     ]} rows={result.forecastType === 'generation_availability_proxy'
       ? result.predictions.map(row => ({ period: row.hora_xm, value: row.energia_kwh }))
       : result.predictions.map(row => ({ period: row.periodo, value: row.precio_cop_kwh }))} getRowKey={row => String(row.period)} />}
@@ -111,9 +115,9 @@ export type ForecastRunState =
 
 export function ForecastRunOutcome({ title, state }: { title: string; state: ForecastRunState }) {
   return <>
-    {state.kind === 'loading' && <p role="status">Consultando {title.toLowerCase()}…</p>}
-    {state.kind === 'error' && <p role="alert">{state.message}</p>}
-    {state.kind === 'idle' && <p>Sin pronóstico solicitado.</p>}
+    {state.kind === 'loading' && <p className="forecast-state" role="status">Cargando... Consultando {title.toLowerCase()}.</p>}
+    {state.kind === 'error' && <p className="forecast-state" role="alert">Error de forecast: {state.message}</p>}
+    {state.kind === 'idle' && <p className="forecast-state">Sin pronóstico solicitado.</p>}
     {state.kind === 'success' && <ResultView result={state.result} />}
   </>
 }
@@ -125,22 +129,23 @@ export type ForecastAvailabilityState =
 
 export function ForecastAvailabilityView({ state }: { state: ForecastAvailabilityState }) {
   if (state.kind === 'loading') return <p role="status">Consultando disponibilidad de datos…</p>
-  if (state.kind === 'error') return <p className="forecast-availability" role="alert">{state.message}</p>
+  if (state.kind === 'error') return <p className="forecast-availability" role="alert">Error de disponibilidad: {state.message}</p>
   const { availability } = state
-  if (!availability.hasFutureForecastWindow) return <div className="forecast-availability" role="status"><p><strong>Los datos disponibles están desactualizados.</strong></p><p>Fecha actual: {formatDateCO(availability.currentDate)}</p>{availability.series === 'DemaSIN' && availability.semanticExcludedDates.length > 0 ? <><p>Último dato recibido de XM: {formatDateCO(availability.latestReceivedDate)}.</p><p>Última observación individualmente utilizable: {formatDateCO(availability.latestIndividuallyUsableDate)}.</p><p>Fechas que requieren revisión semántica: {availability.semanticExcludedDates.map(formatDateCO).join(', ')}.</p></> : <p>Última observación: {formatDateCO(availability.latestObservationDate)}.</p>}<p>No existe actualmente un target futuro con todas sus observaciones fuente utilizables.</p><p>Actualizando datos XM...</p></div>
   const range = effectiveRange(availability)
-  return <dl className="forecast-metadata forecast-availability">
-    <div><dt>Fecha actual</dt><dd>{formatDateCO(availability.currentDate)}</dd></div>
-    <div><dt>Últimos datos disponibles</dt><dd>{formatDateCO(availability.latestObservationDate)}</dd></div>
-    {availability.series === 'DemaSIN' && availability.semanticExcludedDates.length > 0 && <><div><dt>Último dato recibido de XM</dt><dd>{formatDateCO(availability.latestReceivedDate)}</dd></div><div><dt>Última observación individualmente utilizable</dt><dd>{formatDateCO(availability.latestIndividuallyUsableDate)}</dd></div><div><dt>Fechas en revisión semántica</dt><dd>{availability.semanticExcludedDates.map(formatDateCO).join(', ')}</dd></div></>}
-    {availability.series === 'Gene' ? <>
-      <div><dt>Horizonte experimental soportado</dt><dd>1 a {availability.supportedHorizonDays} días</dd></div>
-      <div><dt>Rango futuro disponible</dt><dd>{formatDateCO(range!.min)} — {formatDateCO(range!.max)}</dd></div>
-    </> : <>
-      <div><dt>Próxima fecha pronosticable</dt><dd>{formatDateCO(availability.nextForecastDate)}</dd></div>
-      <div><dt>Horizonte soportado</dt><dd>{availability.supportedHorizonDays} día</dd></div>
-    </>}
-  </dl>
+  const demand = availability.series === 'DemaSIN'
+  const eligible = availability.eligibleFutureTargetDates
+  return <div className="forecast-availability">
+    <dl className="forecast-metadata forecast-availability-grid">
+      <div><dt>Fecha actual</dt><dd>{formatDateCO(availability.currentDate)}</dd></div>
+      <div><dt>{demand ? 'Últimos datos recibidos' : 'Últimos datos disponibles'}</dt><dd>{formatDateCO(demand ? availability.latestReceivedDate : availability.latestObservationDate)}</dd></div>
+      {demand && <div><dt>Última observación utilizable</dt><dd>{formatDateCO(availability.latestIndividuallyUsableDate)}</dd></div>}
+      <div><dt>{availability.series === 'Gene' ? 'Horizonte experimental soportado' : 'Horizonte activo'}</dt><dd>{availability.series === 'Gene' ? `1 a ${availability.supportedHorizonDays} días` : '1 día'}</dd></div>
+      {availability.series !== 'DemaSIN' && <div><dt>Rango futuro disponible</dt><dd>{range ? `${formatDateCO(range.min)} — ${formatDateCO(range.max)}` : 'No disponible'}</dd></div>}
+    </dl>
+    {demand && availability.semanticExcludedDates.length > 0 && <p className="forecast-semantic-note" role="note">Fechas en revisión semántica de EnerTrade AI: {availability.semanticExcludedDates.map(formatDateCO).join(', ')}.</p>}
+    {demand && eligible.length > 0 && <p className="forecast-range">Fechas objetivo elegibles: {eligible.map(formatDateCO).join(', ')}.</p>}
+    {!availability.hasFutureForecastWindow && <p className="forecast-unavailable" role="status"><strong>{demand && eligible.length === 0 ? 'No existe actualmente un target futuro con todas sus observaciones fuente utilizables.' : 'No hay target futuro disponible.'}</strong> Datos desactualizados.</p>}
+  </div>
 }
 
 export function ForecastPanel({ kind }: { kind: ForecastKind }) {
@@ -171,7 +176,7 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
       if (!availability) throw new ApiError('response', 'La API no informó disponibilidad para esta serie.')
       if (!controller.signal.aborted) {
         setAvailabilityState({ kind: 'success', availability })
-        setTargetDate(value => value || (config.series === 'Gene' ? effectiveRange(availability)?.min : null) || availability.nextForecastDate)
+        setTargetDate(config.series === 'Gene' ? effectiveRange(availability)?.min ?? '' : availability.eligibleFutureTargetDates[0] ?? '')
       }
     }).catch(reason => { if (!controller.signal.aborted) setAvailabilityState({ kind: 'error', message: errorMessage(reason) }) })
     return () => controller.abort()
@@ -180,6 +185,7 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (request.current && !request.current.signal.aborted) return
+    if (availabilityState.kind !== 'success' || !availabilityState.availability.hasFutureForecastWindow) return
     let preparedDatasetId: number | undefined
     if (config.requiresPreparedDataset) {
       const parsedId = Number(preparedId)
@@ -189,6 +195,9 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
       preparedDatasetId = parsedId
     }
     if (!targetDate) { setRunState({ kind: 'error', message: 'Selecciona una fecha objetivo válida.' }); return }
+    if (kind !== 'supply' && !availabilityState.availability.eligibleFutureTargetDates.includes(targetDate)) {
+      setRunState({ kind: 'error', message: 'La fecha objetivo no está entre los targets futuros elegibles.' }); return
+    }
     if (availabilityState.kind === 'success' && exceedsSupportedHorizon(targetDate, availabilityState.availability)) {
       setRunState({ kind: 'error', message: horizonMessage(availabilityState.availability) }); return
     }
@@ -212,25 +221,26 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
     }
   }
   function clear() { setRunState({ kind: 'idle' }); if (kind === 'supply') { setMetrics(null); setMetricsError('') } }
-  const demandUnavailable = kind === 'demand' && availabilityState.kind === 'success' && !availabilityState.availability.hasFutureForecastWindow
+  const unavailable = availabilityState.kind !== 'success' || !availabilityState.availability.hasFutureForecastWindow || (kind !== 'supply' && availabilityState.availability.eligibleFutureTargetDates.length === 0)
+  const dates = availabilityState.kind === 'success' && kind !== 'supply' ? availabilityState.availability.eligibleFutureTargetDates : []
+  const range = availabilityState.kind === 'success' && kind === 'supply' ? effectiveRange(availabilityState.availability) : null
   return <section className="panel forecast-panel" aria-label={config.title}>
     <SectionHeader eyebrow={config.source} title={config.title} description={config.description}>
       <StatusBadge>{kind === 'price' ? 'Regla determinista · B1' : 'Modelo experimental · Ridge'}</StatusBadge>
     </SectionHeader>
     <ForecastAvailabilityView state={availabilityState} />
-    <p className="section-description">{config.requiresPreparedDataset ? 'Elige un dataset preparado compatible y una fecha objetivo.' : 'Elige una fecha objetivo.'} Los pronósticos no se consultan automáticamente.</p>
+    <p className="section-description">{config.requiresPreparedDataset ? 'Elige un dataset preparado compatible y una fecha objetivo.' : 'Elige una fecha objetivo.'} Las solicitudes se realizan únicamente al pulsar Generar pronóstico.</p>
     <form onSubmit={submit}>
-      <fieldset disabled={runState.kind === 'loading' || demandUnavailable}>
+      <fieldset disabled={runState.kind === 'loading' || unavailable}>
         <legend>Solicitud al backend</legend>
         {config.requiresPreparedDataset && <PreparedDatasetSelect value={preparedId} onChange={value => { setPreparedId(value); clear() }} requirements={[profiles[kind as 'demand' | 'price']]} />}
         <label>Fecha objetivo<input type="date" required value={targetDate}
-          min={availabilityState.kind === 'success' ? kind === 'supply' ? effectiveRange(availabilityState.availability)?.min : availabilityState.availability.nextForecastDate : undefined}
-          max={availabilityState.kind === 'success' ? kind === 'supply' ? effectiveRange(availabilityState.availability)?.max : availabilityState.availability.nextForecastDate : undefined}
+          min={range?.min ?? dates[0]}
+          max={range?.max ?? dates.at(-1)}
           onChange={e => { setTargetDate(e.target.value); clear() }} /></label>
       </fieldset>
-      {kind === 'supply' && availabilityState.kind === 'success' && effectiveRange(availabilityState.availability) && targetDate >= effectiveRange(availabilityState.availability)!.min && targetDate <= effectiveRange(availabilityState.availability)!.max &&
-        <p className="section-description">Horizonte seleccionado: <strong>{selectedHorizonDays(targetDate, availabilityState.availability)} días</strong></p>}
-      <button className="primary-button" disabled={runState.kind === 'loading' || demandUnavailable} type="submit">{runState.kind === 'loading' ? 'Consultando…' : runState.kind === 'error' ? 'Reintentar consulta' : 'Generar pronóstico'}</button>
+      <p className="section-description forecast-horizon">Horizonte seleccionado: <strong>{kind === 'supply' && availabilityState.kind === 'success' && range && targetDate >= range.min && targetDate <= range.max ? `${selectedHorizonDays(targetDate, availabilityState.availability)} días` : kind === 'supply' ? 'Selecciona una fecha' : '1 día'}</strong></p>
+      <button className="primary-button" disabled={runState.kind === 'loading' || unavailable} type="submit">{runState.kind === 'loading' ? 'Cargando...' : runState.kind === 'error' ? 'Reintentar consulta' : 'Generar pronóstico'}</button>
     </form>
     {kind === 'price' && <p className="section-description">Cada solicitud registra una nueva ejecución HU-09, incluso si repites la misma fecha.</p>}
     <ForecastRunOutcome title={config.title} state={runState} />
@@ -239,5 +249,6 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
       setMetricsError(''); setMetricsLoading(true); setRetry(n => n + 1)
     }}>Reintentar métricas</button></div>}
     {metrics && <MetricsView metrics={metrics} result={runState.kind === 'success' ? runState.result : null} />}
+    {kind === 'price' && <div className="forecast-metrics"><h3>Métricas</h3><p className="section-description">Baseline determinista de referencia. El runtime B1 no publica métricas históricas en este contrato.</p></div>}
   </section>
 }
