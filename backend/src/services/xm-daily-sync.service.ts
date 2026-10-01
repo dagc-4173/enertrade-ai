@@ -6,13 +6,14 @@ import { XmProvider } from '@/integrations/providers/xm.provider';
 import { createXmConsolidatedDatasetService } from '@/integrations/xm-consolidated-dataset.service';
 import { createXmWindowIngestionService, type XmMetric } from '@/integrations/xm-window-ingestion.service';
 import { calendarNextDate, localCalendarDate, readXmCoverage, type XmCoverage } from './xm-coverage.service';
+import { demandD1FeatureDates, isDemandForecastSampleEligible, type DemandObservationEligibility } from './demand-semantic-eligibility';
 
 export type XmSyncMetric = XmMetric;
-export type ForecastAvailability = { series: XmSyncMetric; currentDate: string; latestObservationDate: string; nextForecastDate: string; supportedHorizonDays: 1 | 7; modelMinTargetDate: string; modelMaxTargetDate: string; effectiveFutureMinDate: string | null; effectiveFutureMaxDate: string | null; hasFutureForecastWindow: boolean; dataFreshnessDays: number };
+export type ForecastAvailability = { series: XmSyncMetric; currentDate: string; latestObservationDate: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[]; eligibleFutureTargetDates: string[]; nextForecastDate: string; supportedHorizonDays: 1 | 7; modelMinTargetDate: string; modelMaxTargetDate: string; effectiveFutureMinDate: string | null; effectiveFutureMaxDate: string | null; hasFutureForecastWindow: boolean; dataFreshnessDays: number };
 type ExternalRecord = { date: string; hour: number | null; value: number };
 type SyncWindow = { from: string; to: string; manifestId: number; energyDatasetId: number; reused: boolean };
 type Materialized = { consolidatedDatasetId: number; energyDatasetId: number };
-type Validation = { status: string; canProceed: boolean };
+type Validation = { status: string; canProceed: boolean; semanticValidation?: { latestIndividuallyUsableDate: string | null; semanticExcludedDates: string[] } };
 type Preparation = { preparedDatasetId: number; profileId: string; profileVersion: string };
 
 export type XmDailySyncDependencies = {
@@ -30,6 +31,10 @@ export type XmMetricSyncResult = {
   status: 'up_to_date' | 'synchronized' | 'validation_rejected' | 'failed';
   previousPersistedUntil?: string;
   availableUntil?: string;
+  providerAvailableUntil?: string;
+  persistedUntil?: string;
+  latestIndividuallyUsableDate?: string;
+  semanticExcludedDates?: string[];
   synchronizedUntil?: string;
   windowsCreatedOrReused?: SyncWindow[];
   consolidatedDatasetId?: number;
@@ -80,9 +85,12 @@ const defaultDependencies: XmDailySyncDependencies = {
   async ingest(input) { return ingestion.ingest(input); },
   async materialize(input) { return consolidation.materialize(input); },
   async validate(energyDatasetId) {
-    const dataset = await prisma.energyDataset.findUnique({ where: { id: energyDatasetId }, select: { status: true } });
+    const dataset = await prisma.energyDataset.findUnique({ where: { id: energyDatasetId }, select: { status: true, validationReport: true } });
     if (!dataset) throw new XmDailySyncError(404, 'DATASET_NOT_FOUND', 'Dataset consolidado no encontrado.');
-    if (dataset.status !== 'recibido') return { status: dataset.status, canProceed: dataset.status !== 'rechazado' };
+    if (dataset.status !== 'recibido') {
+      const report = object(dataset.validationReport) && object(dataset.validationReport.semanticValidation) ? dataset.validationReport.semanticValidation : undefined;
+      return { status: dataset.status, canProceed: dataset.status !== 'rechazado', ...(report && (typeof report.latestIndividuallyUsableDate === 'string' || report.latestIndividuallyUsableDate === null) && Array.isArray(report.semanticExcludedDates) ? { semanticValidation: { latestIndividuallyUsableDate: report.latestIndividuallyUsableDate as string | null, semanticExcludedDates: report.semanticExcludedDates.filter((date): date is string => typeof date === 'string') } } : {}) };
+    }
     return validateDataset(energyDatasetId);
   },
   async prepare(energyDatasetId) {
@@ -104,10 +112,18 @@ export function createXmDailySyncService(dependencies: XmDailySyncDependencies =
     const coverage = await dependencies.readCoverage(metric);
     if (!coverage) throw new XmDailySyncError(404, 'XM_SYNC_COVERAGE_MISSING', 'No existe cobertura XM consolidada para la métrica.');
     const currentDate = localCalendarDate(dependencies.now()); const supportedHorizonDays = metric === 'Gene' ? 7 : 1;
-    const modelMinTargetDate = calendarNextDate(coverage.persistedUntil); const modelMaxTargetDate = addDays(coverage.persistedUntil, supportedHorizonDays);
-    const firstFutureDate = calendarNextDate(currentDate); const effectiveFutureMinDate = modelMinTargetDate > firstFutureDate ? modelMinTargetDate : firstFutureDate;
-    const effectiveFutureMaxDate = modelMaxTargetDate >= effectiveFutureMinDate ? modelMaxTargetDate : null;
-    return { series: metric, currentDate, latestObservationDate: coverage.persistedUntil, nextForecastDate: modelMinTargetDate, supportedHorizonDays, modelMinTargetDate, modelMaxTargetDate, effectiveFutureMinDate: effectiveFutureMaxDate ? effectiveFutureMinDate : null, effectiveFutureMaxDate, hasFutureForecastWindow: effectiveFutureMaxDate !== null, dataFreshnessDays: Math.max(0, Math.floor((Date.parse(`${currentDate}T00:00:00Z`) - Date.parse(`${coverage.persistedUntil}T00:00:00Z`)) / 86_400_000)) };
+    const latestObservationDate = coverage.latestIndividuallyUsableDate; let eligibleFutureTargetDates: string[] = [];
+    if (metric === 'DemaSIN') {
+      const excluded = new Set(coverage.semanticExcludedDates); const eligibility = new Map<string, DemandObservationEligibility>();
+      for (let date = coverage.historicalFrom; date <= coverage.latestReceivedDate; date = addDays(date, 1)) eligibility.set(date, { date, value: 0, reference: null, ratio: null, semanticStatus: excluded.has(date) ? 'SEMANTIC_REVIEW_REQUIRED' : 'USABLE', issueCode: excluded.has(date) ? 'WARNING_SEMANTIC_ANOMALY' : null });
+      for (let target = calendarNextDate(currentDate); target <= calendarNextDate(coverage.latestReceivedDate); target = addDays(target, 1)) if (isDemandForecastSampleEligible({ eligibility, ...demandD1FeatureDates(target) })) eligibleFutureTargetDates.push(target);
+    } else {
+      const min = calendarNextDate(currentDate) > calendarNextDate(latestObservationDate) ? calendarNextDate(currentDate) : calendarNextDate(latestObservationDate); const max = addDays(latestObservationDate, supportedHorizonDays);
+      for (let target = min; target <= max; target = addDays(target, 1)) eligibleFutureTargetDates.push(target);
+    }
+    const modelMinTargetDate = calendarNextDate(latestObservationDate); const modelMaxTargetDate = addDays(latestObservationDate, supportedHorizonDays);
+    const effectiveFutureMinDate = eligibleFutureTargetDates[0] ?? null; const effectiveFutureMaxDate = eligibleFutureTargetDates.at(-1) ?? null;
+    return { series: metric, currentDate, latestObservationDate, latestReceivedDate: coverage.latestReceivedDate, latestIndividuallyUsableDate: latestObservationDate, semanticExcludedDates: [...coverage.semanticExcludedDates], eligibleFutureTargetDates, nextForecastDate: effectiveFutureMinDate ?? modelMinTargetDate, supportedHorizonDays, modelMinTargetDate, modelMaxTargetDate, effectiveFutureMinDate, effectiveFutureMaxDate, hasFutureForecastWindow: eligibleFutureTargetDates.length > 0, dataFreshnessDays: Math.max(0, Math.floor((Date.parse(`${currentDate}T00:00:00Z`) - Date.parse(`${latestObservationDate}T00:00:00Z`)) / 86_400_000)) };
   }
 
   async function availableUntil(metric: XmSyncMetric, nextDate: string, today: string) {
@@ -126,7 +142,7 @@ export function createXmDailySyncService(dependencies: XmDailySyncDependencies =
       const nextDate = addDays(coverage.persistedUntil, 1);
       const publishedUntil = nextDate > today ? coverage.persistedUntil : await availableUntil(metric, nextDate, today);
       if (!publishedUntil || publishedUntil <= coverage.persistedUntil) {
-        return { metric, status: 'up_to_date', previousPersistedUntil: coverage.persistedUntil, availableUntil: coverage.persistedUntil, synchronizedUntil: coverage.persistedUntil, windowsCreatedOrReused: [] };
+        return { metric, status: 'up_to_date', previousPersistedUntil: coverage.persistedUntil, availableUntil: coverage.persistedUntil, providerAvailableUntil: coverage.persistedUntil, persistedUntil: coverage.persistedUntil, latestIndividuallyUsableDate: coverage.latestIndividuallyUsableDate, semanticExcludedDates: [...coverage.semanticExcludedDates], synchronizedUntil: coverage.persistedUntil, windowsCreatedOrReused: [] };
       }
       const imported: SyncWindow[] = [];
       for (const range of windows(nextDate, publishedUntil)) {
@@ -137,10 +153,12 @@ export function createXmDailySyncService(dependencies: XmDailySyncDependencies =
       const validation = await dependencies.validate(consolidated.energyDatasetId);
       if (!validation.canProceed) {
         return { metric, status: 'validation_rejected', previousPersistedUntil: coverage.persistedUntil, availableUntil: publishedUntil, synchronizedUntil: publishedUntil,
+          providerAvailableUntil: publishedUntil, persistedUntil: publishedUntil, latestIndividuallyUsableDate: validation.semanticValidation?.latestIndividuallyUsableDate ?? coverage.latestIndividuallyUsableDate, semanticExcludedDates: validation.semanticValidation?.semanticExcludedDates ?? coverage.semanticExcludedDates,
           windowsCreatedOrReused: imported, consolidatedDatasetId: consolidated.consolidatedDatasetId, energyDatasetId: consolidated.energyDatasetId, validationStatus: validation.status };
       }
       const prepared = await dependencies.prepare(consolidated.energyDatasetId);
       return { metric, status: 'synchronized', previousPersistedUntil: coverage.persistedUntil, availableUntil: publishedUntil, synchronizedUntil: publishedUntil,
+        providerAvailableUntil: publishedUntil, persistedUntil: publishedUntil, latestIndividuallyUsableDate: validation.semanticValidation?.latestIndividuallyUsableDate ?? publishedUntil, semanticExcludedDates: validation.semanticValidation?.semanticExcludedDates ?? [],
         windowsCreatedOrReused: imported, consolidatedDatasetId: consolidated.consolidatedDatasetId, energyDatasetId: consolidated.energyDatasetId,
         preparedDatasetId: prepared.preparedDatasetId, validationStatus: validation.status, preparationProfile: { id: prepared.profileId, version: prepared.profileVersion } };
     } catch (error) { return failure(metric, error); }

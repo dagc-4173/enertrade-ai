@@ -3,6 +3,10 @@ export type ForecastSeries = 'Gene' | 'DemaSIN' | 'PrecBolsNaci'
 export interface ForecastAvailability {
   series: ForecastSeries
   latestObservationDate: string
+  latestReceivedDate: string
+  latestIndividuallyUsableDate: string
+  semanticExcludedDates: string[]
+  eligibleFutureTargetDates: string[]
   currentDate: string
   nextForecastDate: string
   supportedHorizonDays: 1 | 7

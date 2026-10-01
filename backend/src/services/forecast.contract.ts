@@ -6,6 +6,7 @@ export const messages = {
   PREPARED_DATASET_NOT_FOUND: 'Dataset preparado no encontrado.',
   FORECAST_PROFILE_NOT_APPLICABLE: 'El perfil del dataset no es compatible con el pronóstico.',
   FORECAST_DATA_INSUFFICIENT: 'No hay datos históricos suficientes para pronosticar el día solicitado.',
+  FORECAST_SEMANTIC_DATA_UNAVAILABLE: 'Una o más observaciones requeridas por el pronóstico de demanda necesitan revisión semántica.',
   FORECAST_DATE_NOT_SUPPORTED: 'La fecha debe ser posterior al periodo de entrenamiento del modelo.',
   FORECAST_HORIZON_NOT_SUPPORTED: 'El modelo admite un horizonte de 1 día sobre la última observación real disponible.',
   PREPARED_DATASET_INCONSISTENT: 'El contenido del dataset preparado es inconsistente.',

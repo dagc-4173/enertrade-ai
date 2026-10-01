@@ -127,11 +127,12 @@ export function ForecastAvailabilityView({ state }: { state: ForecastAvailabilit
   if (state.kind === 'loading') return <p role="status">Consultando disponibilidad de datos…</p>
   if (state.kind === 'error') return <p className="forecast-availability" role="alert">{state.message}</p>
   const { availability } = state
-  if (!availability.hasFutureForecastWindow) return <div className="forecast-availability" role="status"><p><strong>Los datos disponibles están desactualizados.</strong></p><p>Fecha actual: {formatDateCO(availability.currentDate)}</p><p>Última observación: {formatDateCO(availability.latestObservationDate)}.</p><p>No existe actualmente un rango futuro pronosticable.</p><p>Actualizando datos XM...</p></div>
+  if (!availability.hasFutureForecastWindow) return <div className="forecast-availability" role="status"><p><strong>Los datos disponibles están desactualizados.</strong></p><p>Fecha actual: {formatDateCO(availability.currentDate)}</p>{availability.series === 'DemaSIN' && availability.semanticExcludedDates.length > 0 ? <><p>Último dato recibido de XM: {formatDateCO(availability.latestReceivedDate)}.</p><p>Última observación individualmente utilizable: {formatDateCO(availability.latestIndividuallyUsableDate)}.</p><p>Fechas que requieren revisión semántica: {availability.semanticExcludedDates.map(formatDateCO).join(', ')}.</p></> : <p>Última observación: {formatDateCO(availability.latestObservationDate)}.</p>}<p>No existe actualmente un target futuro con todas sus observaciones fuente utilizables.</p><p>Actualizando datos XM...</p></div>
   const range = effectiveRange(availability)
   return <dl className="forecast-metadata forecast-availability">
     <div><dt>Fecha actual</dt><dd>{formatDateCO(availability.currentDate)}</dd></div>
     <div><dt>Últimos datos disponibles</dt><dd>{formatDateCO(availability.latestObservationDate)}</dd></div>
+    {availability.series === 'DemaSIN' && availability.semanticExcludedDates.length > 0 && <><div><dt>Último dato recibido de XM</dt><dd>{formatDateCO(availability.latestReceivedDate)}</dd></div><div><dt>Última observación individualmente utilizable</dt><dd>{formatDateCO(availability.latestIndividuallyUsableDate)}</dd></div><div><dt>Fechas en revisión semántica</dt><dd>{availability.semanticExcludedDates.map(formatDateCO).join(', ')}</dd></div></>}
     {availability.series === 'Gene' ? <>
       <div><dt>Horizonte experimental soportado</dt><dd>1 a {availability.supportedHorizonDays} días</dd></div>
       <div><dt>Rango futuro disponible</dt><dd>{formatDateCO(range!.min)} — {formatDateCO(range!.max)}</dd></div>
@@ -211,6 +212,7 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
     }
   }
   function clear() { setRunState({ kind: 'idle' }); if (kind === 'supply') { setMetrics(null); setMetricsError('') } }
+  const demandUnavailable = kind === 'demand' && availabilityState.kind === 'success' && !availabilityState.availability.hasFutureForecastWindow
   return <section className="panel forecast-panel" aria-label={config.title}>
     <SectionHeader eyebrow={config.source} title={config.title} description={config.description}>
       <StatusBadge>{kind === 'price' ? 'Regla determinista · B1' : 'Modelo experimental · Ridge'}</StatusBadge>
@@ -218,7 +220,7 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
     <ForecastAvailabilityView state={availabilityState} />
     <p className="section-description">{config.requiresPreparedDataset ? 'Elige un dataset preparado compatible y una fecha objetivo.' : 'Elige una fecha objetivo.'} Los pronósticos no se consultan automáticamente.</p>
     <form onSubmit={submit}>
-      <fieldset disabled={runState.kind === 'loading'}>
+      <fieldset disabled={runState.kind === 'loading' || demandUnavailable}>
         <legend>Solicitud al backend</legend>
         {config.requiresPreparedDataset && <PreparedDatasetSelect value={preparedId} onChange={value => { setPreparedId(value); clear() }} requirements={[profiles[kind as 'demand' | 'price']]} />}
         <label>Fecha objetivo<input type="date" required value={targetDate}
@@ -228,7 +230,7 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
       </fieldset>
       {kind === 'supply' && availabilityState.kind === 'success' && effectiveRange(availabilityState.availability) && targetDate >= effectiveRange(availabilityState.availability)!.min && targetDate <= effectiveRange(availabilityState.availability)!.max &&
         <p className="section-description">Horizonte seleccionado: <strong>{selectedHorizonDays(targetDate, availabilityState.availability)} días</strong></p>}
-      <button className="primary-button" disabled={runState.kind === 'loading'} type="submit">{runState.kind === 'loading' ? 'Consultando…' : runState.kind === 'error' ? 'Reintentar consulta' : 'Generar pronóstico'}</button>
+      <button className="primary-button" disabled={runState.kind === 'loading' || demandUnavailable} type="submit">{runState.kind === 'loading' ? 'Consultando…' : runState.kind === 'error' ? 'Reintentar consulta' : 'Generar pronóstico'}</button>
     </form>
     {kind === 'price' && <p className="section-description">Cada solicitud registra una nueva ejecución HU-09, incluso si repites la misma fecha.</p>}
     <ForecastRunOutcome title={config.title} state={runState} />

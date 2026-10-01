@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import type { XmMetric } from '@/integrations/xm-window-ingestion.service';
+import { evaluateXmDemaSin } from './dataset-validation-xm-demandasin.rules';
 
-export type XmCoverage = { historicalFrom: string; persistedUntil: string };
+export type XmCoverage = { historicalFrom: string; persistedUntil: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[] };
 
 export function localCalendarDate(now = new Date()) {
   const year = now.getFullYear(); const month = String(now.getMonth() + 1).padStart(2, '0'); const day = String(now.getDate()).padStart(2, '0');
@@ -22,17 +23,27 @@ function calendarDate(value: unknown): value is string {
 }
 
 export function coverageFromConsolidated(metric: XmMetric, rows: { energyDataset: { content: unknown } }[]): XmCoverage | null {
-  const dates: string[] = [];
+  const recordsByDate = new Map<string, Record<string, unknown>>();
   for (const row of rows) {
     if (!object(row.energyDataset.content) || !Array.isArray(row.energyDataset.content.records)) throw new Error(`Invalid ${metric} consolidated content.`);
     for (const record of row.energyDataset.content.records) {
       if (!object(record) || !calendarDate(record.fecha_xm)) throw new Error(`Invalid ${metric} consolidated date.`);
-      dates.push(record.fecha_xm);
+      const existing = recordsByDate.get(record.fecha_xm);
+      if (metric === 'DemaSIN' && existing && existing.demanda_kwh !== record.demanda_kwh) throw new Error('Conflicting DemaSIN consolidated value.');
+      if (!existing) recordsByDate.set(record.fecha_xm, record);
     }
   }
+  const dates = [...recordsByDate.keys()];
   if (dates.length === 0) return null;
   dates.sort();
-  return { historicalFrom: dates[0]!, persistedUntil: dates.at(-1)! };
+  const latestReceivedDate = dates.at(-1)!;
+  let latestIndividuallyUsableDate = latestReceivedDate; let semanticExcludedDates: string[] = [];
+  if (metric === 'DemaSIN') {
+    const evaluation = evaluateXmDemaSin(dates.map(date => recordsByDate.get(date)!));
+    latestIndividuallyUsableDate = evaluation.report.semanticValidation.latestIndividuallyUsableDate ?? dates[0]!;
+    semanticExcludedDates = [...evaluation.report.semanticValidation.semanticExcludedDates];
+  }
+  return { historicalFrom: dates[0]!, persistedUntil: latestReceivedDate, latestReceivedDate, latestIndividuallyUsableDate, semanticExcludedDates };
 }
 
 export async function readXmCoverage(metric: XmMetric): Promise<XmCoverage | null> {

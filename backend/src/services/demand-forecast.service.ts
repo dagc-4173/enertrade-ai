@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { loadModel, type ForecastModel } from '@/models/xm-demandasin-ridge/model-loader';
 import { calendarDate, ForecastError, object, previousDate } from './forecast.contract';
+import { evaluateXmDemaSin } from './dataset-validation-xm-demandasin.rules';
+import { demandD1FeatureDates, demandEligibilityIndex, isDemandForecastSampleEligible } from './demand-semantic-eligibility';
 type StoredPrepared = { id: number; sourceDatasetId: number; profileId: string; profileVersion: string; sourceRulesetId: string; sourceRulesetVersion: string; content: unknown };
 export function createDemandForecastService(read: (id: number) => Promise<StoredPrepared | null>, model: () => ForecastModel = loadModel) {
   return async (input: unknown) => {
@@ -20,8 +22,11 @@ export function createDemandForecastService(read: (id: number) => Promise<Stored
       if (!object(r) || !calendarDate(r.fecha_xm) || typeof r.demanda_kwh !== 'number' || !Number.isFinite(r.demanda_kwh)) return bad();
       if (values.has(r.fecha_xm)) return bad(); values.set(r.fecha_xm, r.demanda_kwh);
     }
-    const history = [1,7,14,28].map(lag => values.get(previousDate(input.targetDate,lag)));
+    const required = demandD1FeatureDates(input.targetDate);
+    const history = required.featureDates.map(date => values.get(date));
     if (history.some(v => v === undefined)) throw new ForecastError(422,'FORECAST_DATA_INSUFFICIENT');
+    const eligibility = demandEligibilityIndex([...values.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([date, value]) => ({ date, value })));
+    if (!isDemandForecastSampleEligible({ eligibility, ...required })) throw new ForecastError(422, 'FORECAST_SEMANTIC_DATA_UNAVAILABLE');
     // Calendar weekday only, not an observation timestamp. Monday=0.
     const weekday = (new Date(input.targetDate+'T00:00:00Z').getUTCDay()+6)%7;
     const x = [...history as number[],Math.sin(2*Math.PI*weekday/7),Math.cos(2*Math.PI*weekday/7)];

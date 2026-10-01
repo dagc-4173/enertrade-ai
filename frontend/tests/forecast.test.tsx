@@ -35,9 +35,9 @@ const metrics = { status: 'available', modelId: 'xm-gene-ridge-direct-h4-v2', mo
 const demandMetrics = { ...metrics, modelId: 'xm-demandasin-ridge', forecastType: 'aggregate_demand_proxy', target: 'demanda_kwh', horizonDays: 1,
   training: { ...metrics.training, effectiveRows: 337 }, scope: { aggregation: 'SIN', personalized: false, zonalFallback: false, confidenceStatus: 'not_defined' } }
 const availability = [
-  { series: 'Gene', currentDate: '2026-09-20', latestObservationDate: '2026-09-20', nextForecastDate: '2026-09-21', supportedHorizonDays: 7, modelMinTargetDate: '2026-09-21', modelMaxTargetDate: '2026-09-27', effectiveFutureMinDate: '2026-09-21', effectiveFutureMaxDate: '2026-09-27', hasFutureForecastWindow: true, dataFreshnessDays: 0 },
-  { series: 'DemaSIN', currentDate: '2026-09-20', latestObservationDate: '2026-09-16', nextForecastDate: '2026-09-17', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-17', modelMaxTargetDate: '2026-09-17', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 4 },
-  { series: 'PrecBolsNaci', currentDate: '2026-09-20', latestObservationDate: '2026-09-15', nextForecastDate: '2026-09-16', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-16', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 5 },
+  { series: 'Gene', currentDate: '2026-09-20', latestObservationDate: '2026-09-20', latestReceivedDate: '2026-09-20', latestIndividuallyUsableDate: '2026-09-20', semanticExcludedDates: [], eligibleFutureTargetDates: ['2026-09-21','2026-09-22','2026-09-23','2026-09-24','2026-09-25','2026-09-26','2026-09-27'], nextForecastDate: '2026-09-21', supportedHorizonDays: 7, modelMinTargetDate: '2026-09-21', modelMaxTargetDate: '2026-09-27', effectiveFutureMinDate: '2026-09-21', effectiveFutureMaxDate: '2026-09-27', hasFutureForecastWindow: true, dataFreshnessDays: 0 },
+  { series: 'DemaSIN', currentDate: '2026-10-01', latestObservationDate: '2026-09-27', latestReceivedDate: '2026-09-29', latestIndividuallyUsableDate: '2026-09-27', semanticExcludedDates: ['2026-09-16','2026-09-28','2026-09-29'], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-28', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-28', modelMaxTargetDate: '2026-09-28', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 4 },
+  { series: 'PrecBolsNaci', currentDate: '2026-09-20', latestObservationDate: '2026-09-15', latestReceivedDate: '2026-09-15', latestIndividuallyUsableDate: '2026-09-15', semanticExcludedDates: [], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-16', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-16', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 5 },
 ]
 const originalFetch = globalThis.fetch
 afterEach(() => { globalThis.fetch = originalFetch })
@@ -150,6 +150,13 @@ test('Oferta availability renders experimental D+1..D+7 range and blocks D+8', (
   expect(lastForecastDate(gene)).toBe('2026-09-27'); expect(exceedsSupportedHorizon('2026-09-28', gene)).toBe(true)
   expect(horizonMessage(gene)).toContain('hasta 7 días de horizonte')
   expect(horizonMessage(gene)).not.toContain('datos históricos insuficientes')
+})
+test('Demanda availability distinguishes received XM data from semantically usable observations', () => {
+  const html = renderToStaticMarkup(<ForecastAvailabilityView state={{ kind: 'success', availability: availability[1]! }} />)
+  expect(html).toContain('Último dato recibido de XM'); expect(html).toContain('29/09/2026')
+  expect(html).toContain('Última observación individualmente utilizable'); expect(html).toContain('27/09/2026')
+  for (const date of ['16/09/2026','28/09/2026','29/09/2026']) expect(html).toContain(date)
+  expect(html).toContain('todas sus observaciones fuente utilizables')
 })
 test('ForecastRunOutcome expresa loading, éxito con 24 predicciones y trazabilidad, e insuficiencia/inconsistencia sin ocultar el código', () => {
   const loadingHtml = renderToStaticMarkup(<ForecastRunOutcome title="Oferta energética" state={{ kind: 'loading' }} />)

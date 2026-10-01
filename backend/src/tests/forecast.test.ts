@@ -29,7 +29,7 @@ const legacyFeatures = (get:(date:string,period:number)=>number|undefined,origin
  if(values.some(value=>value===undefined))return null;
  return {values:values as number[],sourceObservations:[{date:origin,period},{date:weekly,period},{date:origin,period:24}]};
 };
-const service = createForecastService(read, horizonDays => ({...loader(),horizonDays,modelVersion:'1.0.0-experimental',scaler:{...loader().scaler,ddof:0}} as any), async () => coverage, legacyFeatures);
+const service = createForecastService(read, horizonDays => ({...loader(),horizonDays,modelVersion:'1.0.0-experimental',scaler:{...loader().scaler,ddof:0}} as any), async () => coverage ? ({ ...coverage, latestReceivedDate: coverage.persistedUntil, latestIndividuallyUsableDate: coverage.persistedUntil, semanticExcludedDates: [] }) : null, legacyFeatures);
 const app = express(); app.use('/forecasts',createForecastRouter(service));
 const server = app.listen(0,'127.0.0.1');
 await new Promise<void>(r=>server.listening?r():server.once('listening',r));

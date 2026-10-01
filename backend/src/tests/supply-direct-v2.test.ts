@@ -10,7 +10,7 @@ import { predictV2, samplesV2 } from '@/experiments/hu04-multihorizon-v2';
 const corpus = parseCsv(readFileSync(new URL('../../../docs/evidencias/hu-04-multihorizon/corpus/xm-gene-2024-01-01_2026-09-20.csv', import.meta.url), 'utf8'));
 const prepared = { id: 68, sourceDatasetId: 198, profileId: 'xm_gene_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_gene_base', sourceRulesetVersion: '1.0.0', content: { variables: { minimum: [{name:'fecha_xm',type:'string',representation:'YYYY-MM-DD'},{name:'hora_xm',type:'number',representation:'integer 1..24'},{name:'energia_kwh',type:'number',unit:'kWh'}] }, records: corpus.map((record, sourceRecordIndex) => ({ ...record, sourceRecordIndex })) } };
 const origin = '2026-06-01';
-const service = createForecastService(async () => [prepared], loadDirectSupplyModel, async () => ({ historicalFrom: '2024-01-01', persistedUntil: origin }));
+const service = createForecastService(async () => [prepared], loadDirectSupplyModel, async () => ({ historicalFrom: '2024-01-01', persistedUntil: origin, latestReceivedDate: origin, latestIndividuallyUsableDate: origin, semanticExcludedDates: [] }));
 const app = express(); app.use('/forecasts', createForecastRouter(service));
 const server = app.listen(0, '127.0.0.1'); await new Promise<void>(resolve => server.listening ? resolve() : server.once('listening', resolve));
 const address = server.address(); if (!address || typeof address === 'string') throw new Error('Expected listener.'); const url = `http://127.0.0.1:${address.port}/forecasts/supply`;

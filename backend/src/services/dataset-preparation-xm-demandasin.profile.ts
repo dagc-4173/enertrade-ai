@@ -9,10 +9,14 @@ export const sourceRulesetVersion = '1.0.0';
 const minimum = ['fecha_xm', 'demanda_kwh'];
 
 export function consistentReport(report: unknown, status: string): boolean {
-  return status === 'aprobado' && isPlainObject(report) && report.rulesetId === sourceRulesetId &&
-    report.rulesetVersion === sourceRulesetVersion && Number.isInteger(report.recordCount) &&
-    typeof report.recordCount === 'number' && report.recordCount > 0 && report.errorCount === 0 &&
-    report.warningCount === 0 && Array.isArray(report.issues) && report.issues.length === 0;
+  if ((status !== 'aprobado' && status !== 'advertencia') || !isPlainObject(report) || report.rulesetId !== sourceRulesetId ||
+    report.rulesetVersion !== sourceRulesetVersion || !Number.isInteger(report.recordCount) ||
+    typeof report.recordCount !== 'number' || report.recordCount <= 0 || report.errorCount !== 0 ||
+    typeof report.warningCount !== 'number' || !Number.isInteger(report.warningCount) || report.warningCount < 0 || !Array.isArray(report.issues) ||
+    !isPlainObject(report.semanticValidation) || !Array.isArray(report.semanticValidation.semanticExcludedDates)) return false;
+  const semanticIssues = report.issues.every(issue => isPlainObject(issue) && issue.code === 'WARNING_SEMANTIC_ANOMALY' && issue.severity === 'warning' && typeof issue.date === 'string');
+  return semanticIssues && report.warningCount === report.issues.length && report.semanticValidation.severeAnomalyCount === report.warningCount &&
+    (status === 'aprobado' ? report.warningCount === 0 && report.semanticValidation.status === 'usable' : report.warningCount > 0 && report.semanticValidation.status === 'review_required');
 }
 
 export function checkContent(content: unknown) {
@@ -23,13 +27,14 @@ export function checkContent(content: unknown) {
   if (!minimum.every(name => columns.some((column: unknown) => isPlainObject(column) && column.name === name && column.optional === false))) {
     throw new DatasetPreparationError(422, 'PREPARATION_PROFILE_NOT_APPLICABLE', 'El perfil no aplica a las columnas declaradas.');
   }
-  if (!hasDatasetStructure(content) || evaluateXmDemaSin(content.records).status !== 'aprobado') {
+  if (!hasDatasetStructure(content) || evaluateXmDemaSin(content.records).status === 'rechazado') {
     throw new DatasetPreparationError(409, 'DATASET_CONTENT_INCONSISTENT', 'El contenido almacenado es inconsistente con la validación.');
   }
   return content;
 }
 
 export function prepareContent(content: ReturnType<typeof checkContent>) {
+  const semanticValidation = evaluateXmDemaSin(content.records).report.semanticValidation;
   return {
     content: {
       variables: {
@@ -47,6 +52,7 @@ export function prepareContent(content: ReturnType<typeof checkContent>) {
       temporalIdentity: { fields: ['fecha_xm'], representation: 'calendar-date', preserved: true },
       variableSelection: { minimum, optionalContext: [], unusedColumns: content.columns.map(column => column.name).filter(name => !minimum.includes(name)) },
       excludedOptionalContext: [], generatedFeatures: [],
+      semanticEligibility: { policy: 'per_observation', rule: semanticValidation.rule, latestIndividuallyUsableDate: semanticValidation.latestIndividuallyUsableDate, semanticExcludedDates: semanticValidation.semanticExcludedDates },
     },
   };
 }

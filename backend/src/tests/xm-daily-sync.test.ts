@@ -1,10 +1,17 @@
 import { expect, test } from 'bun:test';
 import { createXmDailySyncService, type XmDailySyncDependencies, type XmSyncMetric } from '@/services/xm-daily-sync.service';
+import { coverageFromConsolidated } from '@/services/xm-coverage.service';
 
-const coverage = (persistedUntil = '2026-09-21') => ({ historicalFrom: '2024-01-01', persistedUntil });
+const coverage = (persistedUntil = '2026-09-21', individuallyUsableUntil = persistedUntil, semanticExcludedDates: string[] = []) => ({ historicalFrom: '2024-01-01', persistedUntil, latestReceivedDate: persistedUntil, latestIndividuallyUsableDate: individuallyUsableUntil, semanticExcludedDates });
 const records = (metric: XmSyncMetric, day: string, complete = true) => metric === 'DemaSIN'
   ? [{ date: day, hour: null, value: 1 }]
   : Array.from({ length: complete ? 24 : 23 }, (_, index) => ({ date: day, hour: index + 1, value: index + 1 }));
+
+test('DemaSIN coverage preserves latest received and excludes only severe observations', () => {
+  const normal = Array.from({ length: 15 }, (_, index) => ({ fecha_xm: `2026-09-${String(index + 13).padStart(2, '0')}`, demanda_kwh: 220_000_000 + (index % 3) * 2_000_000 }));
+  const result = coverageFromConsolidated('DemaSIN', [{ energyDataset: { content: { records: [...normal, { fecha_xm: '2026-09-28', demanda_kwh: 138_000 }, { fecha_xm: '2026-09-29', demanda_kwh: 11_310 }] } } }]);
+  expect(result).toEqual({ historicalFrom: '2026-09-13', persistedUntil: '2026-09-29', latestReceivedDate: '2026-09-29', latestIndividuallyUsableDate: '2026-09-27', semanticExcludedDates: ['2026-09-28','2026-09-29'] });
+});
 
 function dependencies(overrides: Partial<XmDailySyncDependencies> = {}) {
   const calls = { query: [] as string[], ingest: [] as string[], materialize: [] as string[], prepare: [] as number[] };
@@ -106,10 +113,35 @@ test('validation rejection never prepares the consolidated dataset', async () =>
 test('forecast availability reports the actual latest observation and only D+1', async () => {
   const { service } = dependencies({ readCoverage: async metric => coverage(metric === 'DemaSIN' ? '2026-09-16' : '2026-09-15') });
   await expect(service.availability()).resolves.toEqual([
-    { series: 'Gene', currentDate: '2026-09-23', latestObservationDate: '2026-09-15', nextForecastDate: '2026-09-16', supportedHorizonDays: 7, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-22', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 8 },
-    { series: 'DemaSIN', currentDate: '2026-09-23', latestObservationDate: '2026-09-16', nextForecastDate: '2026-09-17', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-17', modelMaxTargetDate: '2026-09-17', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 7 },
-    { series: 'PrecBolsNaci', currentDate: '2026-09-23', latestObservationDate: '2026-09-15', nextForecastDate: '2026-09-16', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-16', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 8 },
+    { series: 'Gene', currentDate: '2026-09-23', latestObservationDate: '2026-09-15', latestReceivedDate: '2026-09-15', latestIndividuallyUsableDate: '2026-09-15', semanticExcludedDates: [], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-16', supportedHorizonDays: 7, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-22', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 8 },
+    { series: 'DemaSIN', currentDate: '2026-09-23', latestObservationDate: '2026-09-16', latestReceivedDate: '2026-09-16', latestIndividuallyUsableDate: '2026-09-16', semanticExcludedDates: [], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-17', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-17', modelMaxTargetDate: '2026-09-17', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 7 },
+    { series: 'PrecBolsNaci', currentDate: '2026-09-23', latestObservationDate: '2026-09-15', latestReceivedDate: '2026-09-15', latestIndividuallyUsableDate: '2026-09-15', semanticExcludedDates: [], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-16', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-16', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 8 },
   ]);
+});
+
+test('DemaSIN availability distinguishes receipt, individual usability and sample eligibility', async () => {
+  const { service } = dependencies({ now: () => new Date('2026-10-01T12:00:00'), readCoverage: async metric => metric === 'DemaSIN' ? coverage('2026-09-29', '2026-09-27', ['2026-09-16','2026-09-28','2026-09-29']) : coverage('2026-09-29') });
+  const demand = (await service.availability()).find(value => value.series === 'DemaSIN')!;
+  expect(demand).toMatchObject({ latestReceivedDate: '2026-09-29', latestIndividuallyUsableDate: '2026-09-27', latestObservationDate: '2026-09-27', semanticExcludedDates: ['2026-09-16','2026-09-28','2026-09-29'], eligibleFutureTargetDates: [], hasFutureForecastWindow: false, dataFreshnessDays: 4 });
+});
+
+test('semantic warning persists and prepares DemaSIN with per-observation metadata', async () => {
+  const { service, calls } = dependencies({
+    readCoverage: async () => coverage('2026-09-27'),
+    query: async input => ({ records: input.startDate === '2026-09-29' ? records(input.dataset, input.startDate) : [] }),
+    validate: async () => ({ status: 'advertencia', canProceed: true, semanticValidation: { latestIndividuallyUsableDate: '2026-09-27', semanticExcludedDates: ['2026-09-28','2026-09-29'] } }),
+    now: () => new Date('2026-10-01T12:00:00'),
+  });
+  const result = (await service.sync('DemaSIN')).metrics[0]!;
+  expect(result).toMatchObject({ status: 'synchronized', providerAvailableUntil: '2026-09-29', persistedUntil: '2026-09-29', latestIndividuallyUsableDate: '2026-09-27', semanticExcludedDates: ['2026-09-28','2026-09-29'], validationStatus: 'advertencia' });
+  expect(calls.ingest).toEqual(['DemaSIN:2026-09-28:2026-09-29']); expect(calls.prepare).toEqual([970]);
+});
+
+test('received anomalous DemaSIN coverage remains idempotent without reingestion', async () => {
+  const { service, calls } = dependencies({ readCoverage: async () => coverage('2026-09-29', '2026-09-27'), query: async () => ({ records: [] }), now: () => new Date('2026-10-01T12:00:00') });
+  const result = (await service.sync('DemaSIN')).metrics[0]!;
+  expect(result).toMatchObject({ status: 'up_to_date', persistedUntil: '2026-09-29', latestIndividuallyUsableDate: '2026-09-27' });
+  expect(calls.ingest).toEqual([]); expect(calls.materialize).toEqual([]); expect(calls.prepare).toEqual([]);
 });
 
 test('forecast availability marks stale coverage without an effective future window', async () => {
@@ -137,4 +169,9 @@ test.each([
     effectiveFutureMaxDate: effectiveMax,
     hasFutureForecastWindow: hasFuture,
   });
+});
+
+test('DemaSIN coverage recovers individual usability after an earlier severe anomaly', () => {
+  const records = Array.from({ length: 18 }, (_, index) => ({ fecha_xm: `2026-09-${String(index + 1).padStart(2, '0')}`, demanda_kwh: index === 14 ? 433_980 : 220_000_000 + (index % 3) * 2_000_000 }));
+  expect(coverageFromConsolidated('DemaSIN', [{ energyDataset: { content: { records } } }])).toMatchObject({ latestReceivedDate: '2026-09-18', latestIndividuallyUsableDate: '2026-09-18', semanticExcludedDates: ['2026-09-15'] });
 });
