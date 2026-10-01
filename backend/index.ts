@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { app } from "@/app";
+import { xmDailyScheduler } from "@/services/xm-daily-scheduler.service";
 
 const rawPort = process.env.PORT;
 const port = rawPort === undefined ? 3000 : Number(rawPort);
@@ -10,4 +11,5 @@ if (!Number.isSafeInteger(port) || port < 1 || port > 65535) {
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
+    xmDailyScheduler.start();
 })
