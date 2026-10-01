@@ -1,0 +1,40 @@
+{
+  "experimentId": "hu-06-multihorizon-v2",
+  "corpus": {
+    "firstDate": "2024-01-01",
+    "lastDate": "2026-09-29",
+    "observations": 1003,
+    "file": "docs/evidencias/hu-06-multihorizon/corpus/xm-demandasin-2024-01-01_2026-09-29.csv",
+    "sha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+    "source": {
+      "consolidatedDatasetId": 9,
+      "energyDatasetId": 202,
+      "contentHash": "5741c643992d4d382bef640ed20b04dd78e9625fe6614817008177d6049bc598",
+      "validationStatus": "aprobado",
+      "validationReport": {
+        "issues": [],
+        "rulesetId": "xm_demandasin_base",
+        "errorCount": 0,
+        "recordCount": 1003,
+        "warningCount": 0,
+        "rulesetVersion": "1.0.0"
+      }
+    }
+  },
+  "partitions": {
+    "train": {
+      "start": "2024-02-04",
+      "end": "2026-03-31"
+    },
+    "validation": {
+      "start": "2026-04-01",
+      "end": "2026-05-31"
+    },
+    "externalHoldout": {
+      "start": "2026-06-01",
+      "end": "2026-09-29"
+    }
+  },
+  "v1ResultsFile": "docs/evidencias/hu-06-multihorizon/results.json",
+  "generatedAt": "2026-10-01T06:38:39.688Z"
+}

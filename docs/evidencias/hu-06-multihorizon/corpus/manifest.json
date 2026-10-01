@@ -1,0 +1,32 @@
+{
+  "experimentId": "hu-06-multihorizon-v1",
+  "provider": "XM/SINERGOX",
+  "source": {
+    "consolidatedDatasetId": 9,
+    "energyDatasetId": 202,
+    "contentHash": "5741c643992d4d382bef640ed20b04dd78e9625fe6614817008177d6049bc598",
+    "validationStatus": "aprobado",
+    "validationReport": {
+      "issues": [],
+      "rulesetId": "xm_demandasin_base",
+      "errorCount": 0,
+      "recordCount": 1003,
+      "warningCount": 0,
+      "rulesetVersion": "1.0.0"
+    }
+  },
+  "extractedAt": "2026-10-01T06:36:01.134Z",
+  "corpus": {
+    "file": "docs/evidencias/hu-06-multihorizon/corpus/xm-demandasin-2024-01-01_2026-09-29.csv",
+    "sha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+    "range": {
+      "start": "2024-01-01",
+      "end": "2026-09-29"
+    },
+    "observations": 1003,
+    "continuousDays": 1003,
+    "gaps": 0,
+    "duplicates": 0,
+    "missingValues": 0
+  }
+}

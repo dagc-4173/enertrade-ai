@@ -1,0 +1,19 @@
+{
+  "provider": "XM/SINERGOX",
+  "source": {
+    "consolidatedDatasetId": 7,
+    "energyDatasetId": 198,
+    "contentHash": "429666297f47e87dbb7348412591d811347404413654326dc55927a37e4a407e"
+  },
+  "extractedAt": "2026-09-23T14:24:34.540Z",
+  "corpus": {
+    "file": "docs/evidencias/hu-04-multihorizon/corpus/xm-gene-2024-01-01_2026-09-20.csv",
+    "sha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+    "range": "2024-01-01..2026-09-20",
+    "observations": 23856,
+    "completeDays": 994,
+    "gaps": 0,
+    "duplicates": 0,
+    "incompleteDays": 0
+  }
+}

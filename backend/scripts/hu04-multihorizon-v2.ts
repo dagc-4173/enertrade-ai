@@ -1,0 +1,48 @@
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { parseCsv, sha256, verifyCorpus } from '@/experiments/hu04-multihorizon';
+import { experimentV2, omittedCandidatesV2, orderedFeaturesV2 } from '@/experiments/hu04-multihorizon-v2';
+
+const root = resolve(import.meta.dir, '..', '..');
+const v1 = resolve(root, 'docs/evidencias/hu-04-multihorizon');
+const v2 = resolve(root, 'docs/evidencias/hu-04-multihorizon-v2');
+const v1Manifest = JSON.parse(readFileSync(resolve(v1, 'corpus/manifest.json'), 'utf8')) as any;
+const v1Results = JSON.parse(readFileSync(resolve(v1, 'results.json'), 'utf8')) as any;
+const corpusPath = resolve(root, v1Manifest.corpus.file);
+const corpusText = readFileSync(corpusPath, 'utf8');
+const corpusHash = sha256(corpusText);
+if (corpusHash !== v1Manifest.corpus.sha256) throw new Error('V1 corpus hash mismatch; V2 stopped before evaluation.');
+const records = parseCsv(corpusText); const corpus = verifyCorpus(records);
+if (corpus.firstDate !== '2024-01-01' || corpus.lastDate !== '2026-09-20' || corpus.completeDays !== 994 || corpus.observations !== 23856) throw new Error('V1 corpus integrity mismatch; V2 stopped.');
+mkdirSync(v2, { recursive: true });
+
+const output = experimentV2(records, corpusHash);
+const comparison: Record<string, unknown> = {};
+const classification = (percent: number) => percent <= -1 ? 'mejoró' : percent >= 1 ? 'empeoró' : 'sin cambio relevante';
+for (const [horizon, v2Result] of Object.entries(output.results) as [string, any][]) {
+  const v1Result = v1Results.results[horizon];
+  const validationV1 = v1Result.validation.ridge.find((entry: any) => entry.alpha === v1Result.validation.selectedAlpha).metrics;
+  const validationV2 = v2Result.validation.ridge.find((entry: any) => entry.alpha === v2Result.validation.selectedAlpha).metrics;
+  const validationMaeChangePercent = 100 * (validationV2.MAE - validationV1.MAE) / validationV1.MAE;
+  const holdoutMaeChangePercent = 100 * (v2Result.externalHoldout.ridge.MAE - v1Result.externalHoldout.ridge.MAE) / v1Result.externalHoldout.ridge.MAE;
+  comparison[horizon] = { horizonDays: Number(horizon), validation: { v1: validationV1, v2: validationV2, maeChangePercent: validationMaeChangePercent, assessment: classification(validationMaeChangePercent) }, externalHoldout: { v1: v1Result.externalHoldout.ridge, v2: v2Result.externalHoldout.ridge, maeChangePercent: holdoutMaeChangePercent, assessment: classification(holdoutMaeChangePercent) }, candidateV1: v1Result.candidate, candidateV2: v2Result.candidate };
+}
+const results = { experimentId: 'hu-04-multihorizon-v2', hypothesis: 'Richer observable temporal features improve direct horizons h2..h7 without recursion.', corpus: { reusedFrom: 'hu-04-multihorizon', file: v1Manifest.corpus.file, sha256: corpusHash, source: v1Manifest.source, range: v1Manifest.corpus.range, observations: corpus.observations, completeDays: corpus.completeDays }, partitions: v1Results.results['1'].ranges, orderedFeatures: orderedFeaturesV2, omittedCandidates: omittedCandidatesV2, results: output.results, comparisonV1V2: comparison };
+writeFileSync(resolve(v2, 'results.json'), `${JSON.stringify(results, null, 2)}\n`, 'utf8');
+writeFileSync(resolve(v2, 'manifest.json'), `${JSON.stringify({ experimentId: results.experimentId, corpus: results.corpus, partitions: results.partitions, v1ResultsFile: 'docs/evidencias/hu-04-multihorizon/results.json', generatedAt: new Date().toISOString() }, null, 2)}\n`, 'utf8');
+
+const validationRows = Object.values(output.results).map((r: any) => { const selected = r.validation.ridge.find((entry: any) => entry.alpha === r.validation.selectedAlpha); const baseline = r.validation.baselines[r.validation.baselineReference]; const v1Selected = v1Results.results[String(r.horizonDays)].validation.ridge.find((entry: any) => entry.alpha === v1Results.results[String(r.horizonDays)].validation.selectedAlpha).metrics; return `| ${r.horizonDays} | ${r.validation.selectedAlpha} | ${r.validation.baselineReference} | ${baseline.MAE.toFixed(2)} | ${v1Selected.MAE.toFixed(2)} | ${selected.metrics.MAE.toFixed(2)} | ${(100 * (selected.metrics.MAE - v1Selected.MAE) / v1Selected.MAE).toFixed(2)}% |`; }).join('\n');
+const holdoutRows = Object.values(output.results).map((r: any) => { const h = String(r.horizonDays); const v1r = v1Results.results[h]; const baseline = r.externalHoldout.baselines[r.validation.baselineReference]; const delta = 100 * (r.externalHoldout.ridge.MAE - v1r.externalHoldout.ridge.MAE) / v1r.externalHoldout.ridge.MAE; return `| ${r.horizonDays} | ${r.validation.baselineReference} | ${baseline.MAE.toFixed(2)} | ${v1r.externalHoldout.ridge.MAE.toFixed(2)} | ${r.externalHoldout.ridge.MAE.toFixed(2)} | ${v1r.externalHoldout.ridge.WAPE.toFixed(4)} | ${r.externalHoldout.ridge.WAPE.toFixed(4)} | ${delta.toFixed(2)}% | ${classification(delta)} | ${v1r.candidate} | ${r.candidate} |`; }).join('\n');
+const samplesRows = Object.values(output.results).map((r: any) => `| ${r.horizonDays} | ${r.samples.train} | ${r.samples.validation} | ${r.samples.externalHoldout} |`).join('\n');
+const importance = Object.values(output.results).map((r: any) => `### h=${r.horizonDays}\n\n| feature | standardized coefficient | absolute |\n|---|---:|---:|\n${r.coefficientImportance.map((item: any) => `| ${item.feature} | ${item.standardizedCoefficient.toFixed(6)} | ${item.absoluteStandardizedCoefficient.toFixed(6)} |`).join('\n')}`).join('\n\n');
+
+writeFileSync(resolve(v2, 'README.md'), `# HU-04 — Experimento directo multi-horizonte V2\n\n## Hipótesis\n\nLas features mínimas V1 no capturan suficiente dinámica reciente, periodicidad semanal y estabilidad temporal para h2..h7. V2 cambia solo features; conserva corpus, particiones, baselines, Ridge, grid alpha y promoción V1.\n\n## Corpus y particiones\n\nReutiliza el snapshot V1 únicamente tras verificar SHA-256 \`${corpusHash}\`, continuidad, 994 días y 23.856 observaciones. TRAIN/VALIDATION/HOLDOUT son idénticos a V1.\n\n| h | TRAIN | VALIDATION | HOLDOUT |\n|---:|---:|---:|---:|\n${samplesRows}\n\n## Features finales\n\n${orderedFeaturesV2.map(feature => `- \`${feature}\``).join('\n')}\n\nSe omitieron ` + '`mean_3d` y las tendencias t−(t−1), t−(t−7) por ser combinaciones lineales exactas de niveles ya incluidos. Los estadísticos móviles terminan en t. Seno/coseno de weekday usa calendario conocido de targetDate, no una observación futura.' + `\n`, 'utf8');
+writeFileSync(resolve(v2, 'resultados.md'), `# Resultados V2\n\n## Selección VALIDATION\n\n| h | alpha V2 | baseline | MAE baseline | MAE V1 | MAE V2 | Δ V2/V1 |\n|---:|---:|---|---:|---:|---:|---:|\n${validationRows}\n\n## EXTERNAL HOLDOUT: V1 vs V2\n\n| h | baseline | baseline MAE | Ridge V1 MAE | Ridge V2 MAE | WAPE V1 | WAPE V2 | Δ MAE V2/V1 | evaluación | candidate V1 | candidate V2 |\n|---:|---|---:|---:|---:|---:|---:|---:|---|---|---|\n${holdoutRows}\n\nLa clasificación diagnóstica se fijó antes de leer esta tabla: mejora <=−1%, empeora >=1%, otro resultado sin cambio relevante. No interviene en promoción.\n\n## Coeficientes estandarizados\n\nDiagnóstico únicamente; no se eliminan features después de observar holdout.\n\n${importance}\n`, 'utf8');
+writeFileSync(resolve(v2, 'pruebas.md'), `# Pruebas V2\n\nEjecutar \`bun test src/tests/hu04-multihorizon-v2.test.ts\`. Verifica hash/particiones V1, lags, rolling hasta t, h1/h7, anti-leakage, scaler TRAIN, selección alpha VALIDATION, holdout posterior, métricas finitas, paridad y ausencia de artefactos para candidatos false.\n`, 'utf8');
+
+for (const r of Object.values(output.results) as any[]) if (r.candidate) {
+  const path = resolve(root, `backend/src/models/${r.modelId}/1.0.0/model.json`); mkdirSync(dirname(path), { recursive: true });
+  const artifact = { modelId: r.modelId, modelVersion: '1.0.0-experimental', algorithm: 'ridge', experimentVersion: 'v2', hyperparameters: { alpha: r.validation.selectedAlpha }, horizonDays: r.horizonDays, forecastOriginDefinition: r.originDefinition, targetDefinition: r.targetDefinition, orderedFeatures: r.orderedFeatures, coefficients: r.artifact.coefficients, intercept: r.artifact.intercept, scaler: { ddof: 0, means: r.artifact.means, standardDeviations: r.artifact.standardDeviations }, trainingRange: r.ranges.train, validationRange: r.ranges.validation, externalHoldoutRange: r.ranges.externalHoldout, corpusHash, metrics: { validation: r.validation.ridge.find((entry: any) => entry.alpha === r.validation.selectedAlpha).metrics, externalHoldout: r.externalHoldout.ridge }, baselineReference: r.validation.baselineReference, promotionCriteria: { identicalToV1: true, unavailableRequired: 0, maeMultiplier: 1.05, wapeMultiplier: 1.25, strictMaeOrRmseImprovement: true, catastrophicErrorMultiplierOfTrainTargetStandardDeviation: 10 }, coefficientImportance: r.coefficientImportance, limitations: ['Experimental V2 artifact; not loaded by runtime.', 'Generation XM is a proxy for availability, not transactional supply.', 'No recursive forecasting or predicted features.', 'Feature importance is descriptive, not causal or post-hoc selection.', 'Academic/formal validation pending.'] };
+  writeFileSync(path, `${JSON.stringify(artifact, null, 2)}\n`, 'utf8');
+}
+console.log(JSON.stringify({ corpusHash, candidates: Object.values(output.results).filter((r: any) => r.candidate).map((r: any) => r.modelId) }, null, 2));

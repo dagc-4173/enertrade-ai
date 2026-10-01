@@ -1,0 +1,32 @@
+{
+  "experimentId": "hu-04-multihorizon-v2",
+  "corpus": {
+    "reusedFrom": "hu-04-multihorizon",
+    "file": "docs/evidencias/hu-04-multihorizon/corpus/xm-gene-2024-01-01_2026-09-20.csv",
+    "sha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+    "source": {
+      "consolidatedDatasetId": 7,
+      "energyDatasetId": 198,
+      "contentHash": "429666297f47e87dbb7348412591d811347404413654326dc55927a37e4a407e"
+    },
+    "range": "2024-01-01..2026-09-20",
+    "observations": 23856,
+    "completeDays": 994
+  },
+  "partitions": {
+    "train": {
+      "start": "2024-10-01",
+      "end": "2026-03-31"
+    },
+    "validation": {
+      "start": "2026-04-01",
+      "end": "2026-05-31"
+    },
+    "externalHoldout": {
+      "start": "2026-06-01",
+      "end": "2026-09-20"
+    }
+  },
+  "v1ResultsFile": "docs/evidencias/hu-04-multihorizon/results.json",
+  "generatedAt": "2026-09-24T13:16:41.576Z"
+}
