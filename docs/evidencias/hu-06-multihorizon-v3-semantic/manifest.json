@@ -1,0 +1,45 @@
+{
+  "experimentId": "hu-06-multihorizon-v3-semantic",
+  "evaluationType": "retrospective_technical_reevaluation",
+  "warning": "The 2026-06-01..2026-09-29 block is not an external virgin holdout; its anomalies were observed before this semantic policy was designed.",
+  "corpus": {
+    "file": "docs/evidencias/hu-06-multihorizon/corpus/xm-demandasin-2024-01-01_2026-09-29.csv",
+    "sha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+    "range": {
+      "start": "2024-01-01",
+      "end": "2026-09-29"
+    },
+    "observations": 1003,
+    "semanticExcludedDates": [
+      "2026-09-16",
+      "2026-09-28",
+      "2026-09-29"
+    ]
+  },
+  "semanticPolicy": {
+    "id": "demandasin_severe_drop_vs_trailing_median_v1",
+    "reference": "median_previous_valid_days",
+    "historicalWindowDays": 14,
+    "minimumHistoryDays": 7,
+    "minimumRatio": 0.2
+  },
+  "partitions": {
+    "train": {
+      "start": "2024-02-04",
+      "end": "2026-03-31"
+    },
+    "validation": {
+      "start": "2026-04-01",
+      "end": "2026-05-31"
+    },
+    "retrospectiveEvaluation": {
+      "start": "2026-06-01",
+      "end": "2026-09-29"
+    }
+  },
+  "originalResults": [
+    "docs/evidencias/hu-06-multihorizon/results.json",
+    "docs/evidencias/hu-06-multihorizon-v2/results.json"
+  ],
+  "generatedAt": "2026-10-01T15:27:35.960Z"
+}
