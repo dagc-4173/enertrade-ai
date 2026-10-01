@@ -1,0 +1,85 @@
+{
+  "experimentId": "hu-08-price-multihorizon-v2",
+  "corpus": {
+    "firstDate": "2024-01-01",
+    "lastDate": "2026-09-28",
+    "completeDays": 1002,
+    "observations": 24048,
+    "file": "docs/evidencias/hu-08-price-multihorizon-v1/corpus/xm-preciobolsnaci-2024-01-01_2026-09-28.csv",
+    "sha256": "2aca8e5868eaff50909c8154a842bfbe8a8db873976a90145e73e02aa7c9b02e",
+    "source": {
+      "consolidatedDatasetId": 12,
+      "energyDatasetId": 208,
+      "contentHash": "d30c2e24afd18576f8cc34a233e11d4fd59eb488a86f9697f5dd6e52f24b68b5",
+      "sourceWindowIds": [
+        3,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        106,
+        108
+      ],
+      "validationStatus": "aprobado",
+      "validationReport": {
+        "issues": [],
+        "rulesetId": "xm_preciobolsnaci_base",
+        "errorCount": 0,
+        "recordCount": 24048,
+        "warningCount": 0,
+        "rulesetVersion": "1.0.0"
+      }
+    }
+  },
+  "partitions": {
+    "train": {
+      "start": "2024-02-01",
+      "end": "2026-03-31"
+    },
+    "validation": {
+      "start": "2026-04-01",
+      "end": "2026-05-31"
+    },
+    "externalHoldout": {
+      "start": "2026-06-01",
+      "end": "2026-09-28"
+    }
+  },
+  "promotionCriteria": {
+    "unavailableRequired": 0,
+    "minimumMaeImprovementPercent": 1,
+    "maximumWapeMultiplier": 1,
+    "catastrophicErrorMultiplierOfTrainTargetStandardDeviation": 10
+  },
+  "v1ResultsFile": "docs/evidencias/hu-08-price-multihorizon-v1/results.json",
+  "generatedAt": "2026-10-01T15:43:01.624Z"
+}
