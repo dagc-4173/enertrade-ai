@@ -1,0 +1,5 @@
+# HU-06 Demanda V5: modelos experimentales congelados
+
+Fuente: tag `hu06-v5-preregistered`, commit `33ba66b508e6dca3516f94b04170f27be609f552`; cutoff `2026-10-01T19:02:43.949Z`. Corpus SHA-256 `18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735`. [h1](h1.json), [h2](h2.json), [h3](h3.json), [h4](h4.json), [h5](h5.json), [h6](h6.json) son modelos Ridge independientes **fuera del runtime**. Ningún h7, fallback ni integración. Cada archivo conserva parámetros, TRAIN/VALIDATION y fechas fuente de las muestras; no se leyó RETROSPECTIVE EVALUATION para decidir.
+
+[validation-report.json](validation-report.json) contiene exclusivamente métricas VALIDATION, grid alpha y baselines. No implica calidad prospectiva, sustitución de V2, ni validación académica. [dry-run.json](dry-run.json) contiene solo una prueba computacional h5/h6 del origen 27/09; **no es predicción prospectiva válida**, y no se agregó ningún registro al journal. Antes de cualquier captura hay que demostrar target aún desconocido y adquisición de fuentes posterior al cutoff aplicable, además de congelar la identidad de estos seis modelos.
