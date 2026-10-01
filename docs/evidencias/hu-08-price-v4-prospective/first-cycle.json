@@ -1,0 +1,25 @@
+{
+  "hu": "HU-08",
+  "status": "unavailable",
+  "observedNoLaterThan": "2026-10-01T17:08:07.9908052Z",
+  "preregistrationCommit": "414a7c5",
+  "preregistrationTag": "hu08-v4-preregistered",
+  "preregistrationCutoff": "2026-10-01T16:18:30.593Z",
+  "reason": "SOURCE_NOT_FETCHED_AFTER_PREREGISTRATION",
+  "coverage": {
+    "priceUntil": "2026-09-28",
+    "geneUntil": "2026-09-28",
+    "priceWindowId": 108,
+    "geneWindowId": 107,
+    "priceConsolidatedId": 12,
+    "geneConsolidatedId": 11,
+    "priceFetchedAt": "2026-10-01T15:06:23.602Z",
+    "geneFetchedAt": "2026-10-01T15:06:17.311Z",
+    "priceConsolidatedHash": "d30c2e24afd18576f8cc34a233e11d4fd59eb488a86f9697f5dd6e52f24b68b5",
+    "geneConsolidatedHash": "6c9dc85728240e587eeae5f5cd6ba1dc8f9067b927ac6a0791879e1b2dd3b2b7"
+  },
+  "appendedPredictions": 0,
+  "registryCreated": false,
+  "targetValuesConsulted": false,
+  "modelEvaluated": false
+}
