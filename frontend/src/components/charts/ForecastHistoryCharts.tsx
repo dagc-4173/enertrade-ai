@@ -21,16 +21,16 @@ function useRealSeries({ metric, from, to, granularity }: EnergySeriesRequest): 
 }
 
 export function SupplyHistoryChart({ result }: { result: SupplyForecast }) {
-  const d7 = offsetDate(result.targetDate, -7), d1 = offsetDate(result.targetDate, -1)
-  const state = useRealSeries({ metric: 'gene', from: d7, to: d1, granularity: 'hourly' })
-  let chart: ChartState = state.kind === 'loading' ? state : state.kind === 'error' ? state : { kind: 'empty', message: 'No hay historia suficiente para comparar D-7 y D-1.' }
+  const origin = result.forecastOriginDate, weekly = offsetDate(origin, -6)
+  const state = useRealSeries({ metric: 'gene', from: weekly, to: origin, granularity: 'hourly' })
+  let chart: ChartState = state.kind === 'loading' ? state : state.kind === 'error' ? state : { kind: 'empty', message: 'No hay historia observada suficiente para contextualizar el pronóstico.' }
   if (state.kind === 'success') {
     const build = (date: string) => state.value.points.filter(point => point.date === date && point.period !== undefined).map(point => ({ key: String(point.period), label: `P${point.period}`, value: point.value, detail: `${formatDateCO(point.date)}, periodo ${point.period}: ${formatEnergyKWh(point.value)}` }))
-    const d1Points = build(d1), d7Points = build(d7)
+    const originPoints = build(origin), weeklyPoints = build(weekly)
     const forecast = result.predictions.map(row => ({ key: String(row.hora_xm), label: `P${row.hora_xm}`, value: row.energia_kwh, detail: `${formatDateCO(result.targetDate)}, periodo ${row.hora_xm}: ${formatEnergyKWh(row.energia_kwh)}` }))
-    chart = d1Points.length === 24 && d7Points.length === 24 ? { kind: 'success', lines: [{ id: 'd1', label: `D-1 · ${formatDateCO(d1)}`, color: '#00652e', points: d1Points }, { id: 'd7', label: `D-7 · ${formatDateCO(d7)}`, color: '#2d4851', dash: '6 4', points: d7Points }, { id: 'forecast', label: `Pronóstico D · ${formatDateCO(result.targetDate)}`, color: '#b17800', dash: '2 3', points: forecast }] } : chart
+    chart = originPoints.length === 24 && weeklyPoints.length === 24 ? { kind: 'success', lines: [{ id: 'origin', label: `OBSERVADO · origen ${formatDateCO(origin)}`, color: '#00652e', points: originPoints }, { id: 'weekly', label: `OBSERVADO · t-6 ${formatDateCO(weekly)}`, color: '#2d4851', dash: '6 4', points: weeklyPoints }, { id: 'forecast', label: `PRONÓSTICO · ${formatDateCO(result.targetDate)}`, color: '#b17800', dash: '2 3', points: forecast }] } : chart
   }
-  return <SeriesChart title="Comparación de generación" description="Histórico XM de D-1 y D-7 frente al pronóstico del día objetivo, por periodo 1 a 24." unit="kWh" state={chart} />
+  return <SeriesChart title="Generación observada y pronóstico directo" description="Observaciones reales hasta el origen y pronóstico del único día objetivo solicitado; no se generan trayectorias intermedias." unit="kWh" state={chart} />
 }
 
 export function DemandHistoryChart({ result }: { result: DemandForecast }) {

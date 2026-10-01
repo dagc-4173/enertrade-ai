@@ -10,6 +10,7 @@
 .forecast-metadata { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; }
 .forecast-metadata dt { color: var(--color-muted); }
 .forecast-metadata dd { margin: 4px 0 0; overflow-wrap: anywhere; }
+.forecast-availability { margin: 16px 0; padding: 16px 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
 .forecast-panel .table-wrap { max-height: 440px; overflow: auto; }
 .forecast-metrics, .forecast-trace { border-top: 1px solid var(--color-border); margin-top: 24px; padding-top: 16px; }
 .forecast-trace p { overflow-wrap: anywhere; }

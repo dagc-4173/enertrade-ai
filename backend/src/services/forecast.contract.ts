@@ -7,12 +7,13 @@ export const messages = {
   FORECAST_PROFILE_NOT_APPLICABLE: 'El perfil del dataset no es compatible con el pronóstico.',
   FORECAST_DATA_INSUFFICIENT: 'No hay datos históricos suficientes para pronosticar el día solicitado.',
   FORECAST_DATE_NOT_SUPPORTED: 'La fecha debe ser posterior al periodo de entrenamiento del modelo.',
+  FORECAST_HORIZON_NOT_SUPPORTED: 'El modelo admite un horizonte de 1 día sobre la última observación real disponible.',
   PREPARED_DATASET_INCONSISTENT: 'El contenido del dataset preparado es inconsistente.',
   FORECAST_MODEL_INCOMPATIBLE: 'El modelo de pronóstico no está disponible o no es compatible.',
   FORECAST_FAILED: 'No fue posible generar el pronóstico.',
 } as const;
 export class ForecastError extends Error {
-  constructor(public readonly status: number, public readonly code: keyof typeof messages) { super(messages[code]); }
+  constructor(public readonly status: number, public readonly code: keyof typeof messages, message: string = messages[code]) { super(message); }
 }
 export function object(value: unknown): value is Record<string, any> { return value !== null && typeof value === 'object' && !Array.isArray(value); }
 export function calendarDate(value: unknown): value is string {

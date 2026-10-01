@@ -1,17 +1,24 @@
 export interface ForecastRequest { preparedDatasetId: number; targetDate: string }
+export interface SupplyForecastRequest { targetDate: string }
 
 interface ForecastBase extends ForecastRequest {
   status: 'available'
   sourceDatasetId: number
 }
 
-export interface SupplyForecast extends ForecastBase {
+export interface SupplyForecast extends SupplyForecastRequest {
+  status: 'available'
+  sourceArtifacts: { preparedDatasetId: number; sourceDatasetId: number }[]
+  forecastOriginDate: string
+  horizonDays: number
   forecastType: 'generation_availability_proxy'
   target: 'energia_kwh'
   unit: 'kWh'
   horizonPeriods: 24
   modelId: string
   modelVersion: string
+  modelStatus: 'experimental'
+  academicValidation: 'pending'
   predictions: { hora_xm: number; energia_kwh: number }[]
 }
 
@@ -70,6 +77,10 @@ export interface SupplyMetrics extends ModelMetricsBase {
   forecastType: 'generation_availability_proxy'
   target: 'energia_kwh'
   horizonPeriods: 24
+  horizonDays: number
+  modelStatus: 'experimental'
+  academicValidation: 'pending'
+  baselineReference: 'B_ORIGIN_0' | 'B_ORIGIN_6' | 'B_HISTORICAL_MEAN'
 }
 export interface DemandMetrics extends ModelMetricsBase {
   forecastType: 'aggregate_demand_proxy'

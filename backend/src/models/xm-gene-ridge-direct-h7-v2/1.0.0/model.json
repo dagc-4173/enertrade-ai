@@ -1,0 +1,812 @@
+{
+  "modelId": "xm-gene-ridge-direct-h7-v2",
+  "modelVersion": "1.0.0-experimental",
+  "algorithm": "ridge",
+  "experimentVersion": "v2",
+  "hyperparameters": {
+    "alpha": 100
+  },
+  "horizonDays": 7,
+  "forecastOriginDefinition": "end-of-calendar-day t; every historical source date <= t",
+  "targetDefinition": "energia_kwh(targetDate=t+7, hora_xm=1..24)",
+  "orderedFeatures": [
+    "energy_same_period_at_origin",
+    "energy_same_period_6_days_before_origin",
+    "energy_period24_at_origin",
+    "energy_same_period_1_day_before_origin",
+    "energy_same_period_2_days_before_origin",
+    "energy_same_period_7_days_before_origin",
+    "energy_same_period_13_days_before_origin",
+    "energy_same_period_14_days_before_origin",
+    "energy_same_period_27_days_before_origin",
+    "energy_same_period_28_days_before_origin",
+    "energy_same_period_mean_7d_ending_at_origin",
+    "energy_same_period_mean_14d_ending_at_origin",
+    "energy_same_period_std_7d_ending_at_origin",
+    "sin_2pi_hour_minus1_over24",
+    "cos_2pi_hour_minus1_over24",
+    "sin_2pi_target_weekday_over7",
+    "cos_2pi_target_weekday_over7"
+  ],
+  "coefficients": [
+    524931.7803625561,
+    17682.152523875444,
+    -33429.99210786976,
+    -19079.4232829114,
+    -25229.06413912146,
+    61559.945655759846,
+    -105410.62101356979,
+    160934.86088060896,
+    18406.33772812966,
+    198669.2615657985,
+    356380.41943865793,
+    -224743.04049154522,
+    57501.03605897652,
+    -89893.15987365715,
+    -12797.498787460152,
+    70643.90040711286,
+    -45655.47614598955
+  ],
+  "intercept": 9648648.363818608,
+  "scaler": {
+    "ddof": 0,
+    "means": [
+      9643535.88436552,
+      9644667.096267547,
+      9221297.725319967,
+      9642922.287219722,
+      9641975.886131207,
+      9644009.704423398,
+      9644744.737482507,
+      9644690.610110478,
+      9639862.04240711,
+      9639419.094453117,
+      9643578.120001215,
+      9643744.03367865,
+      520902.6007031518,
+      -7.397681221746311e-17,
+      -7.398949758109e-17,
+      0.0014293080118255226,
+      0.0011398351039455675
+    ],
+    "standardDeviations": [
+      1130832.9277275535,
+      1131837.19485388,
+      424376.97111628944,
+      1130929.8341585523,
+      1131153.645216273,
+      1131633.726763487,
+      1131250.2228847425,
+      1131479.1371297436,
+      1130009.5787524679,
+      1130151.1094096298,
+      983187.244858944,
+      972345.0711033222,
+      203770.05116637488,
+      0.7071067811865476,
+      0.7071067811865476,
+      0.7072491486725442,
+      0.706962021297167
+    ]
+  },
+  "trainingRange": {
+    "start": "2024-10-01",
+    "end": "2026-03-31"
+  },
+  "validationRange": {
+    "start": "2026-04-01",
+    "end": "2026-05-31"
+  },
+  "externalHoldoutRange": {
+    "start": "2026-06-01",
+    "end": "2026-09-20"
+  },
+  "corpusHash": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+  "metrics": {
+    "validation": {
+      "evaluable": 1464,
+      "unavailable": 0,
+      "MAE": 373607.37107404676,
+      "RMSE": 535264.7897028588,
+      "bias": -159626.01033447977,
+      "WAPE": 3.67862640253783,
+      "numeratorAbsoluteErrorKwh": 546961191.2524045,
+      "denominatorAbsoluteActualKwh": 14868625715.159985,
+      "maxAbsoluteErrorKwh": 2483711.8971308023,
+      "byPeriod": {
+        "1": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 250233.60491131427,
+          "RMSE": 324435.92878069915,
+          "bias": -156235.51417669255,
+          "WAPE": 2.6797372042890815,
+          "numeratorAbsoluteErrorKwh": 15264249.89959017,
+          "denominatorAbsoluteActualKwh": 569617419.02,
+          "maxAbsoluteErrorKwh": 796818.816556897,
+          "byPeriod": {}
+        },
+        "2": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 248193.55170003226,
+          "RMSE": 318405.70196983207,
+          "bias": -148875.9998172858,
+          "WAPE": 2.7490485556403486,
+          "numeratorAbsoluteErrorKwh": 15139806.653701968,
+          "denominatorAbsoluteActualKwh": 550728964.85,
+          "maxAbsoluteErrorKwh": 782358.184753025,
+          "byPeriod": {}
+        },
+        "3": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 238825.30716744438,
+          "RMSE": 311226.477875219,
+          "bias": -144419.12531012908,
+          "WAPE": 2.716635793313403,
+          "numeratorAbsoluteErrorKwh": 14568343.737214107,
+          "denominatorAbsoluteActualKwh": 536264146.00999993,
+          "maxAbsoluteErrorKwh": 755151.1268543424,
+          "byPeriod": {}
+        },
+        "4": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 245397.70602396646,
+          "RMSE": 312745.4854238955,
+          "bias": -145458.48090499523,
+          "WAPE": 2.836161210370026,
+          "numeratorAbsoluteErrorKwh": 14969260.067461954,
+          "denominatorAbsoluteActualKwh": 527800042.2799999,
+          "maxAbsoluteErrorKwh": 736872.4610966071,
+          "byPeriod": {}
+        },
+        "5": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 275679.3037186055,
+          "RMSE": 353934.19530935894,
+          "bias": -155005.59314318787,
+          "WAPE": 3.1570433235663073,
+          "numeratorAbsoluteErrorKwh": 16816437.526834935,
+          "denominatorAbsoluteActualKwh": 532664135.49999994,
+          "maxAbsoluteErrorKwh": 957893.1935656946,
+          "byPeriod": {}
+        },
+        "6": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 333979.6451026988,
+          "RMSE": 456600.4736207523,
+          "bias": -122886.79733583485,
+          "WAPE": 3.7305664735721984,
+          "numeratorAbsoluteErrorKwh": 20372758.35126463,
+          "denominatorAbsoluteActualKwh": 546103614.4400002,
+          "maxAbsoluteErrorKwh": 1449325.2671825467,
+          "byPeriod": {}
+        },
+        "7": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 374975.2337597977,
+          "RMSE": 539341.5729148872,
+          "bias": -97723.90628110754,
+          "WAPE": 4.166096925561973,
+          "numeratorAbsoluteErrorKwh": 22873489.25934766,
+          "denominatorAbsoluteActualKwh": 549038816.6199999,
+          "maxAbsoluteErrorKwh": 1854956.083048853,
+          "byPeriod": {}
+        },
+        "8": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 411671.91149195103,
+          "RMSE": 587677.3900260503,
+          "bias": -125304.50080950434,
+          "WAPE": 4.395430498754178,
+          "numeratorAbsoluteErrorKwh": 25111986.60100901,
+          "denominatorAbsoluteActualKwh": 571320297.4799999,
+          "maxAbsoluteErrorKwh": 2054467.7913935008,
+          "byPeriod": {}
+        },
+        "9": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 451598.9399556977,
+          "RMSE": 640065.5416139995,
+          "bias": -153236.2538374639,
+          "WAPE": 4.61635631154913,
+          "numeratorAbsoluteErrorKwh": 27547535.33729756,
+          "denominatorAbsoluteActualKwh": 596737631.9800001,
+          "maxAbsoluteErrorKwh": 2202136.247858667,
+          "byPeriod": {}
+        },
+        "10": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 461891.9967594248,
+          "RMSE": 650511.1571150307,
+          "bias": -183236.90193553985,
+          "WAPE": 4.587880688324671,
+          "numeratorAbsoluteErrorKwh": 28175411.802324913,
+          "denominatorAbsoluteActualKwh": 614126951.34,
+          "maxAbsoluteErrorKwh": 2179323.5706193773,
+          "byPeriod": {}
+        },
+        "11": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 472717.2354005214,
+          "RMSE": 669783.4011965445,
+          "bias": -202362.68659056077,
+          "WAPE": 4.539004303350117,
+          "numeratorAbsoluteErrorKwh": 28835751.359431803,
+          "denominatorAbsoluteActualKwh": 635288037.4699999,
+          "maxAbsoluteErrorKwh": 2306261.07188191,
+          "byPeriod": {}
+        },
+        "12": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 465864.0394146812,
+          "RMSE": 666143.4803772249,
+          "bias": -203018.1090028724,
+          "WAPE": 4.351750051081819,
+          "numeratorAbsoluteErrorKwh": 28417706.404295553,
+          "denominatorAbsoluteActualKwh": 653017890.9799998,
+          "maxAbsoluteErrorKwh": 2311385.9589013886,
+          "byPeriod": {}
+        },
+        "13": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 415233.33113767527,
+          "RMSE": 595925.7473272709,
+          "bias": -190441.14127788463,
+          "WAPE": 3.872907965288893,
+          "numeratorAbsoluteErrorKwh": 25329233.19939819,
+          "denominatorAbsoluteActualKwh": 654010718.21,
+          "maxAbsoluteErrorKwh": 2031589.7601416185,
+          "byPeriod": {}
+        },
+        "14": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 425209.91628203564,
+          "RMSE": 619585.1057832472,
+          "bias": -159695.488986684,
+          "WAPE": 3.9268773976236484,
+          "numeratorAbsoluteErrorKwh": 25937804.893204175,
+          "denominatorAbsoluteActualKwh": 660519855.0099998,
+          "maxAbsoluteErrorKwh": 2109561.4266712517,
+          "byPeriod": {}
+        },
+        "15": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 446841.09332075325,
+          "RMSE": 669581.0661406319,
+          "bias": -116455.86856640925,
+          "WAPE": 4.068656625212373,
+          "numeratorAbsoluteErrorKwh": 27257306.692565948,
+          "denominatorAbsoluteActualKwh": 669933818.54,
+          "maxAbsoluteErrorKwh": 2344598.219425561,
+          "byPeriod": {}
+        },
+        "16": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 444154.42981773085,
+          "RMSE": 679668.2777282996,
+          "bias": -88872.11196692535,
+          "WAPE": 4.027628141931677,
+          "numeratorAbsoluteErrorKwh": 27093420.21888158,
+          "denominatorAbsoluteActualKwh": 672689217.1800001,
+          "maxAbsoluteErrorKwh": 2483711.8971308023,
+          "byPeriod": {}
+        },
+        "17": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 431026.2824167427,
+          "RMSE": 641069.2470720976,
+          "bias": -80930.79834129286,
+          "WAPE": 3.932630583639131,
+          "numeratorAbsoluteErrorKwh": 26292603.227421306,
+          "denominatorAbsoluteActualKwh": 668575465.4099997,
+          "maxAbsoluteErrorKwh": 2319006.2797519807,
+          "byPeriod": {}
+        },
+        "18": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 389665.85405240173,
+          "RMSE": 563311.3018100222,
+          "bias": -99017.07339934635,
+          "WAPE": 3.5907268570826503,
+          "numeratorAbsoluteErrorKwh": 23769617.097196504,
+          "denominatorAbsoluteActualKwh": 661972298.18,
+          "maxAbsoluteErrorKwh": 2059372.54326058,
+          "byPeriod": {}
+        },
+        "19": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 405337.09005032235,
+          "RMSE": 547196.4425526559,
+          "bias": -201482.66589268416,
+          "WAPE": 3.545279913949183,
+          "numeratorAbsoluteErrorKwh": 24725562.493069664,
+          "denominatorAbsoluteActualKwh": 697422011.6099999,
+          "maxAbsoluteErrorKwh": 1806405.752332477,
+          "byPeriod": {}
+        },
+        "20": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 422087.6318028986,
+          "RMSE": 553754.6424011994,
+          "bias": -235201.8279080651,
+          "WAPE": 3.6346164746170215,
+          "numeratorAbsoluteErrorKwh": 25747345.539976813,
+          "denominatorAbsoluteActualKwh": 708392363.2599999,
+          "maxAbsoluteErrorKwh": 1667406.4700981602,
+          "byPeriod": {}
+        },
+        "21": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 411221.62366359885,
+          "RMSE": 537517.9197852019,
+          "bias": -234347.82910867012,
+          "WAPE": 3.6128221919074064,
+          "numeratorAbsoluteErrorKwh": 25084519.04347953,
+          "denominatorAbsoluteActualKwh": 694319225.0000004,
+          "maxAbsoluteErrorKwh": 1563052.0343311112,
+          "byPeriod": {}
+        },
+        "22": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 366532.7327864336,
+          "RMSE": 475413.31934397144,
+          "bias": -218158.14300705818,
+          "WAPE": 3.3473428539079295,
+          "numeratorAbsoluteErrorKwh": 22358496.69997245,
+          "denominatorAbsoluteActualKwh": 667947613.25,
+          "maxAbsoluteErrorKwh": 1388753.8760472722,
+          "byPeriod": {}
+        },
+        "23": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 307488.8898543023,
+          "RMSE": 399671.3838457503,
+          "bias": -199224.99076793334,
+          "WAPE": 2.964041576194683,
+          "numeratorAbsoluteErrorKwh": 18756822.28111244,
+          "denominatorAbsoluteActualKwh": 632812388.0500002,
+          "maxAbsoluteErrorKwh": 1093881.4344435483,
+          "byPeriod": {}
+        },
+        "24": {
+          "evaluable": 61,
+          "unavailable": 0,
+          "MAE": 270749.55518610106,
+          "RMSE": 348334.35673491034,
+          "bias": -169432.4396593955,
+          "WAPE": 2.7649577492020923,
+          "numeratorAbsoluteErrorKwh": 16515722.866352163,
+          "denominatorAbsoluteActualKwh": 597322793.4899999,
+          "maxAbsoluteErrorKwh": 911972.108562151,
+          "byPeriod": {}
+        }
+      }
+    },
+    "externalHoldout": {
+      "evaluable": 2688,
+      "unavailable": 0,
+      "MAE": 317901.449278597,
+      "RMSE": 429805.5011347342,
+      "bias": -153893.43660107133,
+      "WAPE": 3.07249529105186,
+      "numeratorAbsoluteErrorKwh": 854519095.6608688,
+      "denominatorAbsoluteActualKwh": 27811892768.38002,
+      "maxAbsoluteErrorKwh": 2018970.985175386,
+      "byPeriod": {
+        "1": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 273008.66686193796,
+          "RMSE": 350569.7971083998,
+          "bias": -153476.80631065715,
+          "WAPE": 2.8454992068551137,
+          "numeratorAbsoluteErrorKwh": 30576970.688537054,
+          "denominatorAbsoluteActualKwh": 1074573158.0200002,
+          "maxAbsoluteErrorKwh": 1123336.941038264,
+          "byPeriod": {}
+        },
+        "2": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 266967.44009657187,
+          "RMSE": 341795.6932335672,
+          "bias": -143105.50071678188,
+          "WAPE": 2.8810620272929737,
+          "numeratorAbsoluteErrorKwh": 29900353.290816046,
+          "denominatorAbsoluteActualKwh": 1037824004.0500001,
+          "maxAbsoluteErrorKwh": 1113506.231255835,
+          "byPeriod": {}
+        },
+        "3": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 261210.0291867745,
+          "RMSE": 332619.24175976205,
+          "bias": -143612.04887365128,
+          "WAPE": 2.8956418995237594,
+          "numeratorAbsoluteErrorKwh": 29255523.268918745,
+          "denominatorAbsoluteActualKwh": 1010329463.5200002,
+          "maxAbsoluteErrorKwh": 1120647.4954442736,
+          "byPeriod": {}
+        },
+        "4": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 251238.87460418005,
+          "RMSE": 320696.01619744307,
+          "bias": -145351.01268973525,
+          "WAPE": 2.83353951617054,
+          "numeratorAbsoluteErrorKwh": 28138753.955668166,
+          "denominatorAbsoluteActualKwh": 993060227.1499997,
+          "maxAbsoluteErrorKwh": 1099172.5172865018,
+          "byPeriod": {}
+        },
+        "5": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 249727.75458905133,
+          "RMSE": 323169.59712846583,
+          "bias": -154763.2089224475,
+          "WAPE": 2.802868997085875,
+          "numeratorAbsoluteErrorKwh": 27969508.51397375,
+          "denominatorAbsoluteActualKwh": 997888540.0300003,
+          "maxAbsoluteErrorKwh": 1028055.9369378835,
+          "byPeriod": {}
+        },
+        "6": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 266940.8337070496,
+          "RMSE": 347783.7453304146,
+          "bias": -154355.96179702558,
+          "WAPE": 2.9360560164162552,
+          "numeratorAbsoluteErrorKwh": 29897373.375189558,
+          "denominatorAbsoluteActualKwh": 1018283479.8800004,
+          "maxAbsoluteErrorKwh": 1003821.6020089835,
+          "byPeriod": {}
+        },
+        "7": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 271033.108047077,
+          "RMSE": 371476.6642581855,
+          "bias": -116124.48571145305,
+          "WAPE": 2.969718200016746,
+          "numeratorAbsoluteErrorKwh": 30355708.101272628,
+          "denominatorAbsoluteActualKwh": 1022174699.9799998,
+          "maxAbsoluteErrorKwh": 1163597.608202503,
+          "byPeriod": {}
+        },
+        "8": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 296493.714442924,
+          "RMSE": 414368.03882252215,
+          "bias": -128360.7241897002,
+          "WAPE": 3.1225242078377966,
+          "numeratorAbsoluteErrorKwh": 33207296.017607488,
+          "denominatorAbsoluteActualKwh": 1063476015.1499995,
+          "maxAbsoluteErrorKwh": 1335184.692978397,
+          "byPeriod": {}
+        },
+        "9": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 331761.34142729786,
+          "RMSE": 465994.00274359423,
+          "bias": -147702.33643815437,
+          "WAPE": 3.3460431357406493,
+          "numeratorAbsoluteErrorKwh": 37157270.23985736,
+          "denominatorAbsoluteActualKwh": 1110483897.92,
+          "maxAbsoluteErrorKwh": 1448514.2371146586,
+          "byPeriod": {}
+        },
+        "10": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 343555.1906710591,
+          "RMSE": 478752.7786196567,
+          "bias": -161513.80332751997,
+          "WAPE": 3.367089959485693,
+          "numeratorAbsoluteErrorKwh": 38478181.35515862,
+          "denominatorAbsoluteActualKwh": 1142772596.46,
+          "maxAbsoluteErrorKwh": 1619611.2088348418,
+          "byPeriod": {}
+        },
+        "11": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 363226.9109699299,
+          "RMSE": 498753.0669230668,
+          "bias": -168015.54916803498,
+          "WAPE": 3.443154698489011,
+          "numeratorAbsoluteErrorKwh": 40681414.02863215,
+          "denominatorAbsoluteActualKwh": 1181515720.0599997,
+          "maxAbsoluteErrorKwh": 1636635.0258108955,
+          "byPeriod": {}
+        },
+        "12": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 374554.8087189569,
+          "RMSE": 505060.1695124455,
+          "bias": -175378.53984851172,
+          "WAPE": 3.4498741067385095,
+          "numeratorAbsoluteErrorKwh": 41950138.57652317,
+          "denominatorAbsoluteActualKwh": 1215990418.16,
+          "maxAbsoluteErrorKwh": 1735565.9382064585,
+          "byPeriod": {}
+        },
+        "13": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 349732.955848604,
+          "RMSE": 463679.0233989304,
+          "bias": -164242.05262928523,
+          "WAPE": 3.2121467524846117,
+          "numeratorAbsoluteErrorKwh": 39170091.055043645,
+          "denominatorAbsoluteActualKwh": 1219436534.9199996,
+          "maxAbsoluteErrorKwh": 1577649.0023992248,
+          "byPeriod": {}
+        },
+        "14": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 351259.011171368,
+          "RMSE": 477940.82125128194,
+          "bias": -134559.02777626447,
+          "WAPE": 3.190638622513677,
+          "numeratorAbsoluteErrorKwh": 39341009.25119322,
+          "denominatorAbsoluteActualKwh": 1233013634.75,
+          "maxAbsoluteErrorKwh": 1722453.5882571153,
+          "byPeriod": {}
+        },
+        "15": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 367623.2039286634,
+          "RMSE": 525059.6895182811,
+          "bias": -101002.91625706958,
+          "WAPE": 3.28894506080199,
+          "numeratorAbsoluteErrorKwh": 41173798.8400103,
+          "denominatorAbsoluteActualKwh": 1251884664.4999995,
+          "maxAbsoluteErrorKwh": 1901950.5331933647,
+          "byPeriod": {}
+        },
+        "16": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 369914.23623318906,
+          "RMSE": 533925.8312829881,
+          "bias": -82358.95776824481,
+          "WAPE": 3.2918050631189466,
+          "numeratorAbsoluteErrorKwh": 41430394.45811717,
+          "denominatorAbsoluteActualKwh": 1258591978.0700002,
+          "maxAbsoluteErrorKwh": 2018970.985175386,
+          "byPeriod": {}
+        },
+        "17": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 352786.98555288266,
+          "RMSE": 506376.68055528094,
+          "bias": -78631.94929234937,
+          "WAPE": 3.155694319303579,
+          "numeratorAbsoluteErrorKwh": 39512142.381922856,
+          "denominatorAbsoluteActualKwh": 1252090297.2200005,
+          "maxAbsoluteErrorKwh": 1915356.7282268535,
+          "byPeriod": {}
+        },
+        "18": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 314795.65250660054,
+          "RMSE": 436612.879922868,
+          "bias": -93061.63465066139,
+          "WAPE": 2.8473477862449195,
+          "numeratorAbsoluteErrorKwh": 35257113.08073926,
+          "denominatorAbsoluteActualKwh": 1238243998.54,
+          "maxAbsoluteErrorKwh": 1659571.9113839958,
+          "byPeriod": {}
+        },
+        "19": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 328713.74920499773,
+          "RMSE": 425395.65424931806,
+          "bias": -189985.00295551235,
+          "WAPE": 2.8422139290316144,
+          "numeratorAbsoluteErrorKwh": 36815939.91095974,
+          "denominatorAbsoluteActualKwh": 1295326137.66,
+          "maxAbsoluteErrorKwh": 1521170.3228864577,
+          "byPeriod": {}
+        },
+        "20": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 348079.64641488995,
+          "RMSE": 440764.28651803295,
+          "bias": -229950.93309060458,
+          "WAPE": 2.944994224526847,
+          "numeratorAbsoluteErrorKwh": 38984920.398467675,
+          "denominatorAbsoluteActualKwh": 1323768993.2899997,
+          "maxAbsoluteErrorKwh": 1526888.7982570473,
+          "byPeriod": {}
+        },
+        "21": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 348041.1621631501,
+          "RMSE": 439319.0324770116,
+          "bias": -227822.67082097495,
+          "WAPE": 3.000106714432274,
+          "numeratorAbsoluteErrorKwh": 38980610.16227281,
+          "denominatorAbsoluteActualKwh": 1299307453.7900002,
+          "maxAbsoluteErrorKwh": 1472430.4889284559,
+          "byPeriod": {}
+        },
+        "22": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 338933.92659092793,
+          "RMSE": 423086.8863996803,
+          "bias": -219300.40681685894,
+          "WAPE": 3.030289625980401,
+          "numeratorAbsoluteErrorKwh": 37960599.77818393,
+          "denominatorAbsoluteActualKwh": 1252705333.9299998,
+          "maxAbsoluteErrorKwh": 1382765.9208405335,
+          "byPeriod": {}
+        },
+        "23": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 317559.67501821875,
+          "RMSE": 399384.45873548207,
+          "bias": -203583.02506981252,
+          "WAPE": 2.9854151691144133,
+          "numeratorAbsoluteErrorKwh": 35566683.6020405,
+          "denominatorAbsoluteActualKwh": 1191347989.72,
+          "maxAbsoluteErrorKwh": 1386468.1710512973,
+          "byPeriod": {}
+        },
+        "24": {
+          "evaluable": 112,
+          "unavailable": 0,
+          "MAE": 292475.90473003377,
+          "RMSE": 370289.03002616897,
+          "bias": -177183.923304405,
+          "WAPE": 2.904521967846738,
+          "numeratorAbsoluteErrorKwh": 32757301.329763785,
+          "denominatorAbsoluteActualKwh": 1127803531.6100001,
+          "maxAbsoluteErrorKwh": 1249709.510046849,
+          "byPeriod": {}
+        }
+      }
+    }
+  },
+  "baselineReference": "B_ORIGIN_0",
+  "promotionCriteria": {
+    "identicalToV1": true,
+    "unavailableRequired": 0,
+    "maeMultiplier": 1.05,
+    "wapeMultiplier": 1.25,
+    "strictMaeOrRmseImprovement": true,
+    "catastrophicErrorMultiplierOfTrainTargetStandardDeviation": 10
+  },
+  "coefficientImportance": [
+    {
+      "feature": "energy_same_period_at_origin",
+      "standardizedCoefficient": 524931.7803625561,
+      "absoluteStandardizedCoefficient": 524931.7803625561
+    },
+    {
+      "feature": "energy_same_period_mean_7d_ending_at_origin",
+      "standardizedCoefficient": 356380.41943865793,
+      "absoluteStandardizedCoefficient": 356380.41943865793
+    },
+    {
+      "feature": "energy_same_period_mean_14d_ending_at_origin",
+      "standardizedCoefficient": -224743.04049154522,
+      "absoluteStandardizedCoefficient": 224743.04049154522
+    },
+    {
+      "feature": "energy_same_period_28_days_before_origin",
+      "standardizedCoefficient": 198669.2615657985,
+      "absoluteStandardizedCoefficient": 198669.2615657985
+    },
+    {
+      "feature": "energy_same_period_14_days_before_origin",
+      "standardizedCoefficient": 160934.86088060896,
+      "absoluteStandardizedCoefficient": 160934.86088060896
+    },
+    {
+      "feature": "energy_same_period_13_days_before_origin",
+      "standardizedCoefficient": -105410.62101356979,
+      "absoluteStandardizedCoefficient": 105410.62101356979
+    },
+    {
+      "feature": "sin_2pi_hour_minus1_over24",
+      "standardizedCoefficient": -89893.15987365715,
+      "absoluteStandardizedCoefficient": 89893.15987365715
+    },
+    {
+      "feature": "sin_2pi_target_weekday_over7",
+      "standardizedCoefficient": 70643.90040711286,
+      "absoluteStandardizedCoefficient": 70643.90040711286
+    },
+    {
+      "feature": "energy_same_period_7_days_before_origin",
+      "standardizedCoefficient": 61559.945655759846,
+      "absoluteStandardizedCoefficient": 61559.945655759846
+    },
+    {
+      "feature": "energy_same_period_std_7d_ending_at_origin",
+      "standardizedCoefficient": 57501.03605897652,
+      "absoluteStandardizedCoefficient": 57501.03605897652
+    },
+    {
+      "feature": "cos_2pi_target_weekday_over7",
+      "standardizedCoefficient": -45655.47614598955,
+      "absoluteStandardizedCoefficient": 45655.47614598955
+    },
+    {
+      "feature": "energy_period24_at_origin",
+      "standardizedCoefficient": -33429.99210786976,
+      "absoluteStandardizedCoefficient": 33429.99210786976
+    },
+    {
+      "feature": "energy_same_period_2_days_before_origin",
+      "standardizedCoefficient": -25229.06413912146,
+      "absoluteStandardizedCoefficient": 25229.06413912146
+    },
+    {
+      "feature": "energy_same_period_1_day_before_origin",
+      "standardizedCoefficient": -19079.4232829114,
+      "absoluteStandardizedCoefficient": 19079.4232829114
+    },
+    {
+      "feature": "energy_same_period_27_days_before_origin",
+      "standardizedCoefficient": 18406.33772812966,
+      "absoluteStandardizedCoefficient": 18406.33772812966
+    },
+    {
+      "feature": "energy_same_period_6_days_before_origin",
+      "standardizedCoefficient": 17682.152523875444,
+      "absoluteStandardizedCoefficient": 17682.152523875444
+    },
+    {
+      "feature": "cos_2pi_hour_minus1_over24",
+      "standardizedCoefficient": -12797.498787460152,
+      "absoluteStandardizedCoefficient": 12797.498787460152
+    }
+  ],
+  "limitations": [
+    "Experimental V2 artifact; not loaded by runtime.",
+    "Generation XM is a proxy for availability, not transactional supply.",
+    "No recursive forecasting or predicted features.",
+    "Feature importance is descriptive, not causal or post-hoc selection.",
+    "Academic/formal validation pending."
+  ]
+}

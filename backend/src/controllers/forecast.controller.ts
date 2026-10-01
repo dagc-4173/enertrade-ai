@@ -13,8 +13,9 @@ export function createForecastRouter(service = forecastSupply, metrics = getFore
     try{
       let hasBody=Number(req.get('Content-Length') ?? 0)>0 || req.get('Transfer-Encoding')!==undefined;
       if(!hasBody)for await(const chunk of req)if(chunk.length){hasBody=true;break;}
-      if(hasBody||Object.keys(req.query).length){res.status(400).json({error:'INVALID_FORECAST_REQUEST',message:messages.INVALID_FORECAST_REQUEST});return;}
-      res.json(metrics());
+      const keys=Object.keys(req.query),raw=req.query.horizonDays,horizonDays=typeof raw==='string'?Number(raw):NaN;
+      if(hasBody||keys.length!==1||keys[0]!=='horizonDays'||!Number.isInteger(horizonDays)||horizonDays<1||horizonDays>7){res.status(400).json({error:'INVALID_FORECAST_REQUEST',message:messages.INVALID_FORECAST_REQUEST});return;}
+      res.json(metrics(horizonDays));
     }catch(error){
       if(error instanceof ForecastError){res.status(error.status).json({status:'unavailable',error:error.code,message:error.message});}
       else { logUnexpectedError(logger, req, error, 'FORECAST_FAILED'); res.status(500).json({error:'FORECAST_FAILED',message:messages.FORECAST_FAILED}); }

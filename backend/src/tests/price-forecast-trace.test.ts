@@ -154,7 +154,7 @@ test('supply/demand parser errors and all metrics never start price tracing', as
   const h = await harness();
   try {
     for (const path of ['/supply', '/demand']) expect((await h.post({}, false, 'text/plain', path)).status).toBe(415);
-    for (const path of ['/supply/metrics', '/demand/metrics']) {
+    for (const path of ['/supply/metrics?horizonDays=1', '/demand/metrics']) {
       const res = await fetch(h.base + path); expect(res.status).toBe(200);
     }
     expect(h.create).not.toHaveBeenCalled(); expect(h.update).not.toHaveBeenCalled();
