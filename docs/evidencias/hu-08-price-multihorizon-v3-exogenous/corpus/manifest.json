@@ -1,0 +1,63 @@
+{
+  "experimentId": "hu-08-price-multihorizon-v3-exogenous",
+  "corpus": {
+    "firstDate": "2024-01-01",
+    "lastDate": "2026-09-28",
+    "completeDays": 1002,
+    "observations": 24048,
+    "excludedDemandDates": [
+      "2026-09-16",
+      "2026-09-28"
+    ],
+    "file": "docs/evidencias/hu-08-price-multihorizon-v3-exogenous/corpus/xm-price-gene-demand-2024-01-01_2026-09-28.csv",
+    "sha256": "6a809594044cf8f608cf2e52bfbec6d1bb0ebe7268414c4ad1f6da8d9aceae6e",
+    "sources": {
+      "price": {
+        "metric": "PrecBolsNaci",
+        "consolidatedDatasetId": 12,
+        "energyDatasetId": 208,
+        "contentHash": "d30c2e24afd18576f8cc34a233e11d4fd59eb488a86f9697f5dd6e52f24b68b5"
+      },
+      "generation": {
+        "metric": "Gene",
+        "consolidatedDatasetId": 11,
+        "energyDatasetId": 206,
+        "contentHash": "6c9dc85728240e587eeae5f5cd6ba1dc8f9067b927ac6a0791879e1b2dd3b2b7",
+        "aggregation": "daily total = sum of exact 24 energia_kwh periods; same-period values retained"
+      },
+      "demand": {
+        "metric": "DemaSIN",
+        "consolidatedDatasetId": 9,
+        "energyDatasetId": 202,
+        "contentHash": "5741c643992d4d382bef640ed20b04dd78e9625fe6614817008177d6049bc598",
+        "semanticRule": "demandasin_severe_drop_vs_trailing_median_v1",
+        "allExcludedDates": [
+          "2026-09-16",
+          "2026-09-28",
+          "2026-09-29"
+        ]
+      }
+    }
+  },
+  "partitions": {
+    "train": {
+      "start": "2024-02-01",
+      "end": "2026-03-31"
+    },
+    "validation": {
+      "start": "2026-04-01",
+      "end": "2026-05-31"
+    },
+    "externalHoldout": {
+      "start": "2026-06-01",
+      "end": "2026-09-28"
+    }
+  },
+  "promotionCriteria": {
+    "unavailableRequired": 0,
+    "minimumMaeImprovementPercent": 1,
+    "maximumWapeMultiplier": 1,
+    "catastrophicErrorMultiplierOfTrainTargetStandardDeviation": 10
+  },
+  "generatedAt": "2026-10-01T15:57:30.717Z"
+}
