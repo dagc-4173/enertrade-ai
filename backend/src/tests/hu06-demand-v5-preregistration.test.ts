@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { addDays, parseCsv, type DemandRecord } from '@/experiments/hu06-multihorizon';
 import { buildV4UsableStatisticsComparator, v4UsableStatisticsFeatures } from '@/experiments/hu06-demand-v4-preregistration';
 import { buildV5Features, v5OrderedFeatures, v5UsableStatisticsWindow } from '@/experiments/hu06-demand-v5-preregistration';
@@ -105,9 +106,13 @@ test('temporary JSONL remains append-only, hash-chained, immutable and idempoten
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
-test('no V5 Ridge fit/evaluation, runtime artifacts or real prospective JSONL exist', () => {
+test('no V5 Ridge fit/evaluation or runtime artifacts; an existing prospective journal is read-only verified', () => {
   const source = readFileSync(new URL('../experiments/hu06-demand-v5-preregistration.ts', import.meta.url), 'utf8') + readFileSync(new URL('../experiments/hu06-demand-v5-prospective.ts', import.meta.url), 'utf8');
   expect(source).not.toMatch(/\bfitRidge(?:V2)?\s*\(|\bevaluate\s*\(|\bforecastDirectDemand\s*\(/);
   for (let horizon = 1; horizon <= 7; horizon++) expect(existsSync(new URL(`../models/xm-demandasin-ridge-direct-h${horizon}-v5/1.0.0/model.json`, import.meta.url))).toBe(false);
-  expect(existsSync(new URL('../../../docs/evidencias/hu-06-demand-v5-prospective/predictions.jsonl', import.meta.url))).toBe(false);
+  const path = fileURLToPath(new URL('../../../docs/evidencias/hu-06-demand-v5-prospective/predictions.jsonl', import.meta.url));
+  const before = existsSync(path) ? readFileSync(path, 'utf8') : null;
+  const journal = verifyV5ProspectiveJournal(path);
+  expect(new Set(journal.map(entry => `${entry.modelVersion}|${entry.forecastOriginDate}|${entry.targetDate}|${entry.horizonDays}`)).size).toBe(journal.length);
+  expect(existsSync(path) ? readFileSync(path, 'utf8') : null).toBe(before);
 });

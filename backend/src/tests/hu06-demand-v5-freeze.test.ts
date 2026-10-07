@@ -2,10 +2,12 @@ import { expect, test } from 'bun:test';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { addDays, parseCsv } from '@/experiments/hu06-multihorizon';
 import { buildV5Features, v5OrderedFeatures } from '@/experiments/hu06-demand-v5-preregistration';
 import { freezeV5Horizon, predictV5Frozen, v5TrainingSamples } from '@/experiments/hu06-demand-v5-training';
 import { demandEligibilityIndex } from '@/services/demand-semantic-eligibility';
+import { verifyV5ProspectiveJournal } from '@/experiments/hu06-demand-v5-prospective';
 
 const root = new URL('../../../', import.meta.url);
 const preregistration = JSON.parse(readFileSync(new URL('docs/evidencias/hu-06-demand-v5-preregistration/manifest.json', root), 'utf8'));
@@ -84,7 +86,8 @@ test('h5/h6 dry-runs are deterministic and never prospective journal entries', (
     const frozen = model(item.horizonDays);
     expect(predictV5Frozen({ alpha: frozen.selectedAlpha, coefficients: frozen.coefficients, intercept: frozen.intercept, means: frozen.scaler.means, standardDeviations: frozen.scaler.standardDeviations }, features.values)).toBe(item.prediction.demanda_kwh);
   }
-  expect(existsSync(new URL('docs/evidencias/hu-06-demand-v5-prospective/predictions.jsonl', root))).toBe(false);
+  const journal = verifyV5ProspectiveJournal(fileURLToPath(new URL('docs/evidencias/hu-06-demand-v5-prospective/predictions.jsonl', root)));
+  for (const item of dryRun.predictions) expect(journal.some(entry => entry.forecastOriginDate === item.forecastOriginDate && entry.targetDate === item.targetDate && entry.horizonDays === item.horizonDays && entry.modelVersion === item.modelVersion)).toBe(false);
 });
 
 test('no h7, runtime artifacts, retrospective selection or preregistration edits', () => {
