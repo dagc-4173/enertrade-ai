@@ -178,22 +178,21 @@ test('DemaSIN coverage recovers individual usability after an earlier severe ano
   expect(coverageFromConsolidated('DemaSIN', [{ energyDataset: { content: { records } } }])).toMatchObject({ latestReceivedDate: '2026-09-18', latestIndividuallyUsableDate: '2026-09-18', semanticExcludedDates: ['2026-09-15'] });
 });
 
-test('DemaSIN D+1..D+6 requires a complete semantically usable 28-day input window', async () => {
+test('DemaSIN V5 availability requires coherent prepared inputs and a closed origin', async () => {
   const observations = Array.from({ length: 31 }, (_, index) => ({ date: `2026-05-${String(index + 1).padStart(2, '0')}`, value: 220_000_000 + (index % 3) * 2_000_000 }));
   const readCoverage = async (metric: XmSyncMetric) => metric === 'DemaSIN' ? { ...coverage('2026-05-31'), historicalFrom: '2026-05-01', demandObservations: observations } : coverage('2026-05-31');
-  const { service } = dependencies({ now: () => new Date('2026-05-31T12:00:00'), readCoverage });
+  const prepared = { id: 1, sourceDatasetId: 10, profileId: 'xm_demandasin_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_demandasin_base', sourceRulesetVersion: '1.0.0', content: { variables: { minimum: [{ name: 'fecha_xm', type: 'string', representation: 'YYYY-MM-DD' }, { name: 'demanda_kwh', type: 'number', unit: 'kWh' }] }, records: observations.map(row => ({ fecha_xm: row.date, demanda_kwh: row.value })) } };
+  const { service } = dependencies({ now: () => new Date('2026-06-01T12:00:00Z'), readCoverage, readDemandPrepared: async () => [prepared] });
   const demand = (await service.availability()).find(item => item.series === 'DemaSIN')!;
-  expect(demand).toMatchObject({ supportedHorizonMinDays: 1, supportedHorizonMaxDays: 6, eligibleFutureTargetDates: ['2026-06-01','2026-06-02','2026-06-03','2026-06-04','2026-06-05','2026-06-06'], effectiveFutureMinDate: '2026-06-01', effectiveFutureMaxDate: '2026-06-06' });
+  expect(demand).toMatchObject({ supportedHorizonMinDays: 1, supportedHorizonMaxDays: 6, eligibleFutureTargetDates: ['2026-06-02','2026-06-03','2026-06-04','2026-06-05','2026-06-06'], effectiveFutureMinDate: '2026-06-02', effectiveFutureMaxDate: '2026-06-06' });
   expect(demand.eligibleFutureTargetDates).not.toContain('2026-06-07');
-  for (const changed of [observations.filter(row => row.date !== '2026-05-25'), observations.map(row => row.date === '2026-05-25' ? { ...row, value: 1 } : row)]) {
-    const { service: unavailable } = dependencies({ now: () => new Date('2026-05-31T12:00:00'), readCoverage: async metric => metric === 'DemaSIN' ? { ...coverage('2026-05-31'), historicalFrom: '2026-05-01', demandObservations: changed } : coverage('2026-05-31') });
-    expect((await unavailable.availability()).find(item => item.series === 'DemaSIN')!.eligibleFutureTargetDates).toEqual([]);
-  }
+  const { service: unavailable } = dependencies({ now: () => new Date('2026-06-01T12:00:00Z'), readCoverage });
+  expect((await unavailable.availability()).find(item => item.series === 'DemaSIN')!.eligibleFutureTargetDates).toEqual([]);
 });
 
 test('DemaSIN availability does not advertise targets when prepared history disagrees with consolidated coverage', async () => {
   const observations = Array.from({ length: 31 }, (_, index) => ({ date: `2026-05-${String(index + 1).padStart(2, '0')}`, value: 220_000_000 + (index % 3) * 2_000_000 }));
   const prepared = { id: 1, sourceDatasetId: 10, profileId: 'xm_demandasin_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_demandasin_base', sourceRulesetVersion: '1.0.0', content: { variables: { minimum: [{ name: 'fecha_xm', type: 'string', representation: 'YYYY-MM-DD' }, { name: 'demanda_kwh', type: 'number', unit: 'kWh' }] }, records: observations.filter(item => item.date !== '2026-05-25').map(item => ({ fecha_xm: item.date, demanda_kwh: item.value })) } };
   const { service } = dependencies({ now: () => new Date('2026-05-31T12:00:00'), readCoverage: async metric => metric === 'DemaSIN' ? { ...coverage('2026-05-31'), demandObservations: observations } : coverage('2026-05-31'), readDemandPrepared: async () => [prepared] });
-  expect((await service.availability()).find(item => item.series === 'DemaSIN')).toMatchObject({ eligibleFutureTargetDates: [], hasFutureForecastWindow: false });
+  await expect(service.availability()).rejects.toMatchObject({ code: 'PREPARED_DATASET_INCONSISTENT' });
 });

@@ -6,8 +6,10 @@ import { XmProvider } from '@/integrations/providers/xm.provider';
 import { createXmConsolidatedDatasetService } from '@/integrations/xm-consolidated-dataset.service';
 import { createXmWindowIngestionService, type XmMetric } from '@/integrations/xm-window-ingestion.service';
 import { calendarNextDate, localCalendarDate, readXmCoverage, type XmCoverage } from './xm-coverage.service';
-import { demandCompatibility, latestDirectDemandOrigin, mergeDemandPrepared, type Prepared } from './demand-direct-forecast.service';
-import { loadDirectDemandModel } from '@/models/xm-demandasin-ridge-direct-v2/model-loader';
+import { demandCompatibility, type Prepared } from './demand-direct-forecast.service';
+import { loadDirectDemandV5Model, type DirectDemandV5Model } from '@/models/xm-demandasin-ridge-direct-v5/model-loader';
+import { buildResolvedDemandV5Target, resolveDemandV5Origin } from './demand-v5-origin.service';
+import { demandV5CalendarDate } from './demand-v5-features';
 
 export type XmSyncMetric = XmMetric;
 export type ForecastAvailability = { series: XmSyncMetric; currentDate: string; latestObservationDate: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[]; eligibleFutureTargetDates: string[]; nextForecastDate: string; supportedHorizonDays: 1 | 6 | 7; supportedHorizonMinDays?: 1; supportedHorizonMaxDays?: 6; modelMinTargetDate: string; modelMaxTargetDate: string; effectiveFutureMinDate: string | null; effectiveFutureMaxDate: string | null; hasFutureForecastWindow: boolean; dataFreshnessDays: number };
@@ -26,6 +28,7 @@ export type XmDailySyncDependencies = {
   prepare: (energyDatasetId: number) => Promise<Preparation>;
   now: () => Date;
   readDemandPrepared?: () => Promise<Prepared[]>;
+  loadDemandModel?: (horizonDays: number) => DirectDemandV5Model;
 };
 
 export type XmMetricSyncResult = {
@@ -114,20 +117,22 @@ export function createXmDailySyncService(dependencies: XmDailySyncDependencies =
   async function availability(metric: XmSyncMetric): Promise<ForecastAvailability> {
     const coverage = await dependencies.readCoverage(metric);
     if (!coverage) throw new XmDailySyncError(404, 'XM_SYNC_COVERAGE_MISSING', 'No existe cobertura XM consolidada para la métrica.');
-    const currentDate = localCalendarDate(dependencies.now()); const supportedHorizonDays = metric === 'Gene' ? 7 : metric === 'DemaSIN' ? 6 : 1;
+    const observedNow = dependencies.now();
+    const currentDate = metric === 'DemaSIN' ? demandV5CalendarDate(observedNow) : localCalendarDate(observedNow); const supportedHorizonDays = metric === 'Gene' ? 7 : metric === 'DemaSIN' ? 6 : 1;
     const latestObservationDate = coverage.latestIndividuallyUsableDate; let eligibleFutureTargetDates: string[] = [];
     let demandOrigin: string | null = null;
     if (metric === 'DemaSIN') {
-      const values = new Map((coverage.demandObservations ?? []).map(row => [row.date, row.value]));
-      demandOrigin = latestDirectDemandOrigin(values, coverage.latestReceivedDate, addDays(coverage.latestReceivedDate, 7));
-      if (demandOrigin && dependencies.readDemandPrepared) {
-        const merged = mergeDemandPrepared(await dependencies.readDemandPrepared());
-        if (latestDirectDemandOrigin(merged.values, coverage.latestReceivedDate, addDays(coverage.latestReceivedDate, 7)) !== demandOrigin) demandOrigin = null;
-      }
-      if (demandOrigin) for (let horizon = 1; horizon <= 6; horizon++) {
-        try { loadDirectDemandModel(horizon); } catch { continue; }
-        const target = addDays(demandOrigin, horizon);
-        if (target > currentDate && target > coverage.latestReceivedDate) eligibleFutureTargetDates.push(target);
+      const resolved = resolveDemandV5Origin(coverage, dependencies.readDemandPrepared ? await dependencies.readDemandPrepared() : [], observedNow);
+      demandOrigin = resolved?.forecastOriginDate ?? null;
+      if (resolved) for (let horizon = 1; horizon <= 6; horizon++) {
+        const target = addDays(resolved.forecastOriginDate, horizon);
+        if (target <= currentDate || target <= coverage.latestReceivedDate) continue;
+        try {
+          const model = (dependencies.loadDemandModel ?? loadDirectDemandV5Model)(horizon);
+          const built = buildResolvedDemandV5Target(resolved, target);
+          if (model.horizonDays !== built.horizonDays) continue;
+        } catch { continue; }
+        eligibleFutureTargetDates.push(target);
       }
     } else {
       const min = calendarNextDate(currentDate) > calendarNextDate(latestObservationDate) ? calendarNextDate(currentDate) : calendarNextDate(latestObservationDate); const max = addDays(latestObservationDate, supportedHorizonDays);

@@ -8,6 +8,7 @@ import { buildV5Features, v5OrderedFeatures } from '@/experiments/hu06-demand-v5
 import { freezeV5Horizon, predictV5Frozen, v5TrainingSamples } from '@/experiments/hu06-demand-v5-training';
 import { demandEligibilityIndex } from '@/services/demand-semantic-eligibility';
 import { verifyV5ProspectiveJournal } from '@/experiments/hu06-demand-v5-prospective';
+import { loadDirectDemandV5Model } from '@/models/xm-demandasin-ridge-direct-v5/model-loader';
 
 const root = new URL('../../../', import.meta.url);
 const preregistration = JSON.parse(readFileSync(new URL('docs/evidencias/hu-06-demand-v5-preregistration/manifest.json', root), 'utf8'));
@@ -90,9 +91,15 @@ test('h5/h6 dry-runs are deterministic and never prospective journal entries', (
   for (const item of dryRun.predictions) expect(journal.some(entry => entry.forecastOriginDate === item.forecastOriginDate && entry.targetDate === item.targetDate && entry.horizonDays === item.horizonDays && entry.modelVersion === item.modelVersion)).toBe(false);
 });
 
-test('no h7, runtime artifacts, retrospective selection or preregistration edits', () => {
+test('no h7 or retrospective selection; authorized runtime projections match frozen models', () => {
   expect(existsSync(new URL('h7.json', folder))).toBe(false);
-  for (let horizon = 1; horizon <= 7; horizon++) expect(existsSync(new URL(`backend/src/models/xm-demandasin-ridge-direct-h${horizon}-v5/1.0.0/model.json`, root))).toBe(false);
+  for (let horizon = 1; horizon <= 6; horizon++) {
+    const runtime = loadDirectDemandV5Model(horizon), frozen = model(horizon);
+    expect(runtime.coefficients).toEqual(frozen.coefficients);
+    expect(runtime.scaler).toEqual(frozen.scaler);
+    expect(runtime.state).toBe('pendingProspectiveValidation');
+  }
+  expect(existsSync(new URL('backend/src/models/xm-demandasin-ridge-direct-h7-v5/1.0.0/model.json', root))).toBe(false);
   const script = readFileSync(new URL('backend/scripts/hu06-demand-v5-freeze.ts', root), 'utf8');
   expect(script).toContain('records.filter(record => record.fecha_xm <= manifest.partitions.validation.end)');
   expect(script).not.toContain('experimentDemandV4(');

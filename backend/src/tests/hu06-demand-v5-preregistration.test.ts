@@ -9,6 +9,7 @@ import { buildV4UsableStatisticsComparator, v4UsableStatisticsFeatures } from '@
 import { buildV5Features, v5OrderedFeatures, v5UsableStatisticsWindow } from '@/experiments/hu06-demand-v5-preregistration';
 import { appendV5ProspectivePrediction, prepareV5ProspectivePrediction, verifyV5ProspectiveJournal, v5PreregistrationCutoff } from '@/experiments/hu06-demand-v5-prospective';
 import { demandEligibilityIndex, demandSemanticRule } from '@/services/demand-semantic-eligibility';
+import { loadDirectDemandV5Model } from '@/models/xm-demandasin-ridge-direct-v5/model-loader';
 
 const root = new URL('../../../docs/evidencias/hu-06-demand-v5-preregistration/', import.meta.url);
 const manifest = JSON.parse(readFileSync(new URL('manifest.json', root), 'utf8'));
@@ -106,10 +107,11 @@ test('temporary JSONL remains append-only, hash-chained, immutable and idempoten
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
-test('no V5 Ridge fit/evaluation or runtime artifacts; an existing prospective journal is read-only verified', () => {
+test('no V5 Ridge fit/evaluation; runtime stays pending and prospective journal is read-only verified', () => {
   const source = readFileSync(new URL('../experiments/hu06-demand-v5-preregistration.ts', import.meta.url), 'utf8') + readFileSync(new URL('../experiments/hu06-demand-v5-prospective.ts', import.meta.url), 'utf8');
   expect(source).not.toMatch(/\bfitRidge(?:V2)?\s*\(|\bevaluate\s*\(|\bforecastDirectDemand\s*\(/);
-  for (let horizon = 1; horizon <= 7; horizon++) expect(existsSync(new URL(`../models/xm-demandasin-ridge-direct-h${horizon}-v5/1.0.0/model.json`, import.meta.url))).toBe(false);
+  for (let horizon = 1; horizon <= 6; horizon++) expect(loadDirectDemandV5Model(horizon)).toMatchObject({ horizonDays: horizon, state: 'pendingProspectiveValidation', academicValidation: 'pending' });
+  expect(existsSync(new URL('../models/xm-demandasin-ridge-direct-h7-v5/1.0.0/model.json', import.meta.url))).toBe(false);
   const path = fileURLToPath(new URL('../../../docs/evidencias/hu-06-demand-v5-prospective/predictions.jsonl', import.meta.url));
   const before = existsSync(path) ? readFileSync(path, 'utf8') : null;
   const journal = verifyV5ProspectiveJournal(path);
