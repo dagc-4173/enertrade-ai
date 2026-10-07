@@ -41,7 +41,7 @@ function MetricsView({ metrics, result }: { metrics: ModelMetrics; result: Forec
     <p>{metrics.modelId} · versión {metrics.modelVersion}</p>
     {'modelStatus' in metrics && <p>Estado: <strong>Experimental</strong> · Validación académica: <strong>Pendiente</strong></p>}
     {mismatch && <p role="alert">Estas métricas corresponden a otra versión que el pronóstico mostrado.</p>}
-    <p className="section-description">{metrics.forecastType === 'aggregate_demand_proxy' ? 'Evaluación retrospectiva técnica' : 'Holdout temporal'}: {formatDateCO(e.range.start)} — {formatDateCO(e.range.end)}. Describe ese periodo; no es una garantía futura.</p>
+    <p className="section-description">{metrics.forecastType === 'aggregate_demand_proxy' ? metrics.evaluationType === 'validation_technical' ? 'Evaluación técnica de VALIDATION' : 'Evaluación retrospectiva técnica' : 'Holdout temporal'}: {formatDateCO(e.range.start)} — {formatDateCO(e.range.end)}. Describe ese periodo; no es una garantía futura.</p>
     <dl className="forecast-metadata">
       <div><dt>MAE</dt><dd>{formatEnergyKWh(e.MAE.value)}</dd></div>
       <div><dt>RMSE</dt><dd>{formatEnergyKWh(e.RMSE.value)}</dd></div>
@@ -49,7 +49,7 @@ function MetricsView({ metrics, result }: { metrics: ModelMetrics; result: Forec
       <div><dt>WAPE</dt><dd>{formatPercentCO(e.percentageError.value)}</dd></div>
       <div><dt>Observaciones evaluables / no disponibles</dt><dd>{formatNumberCO(e.evaluable)} / {formatNumberCO(e.unavailable)}</dd></div>
       <div><dt>Datos de entrenamiento</dt><dd>{formatDateCO(metrics.training.sourceRange.start)} — {formatDateCO(metrics.training.sourceRange.end)}</dd></div>
-      {metrics.forecastType === 'aggregate_demand_proxy' && <><div><dt>Validación</dt><dd>{formatDateCO(metrics.validationRange.start)} — {formatDateCO(metrics.validationRange.end)}</dd></div><div><dt>Evaluación retrospectiva</dt><dd>{formatDateCO(metrics.retrospectiveEvaluationRange.start)} — {formatDateCO(metrics.retrospectiveEvaluationRange.end)}</dd></div></>}
+      {metrics.forecastType === 'aggregate_demand_proxy' && <><div><dt>Validación</dt><dd>{formatDateCO(metrics.validationRange.start)} — {formatDateCO(metrics.validationRange.end)}</dd></div><div><dt>{metrics.evaluationType === 'validation_technical' ? 'Tipo de evaluación' : 'Evaluación retrospectiva'}</dt><dd>{metrics.evaluationType === 'validation_technical' ? 'VALIDATION técnica (no prospectiva)' : metrics.retrospectiveEvaluationRange ? `${formatDateCO(metrics.retrospectiveEvaluationRange.start)} — ${formatDateCO(metrics.retrospectiveEvaluationRange.end)}` : 'No informada'}</dd></div></>}
       <div><dt>Fecha de entrenamiento</dt><dd>No registrada</dd></div>
       {'baselineReference' in metrics && <div><dt>Baseline de referencia</dt><dd>{metrics.baselineReference}</dd></div>}
     </dl>

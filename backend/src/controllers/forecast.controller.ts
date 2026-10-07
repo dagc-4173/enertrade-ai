@@ -1,4 +1,4 @@
-import {getDirectDemandMetrics} from '@/services/demand-direct-metrics.service';
+import {getDemandV5Metrics} from '@/services/demand-v5-metrics.service';
 import { forecastDemandV5 } from '@/services/demand-v5-forecast.service';
 import express, { Router, type ErrorRequestHandler, type Request, type Response, type NextFunction } from 'express';
 import { forecastSupply } from '@/services/forecast.service';
@@ -7,7 +7,7 @@ import {getForecastMetrics} from '@/services/forecast-metrics.service';
 import { forecastPrice } from '@/services/price-forecast.service';
 import { priceForecastTrace, type TraceState } from '@/services/price-forecast-trace.service';
 import { logUnexpectedError, safeLogger, type SafeLogger } from '@/lib/safe-logger';
-export function createForecastRouter(service = forecastSupply, metrics = getForecastMetrics, demand: (input: unknown) => Promise<unknown> = forecastDemandV5, demandMetrics: (horizonDays: number) => unknown = getDirectDemandMetrics, price = forecastPrice, trace = priceForecastTrace, logger: SafeLogger = safeLogger) {
+export function createForecastRouter(service = forecastSupply, metrics = getForecastMetrics, demand: (input: unknown) => Promise<unknown> = forecastDemandV5, demandMetrics: (horizonDays: number) => unknown = getDemandV5Metrics, price = forecastPrice, trace = priceForecastTrace, logger: SafeLogger = safeLogger) {
   const router = Router();
   router.get('/supply/metrics',async(req,res)=>{
     try{

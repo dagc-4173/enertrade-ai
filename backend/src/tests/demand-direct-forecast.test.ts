@@ -68,7 +68,7 @@ test('direct demand metrics h7 is unsupported', () => {
 });
 
 test('HTTP demand request needs only targetDate; metrics select h1/h6 and reject h7', async () => {
-  const app = express(); app.use('/forecasts', createForecastRouter(undefined, undefined, service()));
+  const app = express(); app.use('/forecasts', createForecastRouter(undefined, undefined, service(), getDirectDemandMetrics));
   const server = app.listen(0, '127.0.0.1');
   await new Promise<void>(resolve => server.listening ? resolve() : server.once('listening', resolve));
   try {

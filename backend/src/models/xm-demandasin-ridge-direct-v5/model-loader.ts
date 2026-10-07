@@ -13,6 +13,7 @@ export type DirectDemandV5Model = {
   corpusHash: string; preregistrationTag: 'hu06-v5-preregistered'; preregistrationCommit: string; preregistrationCutoff: string;
   trainingRange: { start: string; end: string }; validationRange: { start: string; end: string };
   semanticPolicy: typeof demandSemanticRule; sourceFrozenSha256: string;
+  validationMetrics: { evaluable: number; unavailable: number; MAE: number; RMSE: number; bias: number; WAPE: number; maxAbsoluteErrorKwh: number };
 };
 function freeze<T>(value: T): T { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; }
 
@@ -33,6 +34,10 @@ export function validateDirectDemandV5Model(value: unknown, horizonDays: number,
       [value.coefficients, value.scaler.means, value.scaler.standardDeviations].some(vector => !Array.isArray(vector) || vector.length !== 16 || !vector.every((item: unknown) => typeof item === 'number' && Number.isFinite(item))) ||
       value.scaler.standardDeviations.some((item: number) => item <= 0) || typeof value.intercept !== 'number' || !Number.isFinite(value.intercept) ||
       !object(value.semanticPolicy) || Object.entries(demandSemanticRule).some(([key, expectedValue]) => value.semanticPolicy[key] !== expectedValue) ||
+      !object(value.validationMetrics) || !Number.isSafeInteger(value.validationMetrics.evaluable) || value.validationMetrics.evaluable <= 0 ||
+      !Number.isSafeInteger(value.validationMetrics.unavailable) || value.validationMetrics.unavailable < 0 ||
+      ['MAE', 'RMSE', 'WAPE', 'maxAbsoluteErrorKwh'].some(key => typeof value.validationMetrics[key] !== 'number' || !Number.isFinite(value.validationMetrics[key]) || value.validationMetrics[key] < 0) ||
+      typeof value.validationMetrics.bias !== 'number' || !Number.isFinite(value.validationMetrics.bias) ||
       !isDeepStrictEqual(value.trainingRange, { start: '2024-02-04', end: '2026-03-31' }) ||
       !isDeepStrictEqual(value.validationRange, { start: '2026-04-01', end: '2026-05-31' })) return bad();
   return freeze(structuredClone(value)) as DirectDemandV5Model;

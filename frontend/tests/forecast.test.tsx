@@ -233,3 +233,36 @@ test('Availability común conserva etiquetas, aviso sin target y error', () => {
   expect(errorHtml).toContain('role="alert"'); expect(errorHtml).toContain('Error de disponibilidad')
   expect(renderToStaticMarkup(<ForecastRunOutcome title="Precio de referencia" state={{ kind: 'error', message: 'Sin conexión' }} />)).toContain('Error de forecast')
 })
+
+function v5MetricsResponse(horizonDays: number) {
+  const frozen = JSON.parse(readFileSync(new URL(`../../backend/src/models/xm-demandasin-ridge-direct-h${horizonDays}-v5/1.0.0/model.json`, import.meta.url), 'utf8'))
+  return { status: 'available', modelId: frozen.modelId, modelVersion: frozen.modelVersion, active: true,
+    modelStatus: 'experimental', academicValidation: 'pending', modelState: frozen.state,
+    forecastType: 'aggregate_demand_proxy', target: 'demanda_kwh', unit: 'kWh', horizonDays,
+    evaluationType: 'validation_technical', validationRange: frozen.validationRange, baselineReference: frozen.baselineReference,
+    training: { trainedAt: null, trainedAtStatus: 'not_recorded', snapshotSha256: frozen.corpusHash, sourceRange: frozen.trainingRange, effectiveRange: frozen.trainingRange },
+    evaluation: { type: 'validation_technical', range: frozen.validationRange, snapshotSha256: frozen.corpusHash,
+      evaluable: frozen.validationMetrics.evaluable, unavailable: frozen.validationMetrics.unavailable,
+      MAE: { value: frozen.validationMetrics.MAE, unit: 'kWh' }, RMSE: { value: frozen.validationMetrics.RMSE, unit: 'kWh' },
+      bias: { value: frozen.validationMetrics.bias, unit: 'kWh' }, percentageError: { metric: 'WAPE', value: frozen.validationMetrics.WAPE, unit: 'percent' },
+      maxAbsoluteError: { value: frozen.validationMetrics.maxAbsoluteErrorKwh, unit: 'kWh' } },
+    scope: { aggregation: 'SIN', personalized: false, zonalFallback: false, confidenceStatus: 'not_defined' } }
+}
+
+test.each([1, 2, 3, 4, 5, 6])('parser accepts frozen V5 h%s metrics as VALIDATION, not retrospective or prospective validation', async horizon => {
+  const value = v5MetricsResponse(horizon), fetch = respond(value)
+  expect(await getDemandMetrics(horizon)).toEqual(value)
+  expect(fetch.mock.calls[0]?.[0]).toBe(`http://enertrade.test/forecasts/demand/metrics?horizonDays=${horizon}`)
+  expect(value).not.toHaveProperty('retrospectiveEvaluationRange')
+})
+
+test('parser rejects incorrect V5 metadata, wrong requested horizon, missing metric and h7', async () => {
+  const value = v5MetricsResponse(4)
+  const invalid = [{ ...value, modelState: 'validated' }, { ...value, modelId: 'xm-demandasin-ridge-direct-h4-v2' },
+    { ...value, modelVersion: 'other' }, { ...value, horizonDays: 7, modelId: 'xm-demandasin-ridge-direct-h7-v5' },
+    { ...value, evaluation: { ...value.evaluation, range: { start: '2026-06-01', end: '2026-09-29' } } },
+    { ...value, evaluation: { ...value.evaluation, maxAbsoluteError: null } },
+    { ...value, evaluationType: 'retrospective_technical', retrospectiveEvaluationRange: value.validationRange, evaluation: { ...value.evaluation, type: 'retrospective_technical' } }]
+  for (const response of invalid) { respond(response); await expect(getDemandMetrics(4)).rejects.toMatchObject({ kind: 'response' }) }
+  respond(v5MetricsResponse(5)); await expect(getDemandMetrics(4)).rejects.toMatchObject({ kind: 'response' })
+})

@@ -50,7 +50,7 @@ function metrics(v: unknown): v is Record<string, unknown> {
   const t = v.training, e = v.evaluation
   const measure = (x: unknown, nonnegative: boolean) => object(x) && finite(x.value) && (!nonnegative || x.value >= 0) && x.unit === 'kWh'
   return t.trainedAt === null && t.trainedAtStatus === 'not_recorded' && hash(t.snapshotSha256) && range(t.sourceRange) && range(t.effectiveRange) &&
-    (e.type === 'external_temporal_holdout' || e.type === 'retrospective_technical') && range(e.range) && hash(e.snapshotSha256) && count(e.evaluable) && count(e.unavailable) &&
+    (e.type === 'external_temporal_holdout' || e.type === 'retrospective_technical' || e.type === 'validation_technical') && range(e.range) && hash(e.snapshotSha256) && count(e.evaluable) && count(e.unavailable) &&
     measure(e.MAE, true) && measure(e.RMSE, true) && measure(e.bias, false) && object(e.percentageError) &&
     e.percentageError.metric === 'WAPE' && finite(e.percentageError.value) && e.percentageError.value >= 0 && e.percentageError.unit === 'percent'
 }
@@ -58,9 +58,16 @@ function supplyMetrics(v: unknown): v is SupplyMetrics {
   return metrics(v) && object(v.evaluation) && v.evaluation.type === 'external_temporal_holdout' && v.forecastType === 'generation_availability_proxy' && v.target === 'energia_kwh' && v.horizonPeriods === 24 && count(v.horizonDays) && v.horizonDays >= 1 && v.horizonDays <= 7 && v.modelStatus === 'experimental' && v.academicValidation === 'pending' && ['B_ORIGIN_0','B_ORIGIN_6','B_HISTORICAL_MEAN'].includes(v.baselineReference as string)
 }
 function demandMetrics(v: unknown): v is DemandMetrics {
-  return metrics(v) && object(v.evaluation) && v.modelStatus === 'experimental' && v.academicValidation === 'pending' && v.evaluationType === 'retrospective_technical' && v.evaluation.type === 'retrospective_technical' && range(v.validationRange) && range(v.retrospectiveEvaluationRange) && JSON.stringify(v.evaluation.range) === JSON.stringify(v.retrospectiveEvaluationRange) && text(v.baselineReference) && v.forecastType === 'aggregate_demand_proxy' && v.target === 'demanda_kwh' && count(v.horizonDays) && v.horizonDays >= 1 && v.horizonDays <= 6 &&
-    object(v.training) && object(v.scope) && v.scope.aggregation === 'SIN' &&
-    v.scope.personalized === false && v.scope.zonalFallback === false && v.scope.confidenceStatus === 'not_defined'
+  if (!metrics(v) || !object(v.evaluation) || v.modelStatus !== 'experimental' || v.academicValidation !== 'pending' ||
+      !range(v.validationRange) || !text(v.baselineReference) || v.forecastType !== 'aggregate_demand_proxy' || v.target !== 'demanda_kwh' ||
+      !count(v.horizonDays) || v.horizonDays < 1 || v.horizonDays > 6 || !object(v.scope) || v.scope.aggregation !== 'SIN' ||
+      v.scope.personalized !== false || v.scope.zonalFallback !== false || v.scope.confidenceStatus !== 'not_defined') return false
+  if (v.evaluationType === 'validation_technical') return v.evaluation.type === 'validation_technical' && v.modelState === 'pendingProspectiveValidation' &&
+    v.modelId === `xm-demandasin-ridge-direct-h${v.horizonDays}-v5` && v.modelVersion === 'hu06-demand-v5-c-primary@1.0.0' &&
+    JSON.stringify(v.evaluation.range) === JSON.stringify(v.validationRange) && object(v.evaluation.maxAbsoluteError) &&
+    finite(v.evaluation.maxAbsoluteError.value) && v.evaluation.maxAbsoluteError.value >= 0 && v.evaluation.maxAbsoluteError.unit === 'kWh'
+  return v.modelVersion !== 'hu06-demand-v5-c-primary@1.0.0' && !String(v.modelId).endsWith('-v5') && v.evaluationType === 'retrospective_technical' && v.evaluation.type === 'retrospective_technical' &&
+    range(v.retrospectiveEvaluationRange) && JSON.stringify(v.evaluation.range) === JSON.stringify(v.retrospectiveEvaluationRange)
 }
 function parsed<T>(response: { status: number; data: unknown }, check: (v: unknown) => v is T): T {
   if (response.status !== 200 || !check(response.data)) throw new ApiError('response', 'La API devolvió un pronóstico o unas métricas con formato inesperado.', response.status)
@@ -79,5 +86,5 @@ export async function getSupplyMetrics(horizonDays: number, signal?: AbortSignal
   return parsed(await apiRequest<unknown>(`/forecasts/supply/metrics?horizonDays=${horizonDays}`, { signal }), supplyMetrics)
 }
 export async function getDemandMetrics(horizonDays: number, signal?: AbortSignal) {
-  return parsed(await apiRequest<unknown>(`/forecasts/demand/metrics?horizonDays=${horizonDays}`, { signal }), demandMetrics)
+  return parsed(await apiRequest<unknown>(`/forecasts/demand/metrics?horizonDays=${horizonDays}`, { signal }), (value): value is DemandMetrics => demandMetrics(value) && value.horizonDays === horizonDays)
 }

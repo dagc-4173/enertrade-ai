@@ -67,7 +67,7 @@ interface ModelMetricsBase {
     effectiveRange: DateRange
   }
   evaluation: {
-    type: 'external_temporal_holdout' | 'retrospective_technical'
+    type: 'external_temporal_holdout' | 'retrospective_technical' | 'validation_technical'
     range: DateRange
     snapshotSha256: string
     evaluable: number
@@ -76,6 +76,7 @@ interface ModelMetricsBase {
     RMSE: { value: number; unit: 'kWh' }
     bias: { value: number; unit: 'kWh' }
     percentageError: { metric: 'WAPE'; value: number; unit: 'percent' }
+    maxAbsoluteError?: { value: number; unit: 'kWh' }
   }
 }
 export interface SupplyMetrics extends ModelMetricsBase {
@@ -90,13 +91,14 @@ export interface SupplyMetrics extends ModelMetricsBase {
 export interface DemandMetrics extends ModelMetricsBase {
   modelStatus: 'experimental'
   academicValidation: 'pending'
-  evaluationType: 'retrospective_technical'
+  evaluationType: 'retrospective_technical' | 'validation_technical'
+  modelState?: 'pendingProspectiveValidation'
   validationRange: DateRange
-  retrospectiveEvaluationRange: DateRange
+  retrospectiveEvaluationRange?: DateRange
   baselineReference: string
   forecastType: 'aggregate_demand_proxy'
   target: 'demanda_kwh'
-  horizonDays: 1
+  horizonDays: number
   scope: { aggregation: 'SIN'; personalized: false; zonalFallback: false; confidenceStatus: 'not_defined' }
 }
 export type ModelMetrics = SupplyMetrics | DemandMetrics
