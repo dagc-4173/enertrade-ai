@@ -21,7 +21,7 @@ test('VERSION-01 a VERSION-08/VERSION-11: expone las cinco capacidades activas c
     { capability: 'supply_forecast', artifactType: 'ml_model', id: 'xm-gene-ridge', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
     { capability: 'demand_forecast', artifactType: 'ml_model', id: 'xm-demandasin-ridge', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
     { capability: 'price_estimation', artifactType: 'deterministic_rule', id: 'xm-preciobolsnaci-b1', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
-    { capability: 'matching', artifactType: 'deterministic_method', id: 'matching-v1', version: 'v1', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
+    { capability: 'matching', artifactType: 'deterministic_method', id: 'matching-hourly-v2', version: 'v2', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
     { capability: 'pattern_recognition', artifactType: 'deterministic_method', id: 'energy-pattern-descriptive', version: '1.0.0', status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
   ]);
 });

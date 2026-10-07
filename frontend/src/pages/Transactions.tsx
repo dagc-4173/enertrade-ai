@@ -1,3 +1,4 @@
+import { hourLabel } from '../utils/hourlyMarket'
 import { useEffect, useEffectEvent, useState, type FormEvent } from 'react'
 import { LocalizedDecimalInput } from '../components/forms/LocalizedDecimalInput'
 import { SectionHeader } from '../components/ui/SectionHeader'
@@ -6,7 +7,7 @@ import { useVisiblePolling } from '../hooks/useVisiblePolling'
 import { ApiError } from '../services/apiClient'
 import { acceptTransaction, cancelTransaction, counterTransaction, listMyTransactions, listTransactionRevisions, rejectTransaction, updateTransaction } from '../services/transactionService'
 import type { EnergyTransaction, TransactionRevision, TransactionStatus } from '../types/transactions'
-import { parseLocalizedDecimal } from '../utils/localizedDecimal'
+import { parseLocalizedDecimal, formatLocalizedDecimal } from '../utils/localizedDecimal'
 import { formatCurrencyCOP, formatDeliveryDate, formatEnergyKWh, formatPriceCOPPerKWh } from '../utils/numberFormat'
 import { canAccept, canCancel, canCounter, canEdit, canReject, hasRevisions } from '../utils/transactionActions'
 import './Transactions.css'
@@ -104,22 +105,22 @@ export function Transactions() {
     {error && <div className="panel" role="alert"><p className="marketplace-error">{error}</p><button className="secondary-button" type="button" onClick={refresh}>Reintentar</button></div>}
     {loading && <p role="status">Cargando transacciones…</p>}
     {!loading && !error && items.length === 0 && <section className="panel"><p className="marketplace-empty">No tienes transacciones todavía.</p></section>}
-    {!loading && !error && <div className="transaction-list">{items.map(item => <article className="panel transaction-item" key={item.id}>
+    {!loading && !error && <div className="table-wrap"><table className="data-table"><thead><tr><th>Fecha</th><th>Hora</th><th>Rol</th><th>Cantidad</th><th>Total</th><th>Estado</th><th>Gestión</th></tr></thead><tbody>{items.map(item => <tr key={item.id}><td>{formatDeliveryDate(item.deliveryDate)}</td><td>{hourLabel(item.hour)}</td><td>{roleLabel(item.role)}</td><td>{formatEnergyKWh(Number(item.quantityKwh))}</td><td>{formatCurrencyCOP(Number(item.totalAmountCop))}</td><td>{statusLabel[item.status]}</td><td><details><summary>Ver negociación</summary><article className="transaction-item">
       <div className="row-between"><strong>Referencia {item.id.slice(0, 8)} · {item.role === 'SELLER' ? 'Vendedor' : 'Comprador'}</strong><StatusBadge tone={tone(item.status)}>{statusLabel[item.status]}</StatusBadge></div>
       <p className="transaction-ownership">{ownershipLabel(item)}</p>
       {hasRevisions(item) ? <><h3>Término vigente</h3><p>Cantidad: {formatEnergyKWh(Number(item.quantityKwh))}</p><p>Precio: {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p><p>Total: {formatCurrencyCOP(Number(item.totalAmountCop))}</p><p>Propuesto por {roleLabel(item.latestRevisionProposedByRole!)}.</p></> : <p>{formatEnergyKWh(Number(item.quantityKwh))} a {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p>}
-      <p>Entrega: {formatDeliveryDate(item.deliveryDate)}</p><p>Comprador: {item.buyerAcceptedAt ? 'Aceptado' : 'Pendiente'} · Vendedor: {item.sellerAcceptedAt ? 'Aceptado' : 'Pendiente'}</p><p>{acceptanceMessage(item)}</p>
+      <p>Entrega: {formatDeliveryDate(item.deliveryDate)} · {hourLabel(item.hour)}</p><p>Comprador: {item.buyerAcceptedAt ? 'Aceptado' : 'Pendiente'} · Vendedor: {item.sellerAcceptedAt ? 'Aceptado' : 'Pendiente'}</p><p>{acceptanceMessage(item)}</p>
       {editingId === item.id && <form className="transaction-edit-form" onSubmit={event => { void saveEdit(event, item.id) }}><label>Cantidad (kWh)<LocalizedDecimalInput mode="quantity" value={editQuantity} onValueChange={value => setEditQuantity(value.displayValue)} disabled={busy === item.id} required /></label><div className="marketplace-actions"><button type="submit" className="primary-button" disabled={busy === item.id}>Guardar cambios</button><button type="button" className="secondary-button" onClick={() => setEditingId(null)}>Cancelar edición</button></div></form>}
       {counterId === item.id && <form className="transaction-edit-form" onSubmit={event => { void saveCounter(event, item.id) }}><label>Cantidad (kWh)<LocalizedDecimalInput mode="quantity" value={counterQuantity} onValueChange={value => setCounterQuantity(value.displayValue)} disabled={busy === item.id} required /></label><label>Precio (COP/kWh)<LocalizedDecimalInput mode="price" value={counterPrice} onValueChange={value => setCounterPrice(value.displayValue)} disabled={busy === item.id} required /></label><div className="marketplace-actions"><button type="submit" className="primary-button" disabled={busy === item.id}>Enviar contrapropuesta</button><button type="button" className="secondary-button" onClick={() => setCounterId(null)}>Cancelar</button></div></form>}
       {historyId === item.id && <ol className="transaction-history" aria-label="Historial de negociación">{history.map(entry => <li key={entry.sequence}><strong>#{entry.sequence} · {roleLabel(entry.proposedByRole)}</strong><span>{formatEnergyKWh(Number(entry.quantityKwh))} · {formatPriceCOPPerKWh(Number(entry.pricePerKwh))} · {formatCurrencyCOP(Number(entry.totalAmountCop))}</span><span>{new Date(entry.createdAt).toLocaleString('es-CO')}</span></li>)}</ol>}
       <div className="marketplace-actions">
         {hasRevisions(item) && <button type="button" className="secondary-button" onClick={() => { void showHistory(item.id) }} disabled={busy === item.id}>{historyId === item.id ? 'Ocultar historial' : 'Ver historial'}</button>}
-        {canEdit(item) && <button type="button" className="secondary-button" onClick={() => { setEditingId(item.id); setEditQuantity(item.quantityKwh) }}>Editar propuesta</button>}
-        {canCounter(item) && <button type="button" className="primary-button" onClick={() => { setCounterId(item.id); setCounterQuantity(item.quantityKwh); setCounterPrice(item.pricePerKwh) }}>Contraproponer</button>}
+        {canEdit(item) && <button type="button" className="secondary-button" onClick={() => { setEditingId(item.id); setEditQuantity(formatLocalizedDecimal(item.quantityKwh, 'quantity')) }}>Editar propuesta</button>}
+        {canCounter(item) && <button type="button" className="primary-button" onClick={() => { setCounterId(item.id); setCounterQuantity(formatLocalizedDecimal(item.quantityKwh, 'quantity')); setCounterPrice(formatLocalizedDecimal(item.pricePerKwh, 'price')) }}>Contraproponer</button>}
         {canAccept(item) && <button type="button" className="primary-button" onClick={() => { void act(item.id, 'accept') }}>Aceptar</button>}
         {canReject(item) && <button type="button" className="secondary-button" onClick={() => { void act(item.id, 'reject') }}>Rechazar</button>}
         {canCancel(item) && <button type="button" className="secondary-button" onClick={() => { void act(item.id, 'cancel') }}>{hasRevisions(item) ? 'Cancelar negociación' : 'Cancelar propuesta'}</button>}
       </div>
-    </article>)}</div>}
+    </article></details></td></tr>)}</tbody></table></div>}
   </div>
 }

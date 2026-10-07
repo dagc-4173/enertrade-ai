@@ -1,5 +1,7 @@
+import {publicationApproved} from './publication-trading-eligibility';
+import type { Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
-import { expireActivePublications } from '@/services/publication-expiration.service';
+import { expireActivePublications, businessDateInColombia, type PublicationExpirationScope } from '@/services/publication-expiration.service';
 import type { MatchingDemandLike, MatchingOfferLike, MatchingReadRepository } from '@/services/matching.service';
 
 function value(input: unknown) { return String(input); }
@@ -29,34 +31,38 @@ export async function availablePublicationQuantity(database: BalanceDatabase, fi
 export { positive as hasAvailablePublicationQuantity }
 
 type MatchingBalanceDatabase = BalanceDatabase & {
-  energyOffer: { findMany(args: { where: { status: 'ACTIVE' }; orderBy: { createdAt: 'asc' } }): Promise<MatchingOfferLike[]> }
-  energyDemand: { findMany(args: { where: { status: 'ACTIVE' }; orderBy: { createdAt: 'asc' } }): Promise<MatchingDemandLike[]> }
+  energyOffer: { findMany(args: { where: { status: 'ACTIVE'; userId?: { in: string[] } }; orderBy: { createdAt: 'asc' } }): Promise<MatchingOfferLike[]> }
+  energyDemand: { findMany(args: { where: { status: 'ACTIVE'; userId?: { in: string[] } }; orderBy: { createdAt: 'asc' } }): Promise<MatchingDemandLike[]> }
 }
 
-export function createAvailableMatchingReadRepository(database: MatchingBalanceDatabase): MatchingReadRepository {
+export function createAvailableMatchingReadRepository(database: MatchingBalanceDatabase, scope?: PublicationExpirationScope): MatchingReadRepository {
   return {
     async listActiveOffers() {
-      const rows = await database.energyOffer.findMany({ where: { status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } })
-      return (await Promise.all(rows.map(async row => ({ ...row, quantityKwh: await availablePublicationQuantity(database, 'offerId', row.id, row.quantityKwh) })))).filter(row => positive(row.quantityKwh))
+      let rows = await database.energyOffer.findMany({ where: { status: 'ACTIVE', ...(scope ? { userId: { in: [...scope.userIds] } } : {}) }, orderBy: { createdAt: 'asc' } })
+      rows = (await Promise.all(rows.map(async row => await publicationApproved(database as unknown as Prisma.TransactionClient, 'offer', row) ? row : null))).filter((row): row is NonNullable<typeof row> => row !== null)
+      return (await Promise.all(rows.filter(row => row.hour == null || (row.deliveryDate instanceof Date ? row.deliveryDate.toISOString() : row.deliveryDate).slice(0, 10) > businessDateInColombia()).map(async row => ({ ...row, quantityKwh: await availablePublicationQuantity(database, 'offerId', row.id, row.quantityKwh) })))).filter(row => positive(row.quantityKwh))
     },
     async listActiveDemands() {
-      const rows = await database.energyDemand.findMany({ where: { status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } })
-      return (await Promise.all(rows.map(async row => ({ ...row, quantityKwh: await availablePublicationQuantity(database, 'demandId', row.id, row.quantityKwh) })))).filter(row => positive(row.quantityKwh))
+      let rows = await database.energyDemand.findMany({ where: { status: 'ACTIVE', ...(scope ? { userId: { in: [...scope.userIds] } } : {}) }, orderBy: { createdAt: 'asc' } })
+      rows = (await Promise.all(rows.map(async row => await publicationApproved(database as unknown as Prisma.TransactionClient, 'demand', row) ? row : null))).filter((row): row is NonNullable<typeof row> => row !== null)
+      return (await Promise.all(rows.filter(row => row.hour == null || (row.deliveryDate instanceof Date ? row.deliveryDate.toISOString() : row.deliveryDate).slice(0, 10) > businessDateInColombia()).map(async row => ({ ...row, quantityKwh: await availablePublicationQuantity(database, 'demandId', row.id, row.quantityKwh) })))).filter(row => positive(row.quantityKwh))
     },
   }
 }
 
-export function createMarketService(database = prisma, now: () => Date = () => new Date()) {
+export function createMarketService(database = prisma, now: () => Date = () => new Date(), scope?: PublicationExpirationScope) {
   return {
     async offers(userId: string) {
-      await expireActivePublications(database, now());
-      const rows = await database.energyOffer.findMany({ where: { status: 'ACTIVE', userId: { not: userId } }, orderBy: { createdAt: 'asc' } });
-      return (await Promise.all(rows.map(async row => ({ id: row.id, availableQuantityKwh: await availablePublicationQuantity(database, 'offerId', row.id, row.quantityKwh), pricePerKwh: value(row.pricePerKwh), deliveryDate: row.deliveryDate.toISOString().slice(0, 10), status: row.status })))).filter(row => positive(row.availableQuantityKwh));
+      await expireActivePublications(database, now(), scope);
+      let rows = await database.energyOffer.findMany({ where: { status: 'ACTIVE', userId: { not: userId, ...(scope ? { in: [...scope.userIds] } : {}) } }, orderBy: { createdAt: 'asc' } });
+      rows = (await Promise.all(rows.map(async row => await publicationApproved(database, 'offer', row) ? row : null))).filter((row): row is NonNullable<typeof row> => row !== null);
+      return (await Promise.all(rows.filter(row => row.hour == null || row.deliveryDate.toISOString().slice(0, 10) > businessDateInColombia(now())).map(async row => ({ id: row.id, hour: row.hour ?? null, publicationId: row.publicationId ?? null, availableQuantityKwh: await availablePublicationQuantity(database, 'offerId', row.id, row.quantityKwh), pricePerKwh: value(row.pricePerKwh), deliveryDate: row.deliveryDate.toISOString().slice(0, 10), status: row.status })))).filter(row => positive(row.availableQuantityKwh));
     },
     async demands(userId: string) {
-      await expireActivePublications(database, now());
-      const rows = await database.energyDemand.findMany({ where: { status: 'ACTIVE', userId: { not: userId } }, orderBy: { createdAt: 'asc' } });
-      return (await Promise.all(rows.map(async row => ({ id: row.id, availableQuantityKwh: await availablePublicationQuantity(database, 'demandId', row.id, row.quantityKwh), maxPricePerKwh: value(row.maxPricePerKwh), deliveryDate: row.deliveryDate.toISOString().slice(0, 10), status: row.status })))).filter(row => positive(row.availableQuantityKwh));
+      await expireActivePublications(database, now(), scope);
+      let rows = await database.energyDemand.findMany({ where: { status: 'ACTIVE', userId: { not: userId, ...(scope ? { in: [...scope.userIds] } : {}) } }, orderBy: { createdAt: 'asc' } });
+      rows = (await Promise.all(rows.map(async row => await publicationApproved(database, 'demand', row) ? row : null))).filter((row): row is NonNullable<typeof row> => row !== null);
+      return (await Promise.all(rows.filter(row => row.hour == null || row.deliveryDate.toISOString().slice(0, 10) > businessDateInColombia(now())).map(async row => ({ id: row.id, hour: row.hour ?? null, publicationId: row.publicationId ?? null, availableQuantityKwh: await availablePublicationQuantity(database, 'demandId', row.id, row.quantityKwh), maxPricePerKwh: value(row.maxPricePerKwh), deliveryDate: row.deliveryDate.toISOString().slice(0, 10), status: row.status })))).filter(row => positive(row.availableQuantityKwh));
     },
   };
 }

@@ -288,16 +288,31 @@ describe('buildMatchingSuggestions', () => {
 
   test('C21E-SALDO-02: repositorio descuenta confirmadas y pendientes con la misma lógica del mercado', async () => {
     const balances = { 'offer-1': '94000', 'offer-2': '7000', 'demand-1': '42000' };
-    const repository = createAvailableMatchingReadRepository({
-      energyOffer: { findMany: async () => [
-        { id: 'offer-1', quantityKwh: decimal('100000'), pricePerKwh: decimal('400'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' },
-        { id: 'offer-2', quantityKwh: decimal('10000'), pricePerKwh: decimal('400'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' },
-      ] },
-      energyDemand: { findMany: async () => [{ id: 'demand-1', quantityKwh: decimal('50000'), maxPricePerKwh: decimal('500'), deliveryDate: isoDate('2026-10-01'), createdAt: isoDate('2026-09-20T00:00:00Z'), status: 'ACTIVE' }] },
+    const { publicationVerificationRule } = await import('@/services/publication-verification.rules');
+    const base = { deliveryDate: isoDate('2099-10-01'), createdAt: isoDate('2026-09-20'), hour: 8, status: 'ACTIVE' };
+    const offers = [
+      { ...base, id: 'offer-1', userId: 'seller', publicationId: 'offer-publication', quantityKwh: decimal('100000'), pricePerKwh: decimal('400') },
+      { ...base, id: 'offer-2', userId: 'seller', publicationId: 'offer-publication-2', quantityKwh: decimal('10000'), pricePerKwh: decimal('400') },
+    ];
+    const demands = [{ ...base, id: 'demand-1', userId: 'buyer', publicationId: 'demand-publication', quantityKwh: decimal('50000'), maxPricePerKwh: decimal('500') }];
+    let verificationReads = 0;
+    const database = {
+      energyOffer: { findMany: async () => offers },
+      energyDemand: { findMany: async () => demands },
       energyTransaction: { aggregate: async ({ where }: { where: Record<string, unknown> }) => ({ _sum: { quantityKwh: balances[String(where.offerId ?? where.demandId) as keyof typeof balances] ?? '0' } }) },
-    });
+      publicationVerification: { findFirst: async ({ where }: { where: { offerId?: string; demandId?: string } }) => {
+        verificationReads += 1;
+        const kind = where.offerId ? 'offer' : 'demand';
+        const row = [...offers, ...demands].find(value => value.id === (where.offerId ?? where.demandId));
+        if (!row) return null;
+        return { id: `verification-${row.id}`, userId: row.userId, profileId: `profile-${kind}`, ruleId: publicationVerificationRule.id, ruleVersion: publicationVerificationRule.version, resultStatus: 'APPROVED', createdAt: isoDate('2026-09-21'), inputSnapshot: { quantityKwh: row.quantityKwh.toString(), deliveryDate: '2099-10-01', hour: row.hour, profileVersion: 1 }, resultSnapshot: { reason: 'Cumple el limite de capacidad declarado.', maxQuantityKwh: '100000' } };
+      } },
+      simulationCapacityProfile: { findFirst: async ({ where }: { where: { kind: string } }) => ({ id: `profile-${where.kind}`, version: 1, limits: [{ hour: 8, maxQuantityKwh: '100000' }] }) },
+    };
+    const repository = createAvailableMatchingReadRepository(database);
     await expect(repository.listActiveOffers()).resolves.toMatchObject([{ id: 'offer-1', quantityKwh: '6000' }, { id: 'offer-2', quantityKwh: '3000' }]);
     await expect(repository.listActiveDemands()).resolves.toMatchObject([{ id: 'demand-1', quantityKwh: '8000' }]);
+    expect(verificationReads).toBe(3);
   });
 
   test('C21E-DIAGNOSTICO: distingue fecha, precio, cobertura completa y varias ofertas', () => {

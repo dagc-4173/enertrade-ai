@@ -1,11 +1,14 @@
 export type MatchingCompatibility = 'FULL' | 'PARTIAL' | 'NO_MATCH';
-export type MatchingReason = 'NO_ACTIVE_OFFERS' | 'NO_SAME_DELIVERY_DATE' | 'PRICE_ABOVE_MAX' | 'INSUFFICIENT_AVAILABLE_QUANTITY' | 'FULLY_MATCHED' | 'PARTIALLY_MATCHED';
+export type MatchingReason = 'NO_ACTIVE_OFFERS' | 'NO_SAME_DELIVERY_DATE' | 'NO_SAME_DELIVERY_HOUR' | 'PRICE_ABOVE_MAX' | 'INSUFFICIENT_AVAILABLE_QUANTITY' | 'FULLY_MATCHED' | 'PARTIALLY_MATCHED';
 
 export type DecimalLike = string | number | { toString(): string };
 export type MatchWarning = 'NO_ACTIVE_OFFERS' | 'NO_ACTIVE_DEMANDS' | 'PARTIAL_MATCHES';
 
 export type MatchingOfferLike = {
   id: string;
+  userId?: string;
+  participantKey?: string | null;
+  hour?: number | null;
   quantityKwh: DecimalLike;
   pricePerKwh: DecimalLike;
   deliveryDate: Date | string;
@@ -15,6 +18,9 @@ export type MatchingOfferLike = {
 
 export type MatchingDemandLike = {
   id: string;
+  userId?: string;
+  participantKey?: string | null;
+  hour?: number | null;
   quantityKwh: DecimalLike;
   maxPricePerKwh: DecimalLike;
   deliveryDate: Date | string;
@@ -29,6 +35,7 @@ export type MatchingSuggestion = {
   offerPricePerKwh: string;
   maxDemandPricePerKwh: string;
   deliveryDate: string;
+  hour?: number | null;
 };
 
 export type MatchingDemandSummary = {
@@ -56,6 +63,12 @@ export type MatchingResponse = {
   summary: MatchingSummary;
   warnings: MatchWarning[];
 };
+
+function isSelfMatch(offer: MatchingOfferLike, demand: MatchingDemandLike): boolean {
+  const offerParticipant = offer.participantKey ?? offer.userId;
+  const demandParticipant = demand.participantKey ?? demand.userId;
+  return Boolean(offerParticipant && offerParticipant === demandParticipant);
+}
 
 function asDateString(value: Date | string): string {
   const date = value instanceof Date ? value : new Date(value);
@@ -186,7 +199,8 @@ export function buildMatchingSuggestions(offers: MatchingOfferLike[], demands: M
     let remainingDemand = decimalToString(demand.quantityKwh);
     let assignedTotal = '0';
     const sameDateOffers = sortedOffers.filter(offer => asDateString(offer.deliveryDate) === asDateString(demand.deliveryDate));
-    const compatibleOffers = sameDateOffers.filter(offer => compareDecimal(decimalToString(offer.pricePerKwh), decimalToString(demand.maxPricePerKwh)) <= 0);
+    const sameHourOffers = sameDateOffers.filter(offer => (offer.hour ?? null) === (demand.hour ?? null) && !isSelfMatch(offer, demand));
+    const compatibleOffers = sameHourOffers.filter(offer => compareDecimal(decimalToString(offer.pricePerKwh), decimalToString(demand.maxPricePerKwh)) <= 0);
 
     for (const offer of sortedOffers) {
       if (!remainingOffer.has(offer.id)) continue;
@@ -194,7 +208,8 @@ export function buildMatchingSuggestions(offers: MatchingOfferLike[], demands: M
       const demandDate = asDateString(demand.deliveryDate);
       const offerRemaining = remainingOffer.get(offer.id)!;
 
-      if (offerDate !== demandDate) continue;
+      if (offerDate !== demandDate || (offer.hour ?? null) !== (demand.hour ?? null)) continue;
+      if (isSelfMatch(offer, demand)) continue;
       if (compareDecimal(decimalToString(offer.pricePerKwh), decimalToString(demand.maxPricePerKwh)) > 0) continue;
       if (decimalIsZero(offerRemaining) || decimalIsZero(remainingDemand)) continue;
 
@@ -208,6 +223,7 @@ export function buildMatchingSuggestions(offers: MatchingOfferLike[], demands: M
         offerPricePerKwh: decimalToString(offer.pricePerKwh),
         maxDemandPricePerKwh: decimalToString(demand.maxPricePerKwh),
         deliveryDate: demandDate,
+        hour: demand.hour ?? null,
       });
 
       remainingOffer.set(offer.id, subtractDecimal(offerRemaining, allocated));
@@ -230,7 +246,9 @@ export function buildMatchingSuggestions(offers: MatchingOfferLike[], demands: M
       ? 'NO_ACTIVE_OFFERS'
       : sameDateOffers.length === 0
         ? 'NO_SAME_DELIVERY_DATE'
-        : compatibleOffers.length === 0
+        : sameHourOffers.length === 0
+          ? 'NO_SAME_DELIVERY_HOUR'
+          : compatibleOffers.length === 0
           ? 'PRICE_ABOVE_MAX'
           : compatibility === 'FULL'
             ? 'FULLY_MATCHED'

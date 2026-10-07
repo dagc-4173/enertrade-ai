@@ -1,6 +1,8 @@
-import { describe, expect, test } from 'bun:test';
-import { EnergyMarketStatus, EnergyTransactionStatus } from '@/generated/prisma/client';
-import { createEnergyTransactionService, type EnergyTransactionRepository, type TransactionRecord, type TransactionRevisionRecord } from '@/services/energy-transaction.service';
+import { describe, expect, test, spyOn } from 'bun:test';
+import { randomUUID } from 'node:crypto';
+import { prisma } from '@/lib/prisma';
+import { EnergyMarketStatus, EnergyTransactionStatus, Prisma } from '@/generated/prisma/client';
+import { createEnergyTransactionService, type EnergyTransactionRepository, type LockedStore, type TransactionRecord, type TransactionRevisionRecord } from '@/services/energy-transaction.service';
 
 const seller = '11111111-1111-4111-8111-111111111111';
 const buyer = '22222222-2222-4222-8222-222222222222';
@@ -26,9 +28,9 @@ function createRepository(overrides: { offer?: any; demand?: any } = {}) {
     await previous;
     try { return await action(); } finally { release(); }
   };
-  const sum = (field: 'offerId' | 'demandId', id: string, statuses: EnergyTransactionStatus[]) => Array.from(transactions.values()).filter(value => value[field] === id && statuses.includes(value.status)).reduce((total, value) => total + BigInt(String(value.quantityKwh)), 0n).toString();
-  const repository: EnergyTransactionRepository = {
-    withLockedPublications: (offerId, demandId, action) => lock(() => action({
+  const sum = (field: 'offerId' | 'demandId', id: string, statuses: EnergyTransactionStatus[], excludeTransactionId?: string) => Array.from(transactions.values()).filter(value => value.id !== excludeTransactionId && value[field] === id && statuses.includes(value.status)).reduce((total, value) => total.plus(String(value.quantityKwh)), new Prisma.Decimal(0)).toString();
+  const storeFor = (offerId: string, demandId: string): LockedStore => ({
+      verificationApproved: async () => true,
       expire: async today => {
         for (const publication of [...offers.values(), ...demands.values()]) {
           if (publication.status === EnergyMarketStatus.ACTIVE && publication.deliveryDate.toISOString().slice(0, 10) < today) publication.status = EnergyMarketStatus.EXPIRED;
@@ -50,8 +52,27 @@ function createRepository(overrides: { offer?: any; demand?: any } = {}) {
         revisions.set(data.transactionId, [...(revisions.get(data.transactionId) ?? []), value]);
         return value;
       },
-    })),
+    });
+  const repository: EnergyTransactionRepository = {
+    withLockedPublications: (offerId, demandId, action) => lock(() => action(storeFor(offerId, demandId))),
+    withLockedBatch: (_pairs, action) => lock(async () => {
+      const previousOffers = structuredClone(offers);
+      const previousDemands = structuredClone(demands);
+      const previousTransactions = structuredClone(transactions);
+      const previousRevisions = structuredClone(revisions);
+      const previousSequence = sequence;
+      try { return await action(storeFor); }
+      catch (error) {
+        offers.clear(); previousOffers.forEach((value, key) => offers.set(key, value));
+        demands.clear(); previousDemands.forEach((value, key) => demands.set(key, value));
+        transactions.clear(); previousTransactions.forEach((value, key) => transactions.set(key, value));
+        revisions.clear(); previousRevisions.forEach((value, key) => revisions.set(key, value));
+        sequence = previousSequence;
+        throw error;
+      }
+    }),
     withLockedTransaction: (id, action) => lock(() => action({
+      verificationApproved: async () => true,
       transaction: async () => transactions.get(id) ?? null,
       update: async data => {
         const value = transactions.get(id)!;
@@ -60,8 +81,8 @@ function createRepository(overrides: { offer?: any; demand?: any } = {}) {
       },
       reservedOfferQuantity: async () => { const value = transactions.get(id); return value ? sum('offerId', value.offerId, [EnergyTransactionStatus.PENDING_ACCEPTANCE, EnergyTransactionStatus.CONFIRMED]) : '0'; },
       reservedDemandQuantity: async () => { const value = transactions.get(id); return value ? sum('demandId', value.demandId, [EnergyTransactionStatus.PENDING_ACCEPTANCE, EnergyTransactionStatus.CONFIRMED]) : '0'; },
-      confirmedOfferQuantity: async () => { const value = transactions.get(id); return value ? sum('offerId', value.offerId, [EnergyTransactionStatus.CONFIRMED]) : '0'; },
-      confirmedDemandQuantity: async () => { const value = transactions.get(id); return value ? sum('demandId', value.demandId, [EnergyTransactionStatus.CONFIRMED]) : '0'; },
+      confirmedOfferQuantity: async excludeTransactionId => { const value = transactions.get(id); return value ? sum('offerId', value.offerId, [EnergyTransactionStatus.CONFIRMED], excludeTransactionId) : '0'; },
+      confirmedDemandQuantity: async excludeTransactionId => { const value = transactions.get(id); return value ? sum('demandId', value.demandId, [EnergyTransactionStatus.CONFIRMED], excludeTransactionId) : '0'; },
       offer: async () => { const value = transactions.get(id); return value ? offers.get(value.offerId) ?? null : null; },
       demand: async () => { const value = transactions.get(id); return value ? demands.get(value.demandId) ?? null : null; },
       setOfferStatus: async status => { const value = transactions.get(id); if (value) offers.get(value.offerId)!.status = status; },
@@ -90,6 +111,63 @@ function fixture(overrides?: { offer?: any; demand?: any }) {
   };
   return { ...memory, rawService, service: { ...rawService, create: createLegacy } };
 }
+
+describe('Confirmacion: capacidad bajo la misma frontera transaccional', () => {
+  function capacityFixture(offerCapacity = '10', demandCapacity = offerCapacity) {
+    const memory = createRepository({ offer: market('offer-1', seller, offerCapacity, 'pricePerKwh', '900'), demand: market('demand-1', buyer, demandCapacity, 'maxPricePerKwh', '950') });
+    const seed = (id: string, quantity: string, status: EnergyTransactionStatus = 'PENDING_ACCEPTANCE') => {
+      const timestamp = new Date('2026-09-21T10:00:00Z');
+      const row: TransactionRecord = { id, offerId: 'offer-1', demandId: 'demand-1', sellerUserId: seller, buyerUserId: buyer, proposedByUserId: seller, quantityKwh: new Prisma.Decimal(quantity), pricePerKwh: '900', totalAmountCop: new Prisma.Decimal(quantity).times(900), deliveryDate, status, sellerAcceptedAt: timestamp, buyerAcceptedAt: status === 'CONFIRMED' ? timestamp : null, confirmedAt: status === 'CONFIRMED' ? timestamp : null, cancelledAt: null, createdAt: timestamp, updatedAt: timestamp, matchingExecutionId: null };
+      memory.transactions.set(id, row);
+      return row;
+    };
+    return { ...memory, seed, service: createEnergyTransactionService(memory.repository, () => new Date('2026-09-21T10:00:00Z')) };
+  }
+
+  test('CAP-A: pendientes importados 7+7 sobre 10 tienen un solo ganador', async () => {
+    const memory = capacityFixture(); memory.seed('first', '7'); const second = memory.seed('second', '7');
+    const original = { ...second };
+    const race = await Promise.allSettled([memory.service.accept(buyer, 'first'), memory.service.accept(buyer, 'second')]);
+    expect(race.filter(value => value.status === 'fulfilled')).toHaveLength(1);
+    const rejected = race.find(value => value.status === 'rejected') as PromiseRejectedResult;
+    expect(rejected.reason).toMatchObject({ status: 409, code: 'OFFER_CONFIRMATION_CAPACITY_EXCEEDED' });
+    expect(second).toEqual(original);
+    expect([...memory.transactions.values()].filter(value => value.status === 'CONFIRMED')).toHaveLength(1);
+  });
+
+  test('CAP-B/E: confirmado 3 mas pendiente 7 confirma hasta 10 sin contar su reserva dos veces', async () => {
+    const memory = capacityFixture(); memory.seed('confirmed', '3', 'CONFIRMED'); memory.seed('pending', '7');
+    expect((await memory.service.accept(buyer, 'pending')).status).toBe('CONFIRMED');
+    expect(memory.offers.get('offer-1')!.status).toBe('FULFILLED');
+    expect(memory.demands.get('demand-1')!.status).toBe('FULFILLED');
+  });
+
+  test.each([{ offer: '10', demand: '20', code: 'OFFER_CONFIRMATION_CAPACITY_EXCEEDED' }, { offer: '20', demand: '10', code: 'DEMAND_CONFIRMATION_CAPACITY_EXCEEDED' }])('CAP-C: 3+7.01 rechaza por la capacidad limitante %j', async boundary => {
+    const memory = capacityFixture(boundary.offer, boundary.demand); memory.seed('confirmed', '3', 'CONFIRMED'); const pending = memory.seed('pending', '7.01');
+    const original = { ...pending };
+    await expect(memory.service.accept(buyer, 'pending')).rejects.toMatchObject({ status: 409, code: boundary.code });
+    expect(pending).toEqual(original);
+    expect(memory.offers.get('offer-1')!.status).toBe('ACTIVE');
+  });
+
+  test('CAP-D: un retry tras P2034 relee el ganador y revalida antes de cualquier write', async () => {
+    const memory = capacityFixture(); memory.seed('first', '7'); const second = memory.seed('second', '7');
+    let reads = 0, updates = 0;
+    const conflicted: EnergyTransactionRepository = { ...memory.repository, withLockedTransaction: (id, action) => memory.repository.withLockedTransaction(id, store => action({ ...store, transaction: async () => { reads += 1; return store.transaction(); }, update: async () => { updates += 1; throw Object.assign(new Error('Serialization conflict'), { code: 'P2034' }); } })) };
+    await expect(createEnergyTransactionService(conflicted, () => new Date('2026-09-21T10:00:00Z')).accept(buyer, 'second')).rejects.toMatchObject({ code: 'P2034' });
+    expect(second.status).toBe('PENDING_ACCEPTANCE');
+    await memory.service.accept(buyer, 'first');
+    const reread: EnergyTransactionRepository = { ...memory.repository, withLockedTransaction: (id, action) => memory.repository.withLockedTransaction(id, store => action({ ...store, transaction: async () => { reads += 1; return store.transaction(); } })) };
+    await expect(createEnergyTransactionService(reread, () => new Date('2026-09-21T10:00:00Z')).accept(buyer, 'second')).rejects.toMatchObject({ code: 'OFFER_CONFIRMATION_CAPACITY_EXCEEDED' });
+    expect(reads).toBe(2); expect(updates).toBe(1); expect(second.buyerAcceptedAt).toBeNull(); expect(second.confirmedAt).toBeNull();
+  });
+
+  test.each(['0.01', '0.02'])('CAP-F: limite Decimal(20,2) conserva centesima %s', async quantity => {
+    const memory = capacityFixture('999999999999999999.99'); memory.seed('confirmed', '999999999999999999.98', 'CONFIRMED'); memory.seed('pending', quantity);
+    if (quantity === '0.01') expect((await memory.service.accept(buyer, 'pending')).status).toBe('CONFIRMED');
+    else await expect(memory.service.accept(buyer, 'pending')).rejects.toMatchObject({ code: 'OFFER_CONFIRMATION_CAPACITY_EXCEEDED' });
+  });
+});
 
 describe('C20a simulated energy transactions', () => {
   test('TX-01: crea propuesta cross-user con precio de oferta, total exacto y DTO privado', async () => {
@@ -391,4 +469,97 @@ describe('C21b negociación de precio y cantidad', () => {
     expect((await rejected.rawService.reject(seller, rejectTarget.id)).status).toBe('REJECTED');
     expect(await rejected.rawService.revisions(seller, rejectTarget.id)).toHaveLength(2);
   });
+});
+describe('Negociación horaria', () => {
+  function hourlyBatch() {
+    const offerPublication = randomUUID();
+    const demandPublication = randomUUID();
+    const slots = [8, 9].map(hour => ({
+      offer: { ...market(randomUUID(), seller, '10', 'pricePerKwh', '900'), hour, publicationId: offerPublication },
+      demand: { ...market(randomUUID(), buyer, '10', 'maxPricePerKwh', '950'), hour, publicationId: demandPublication },
+    }));
+    const memory = createRepository(slots[0]);
+    for (const slot of slots) { memory.offers.set(slot.offer.id, slot.offer); memory.demands.set(slot.demand.id, slot.demand); }
+    return { ...memory, service: createEnergyTransactionService(memory.repository, () => new Date('2026-09-21T10:00:00Z')), proposals: slots.map(slot => ({ offerId: slot.offer.id, demandId: slot.demand.id, quantityKwh: 5, pricePerKwh: 900 })) };
+  }
+
+  test('BATCH-MEMORY-01: lote in-memory conserva hour/batchId sin llamar Prisma global', async () => {
+    const globalTransaction = spyOn(prisma, '$transaction').mockImplementation(() => { throw new Error('Global Prisma forbidden'); });
+    try {
+      const memory = hourlyBatch();
+      const created = await memory.service.createBatch(seller, { proposals: memory.proposals });
+      expect(created.transactions.map(value => value.hour)).toEqual([8, 9]);
+      expect([...memory.transactions.values()].map(value => value.batchId)).toEqual([created.batchId, created.batchId]);
+      expect(memory.revisions.size).toBe(2);
+      expect(created.transactions[0]).not.toHaveProperty('batchId');
+      expect(globalTransaction).not.toHaveBeenCalled();
+    } finally { globalTransaction.mockRestore(); }
+  });
+
+  test('BATCH-MEMORY-02: fallo de segunda hora revierte transacciones, revisiones y reservas', async () => {
+    const globalTransaction = spyOn(prisma, '$transaction').mockImplementation(() => { throw new Error('Global Prisma forbidden'); });
+    try {
+      const memory = hourlyBatch();
+      await expect(memory.service.createBatch(seller, { proposals: [memory.proposals[0], { ...memory.proposals[1], quantityKwh: 11 }] })).rejects.toMatchObject({ code: 'OFFER_QUANTITY_UNAVAILABLE' });
+      expect(memory.transactions.size).toBe(0);
+      expect(memory.revisions.size).toBe(0);
+      expect([...memory.offers.values()].map(value => value.status)).toEqual(['ACTIVE', 'ACTIVE']);
+      expect((await memory.service.createBatch(seller, { proposals: memory.proposals })).transactions).toHaveLength(2);
+      expect(globalTransaction).not.toHaveBeenCalled();
+    } finally { globalTransaction.mockRestore(); }
+  });
+
+  test('BATCH-MEMORY-03: repositorio sin frontera atomica falla sin fallback', async () => {
+    const globalTransaction = spyOn(prisma, '$transaction').mockImplementation(() => { throw new Error('Global Prisma forbidden'); });
+    try {
+      const memory = hourlyBatch();
+      const { withLockedBatch: _batch, ...withoutBatch } = memory.repository;
+      const service = createEnergyTransactionService(withoutBatch);
+      await expect(service.createBatch(seller, { proposals: memory.proposals })).rejects.toMatchObject({ code: 'TRANSACTION_BATCH_UNSUPPORTED' });
+      expect(globalTransaction).not.toHaveBeenCalled();
+    } finally { globalTransaction.mockRestore(); }
+  });
+
+  test('BATCH-ISOLATED-01: no crea ni cancela acuerdos fuera de ambos propietarios fixture', async () => {
+    const memory = hourlyBatch();
+    const scoped = createEnergyTransactionService(memory.repository, () => new Date('2026-09-21T10:00:00Z'), { userIds: [seller] });
+    await expect(scoped.createBatch(seller, { proposals: memory.proposals })).rejects.toMatchObject({ status: 404 });
+    expect(memory.transactions.size).toBe(0);
+    expect(memory.revisions.size).toBe(0);
+    const created = await memory.service.createBatch(seller, { proposals: memory.proposals });
+    await expect(scoped.cancel(seller, created.transactions[0]!.id)).rejects.toMatchObject({ status: 404 });
+    expect([...memory.transactions.values()].every(value => value.status === 'PENDING_ACCEPTANCE')).toBe(true);
+    expect(await scoped.findMine(seller)).toEqual([]);
+  });
+
+  test('HOUR-TX-01: rechaza horas distintas e histórico contra horario', async () => {
+    const offer = { ...market('offer-1', seller, '10', 'pricePerKwh', '900'), hour: 8 };
+    for (const hour of [9, undefined]) {
+      const demand = { ...market('demand-1', buyer, '10', 'maxPricePerKwh', '950'), hour };
+      const { rawService } = fixture({ offer, demand });
+      await expect(rawService.create(seller, { offerId: offer.id, demandId: demand.id, quantityKwh: 5, pricePerKwh: 900 })).rejects.toMatchObject({ code: 'DELIVERY_HOUR_MISMATCH' });
+    }
+  });
+  test('HOUR-TX-02: reserva parcial conserva hora; al cierre no acepta ni contrapropone', async () => {
+    const offer = { ...market('offer-1', seller, '10', 'pricePerKwh', '900'), hour: 8 };
+    const demand = { ...market('demand-1', buyer, '10', 'maxPricePerKwh', '950'), hour: 8 };
+    const memory = createRepository({ offer, demand });
+    let clock = new Date('2026-09-21T10:00:00Z');
+    const service = createEnergyTransactionService(memory.repository, () => clock);
+    const created = await service.create(seller, { offerId: offer.id, demandId: demand.id, quantityKwh: 5, pricePerKwh: 900 });
+    expect(created.hour).toBe(8);
+    clock = new Date('2026-09-23T05:00:00Z');
+    await expect(service.accept(buyer, created.id)).rejects.toMatchObject({ code: 'HOURLY_MARKET_CLOSED' });
+    await expect(service.counter(buyer, created.id, { quantityKwh: 4, pricePerKwh: 800 })).rejects.toMatchObject({ code: 'HOURLY_MARKET_CLOSED' });
+    expect((await service.cancel(seller, created.id)).status).toBe('CANCELLED');
+  });
+});
+
+test('GATE-UNIT: repositorio sin aprobación o aprobación negativa bloquea propuestas', async()=>{
+ const memory=createRepository();
+ for (const approved of [false,undefined]) {
+  const repo={...memory.repository,withLockedPublications: (offerId:string,demandId:string,action:(store:LockedStore)=>Promise<unknown>)=>memory.repository.withLockedPublications(offerId,demandId,store=>action({...store,verificationApproved:approved===undefined?undefined:async()=>approved}))} as EnergyTransactionRepository;
+  await expect(createEnergyTransactionService(repo,()=>new Date('2026-09-21')).create(buyer,{offerId:'offer-1',demandId:'demand-1',quantityKwh:1,pricePerKwh:900})).rejects.toMatchObject({code:'PUBLICATION_VERIFICATION_REQUIRED'});
+ }
+ expect(memory.transactions.size).toBe(0);
 });

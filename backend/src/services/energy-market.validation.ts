@@ -1,5 +1,14 @@
 import { calendarDate } from '@/services/forecast.contract';
+import { Prisma } from '@/generated/prisma/client';
 import { businessDateInColombia, isPublicationExpired } from '@/services/publication-expiration.service';
+
+export type MarketDecimalValue = number | string | Prisma.Decimal;
+
+export function marketDecimal(value: unknown): Prisma.Decimal {
+  const result = new Prisma.Decimal(String(value));
+  if (!result.isFinite()) throw new Error('Invalid persisted market decimal');
+  return result;
+}
 
 export class EnergyMarketInputError extends Error {
   constructor(public readonly code: string, message: string) {

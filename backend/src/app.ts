@@ -1,14 +1,17 @@
 import express, { type ErrorRequestHandler } from 'express'
+import { router as publicationVerificationRouter } from '@/controllers/publication-verification.controller';
+import { requireAuth } from '@/middlewares/auth.middleware';
+import { router as hourlyPublicationRouter } from '@/controllers/hourly-publication.controller';
 import {router as authRouter} from "@/controllers/auth.controller";
 import {router as datasetRouter} from "@/controllers/dataset.controller";
 import { validateDatasetRequest } from '@/controllers/dataset-validation.controller';
 import { prepareDatasetRequest } from '@/controllers/dataset-preparation.controller';
 import { router as externalDataRouter } from '@/controllers/external-data.controller';
 import { router as forecastRouter } from '@/controllers/forecast.controller';
-import { router as offerRouter } from '@/controllers/offer.controller';
-import { router as demandRouter } from '@/controllers/demand.controller';
-import { router as energyTransactionRouter } from '@/controllers/energy-transaction.controller';
-import { router as marketRouter } from '@/controllers/market.controller';
+import { createOfferRouter } from '@/controllers/offer.controller';
+import { createDemandRouter } from '@/controllers/demand.controller';
+import { createEnergyTransactionRouter } from '@/controllers/energy-transaction.controller';
+import { createMarketRouter } from '@/controllers/market.controller';
 import { createMatchingRouter } from '@/controllers/matching.controller';
 import { router as modelCatalogRouter } from '@/controllers/model-catalog.controller';
 import { router as patternsRouter } from '@/controllers/patterns.controller';
@@ -22,13 +25,22 @@ import { requestIdMiddleware } from '@/middlewares/request-id.middleware';
 import { createAiQueryTraceMiddleware } from '@/middlewares/ai-query-trace.middleware';
 import { prisma } from '@/lib/prisma';
 import { createTracedMatchingService, matchingTrace } from '@/services/matching-trace.service';
-import { expireActivePublications } from '@/services/publication-expiration.service';
-import { createAvailableMatchingReadRepository } from '@/services/market.service';
+import { expireActivePublications, type PublicationExpirationScope } from '@/services/publication-expiration.service';
+import { createAvailableMatchingReadRepository, createMarketService } from '@/services/market.service';
+import { createOfferService } from '@/services/offer.service';
+import { createDemandService } from '@/services/demand.service';
+import { createEnergyTransactionService } from '@/services/energy-transaction.service';
+export function createApp(options: { expirationScope?: PublicationExpirationScope } = {}) {
 const app = express()
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim()
 
-const matchingRepository = createAvailableMatchingReadRepository(prisma)
-const matchingRouter = createMatchingRouter(createTracedMatchingService(matchingRepository, matchingTrace, () => expireActivePublications()))
+const expire = (now = new Date()) => expireActivePublications(prisma, now, options.expirationScope)
+const matchingRepository = createAvailableMatchingReadRepository(prisma, options.expirationScope)
+const matchingRouter = createMatchingRouter(createTracedMatchingService(matchingRepository, matchingTrace, expire))
+const offerRouter = createOfferRouter(createOfferService(undefined, undefined, expire))
+const demandRouter = createDemandRouter(createDemandService(undefined, undefined, expire))
+const marketRouter = createMarketRouter(createMarketService(prisma, undefined, options.expirationScope))
+const energyTransactionRouter = createEnergyTransactionRouter(createEnergyTransactionService(undefined, undefined, options.expirationScope))
 
 app.use(requestIdMiddleware)
 app.use(createAiQueryTraceMiddleware())
@@ -76,6 +88,15 @@ app.use('/datasets', datasetJsonError)
 
 app.use('/external-data', externalDataRouter)
 app.use('/forecasts', forecastRouter)
+if (options.expirationScope) {
+    app.use(['/publication-verifications', '/publications', '/offers', '/demands',  '/transactions', '/market', '/matches'], requireAuth(), (req, res, next) => {
+        if (!options.expirationScope!.userIds.includes(req.authUser!.id)) { res.status(403).json({ error: 'FIXTURE_USER_REQUIRED', message: 'La cuenta no pertenece al fixture.' }); return; }
+        next();
+    })
+}
+app.use('/publication-verifications', publicationVerificationRouter)
+app.use('/publications', hourlyPublicationRouter)
+app.post(['/offers', '/demands'], requireAuth(), (_req, res) => { res.status(410).json({ error: 'HOURLY_PUBLICATION_REQUIRED', message: 'Las nuevas publicaciones deben incluir horas y fechas de los próximos siete días mediante /publications.' }); });
 app.use('/offers', offerRouter)
 app.use('/demands', demandRouter)
 app.use('/transactions', energyTransactionRouter)
@@ -91,4 +112,7 @@ app.use('/patterns', patternsRouter)
 app.use('/auth', authRouter)
 app.use('/health', healthRouter)
 
-export { app }
+return app
+}
+
+export const app = createApp()

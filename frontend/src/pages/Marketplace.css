@@ -153,3 +153,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+.hourly-form select, .marketplace-section select { min-height: 40px; max-width: 100%; padding: 6px 10px; margin: 6px 12px 12px 0; }
+.hourly-form details button { margin: 6px; }
+.hourly-editor input[type="checkbox"] { width: 20px; min-height: 20px; }
+.hourly-editor td { padding: 6px 10px; }
+.hourly-editor td input:not([type="checkbox"]) { min-width: 110px; min-height: 34px; padding: 6px 8px; }
+.marketplace-page .data-table { font-size: 13px; }
+.marketplace-page > .marketplace-columns { grid-template-columns: 1fr; }
+
+.simulation-profile { margin-bottom: 18px; padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; }
+.simulation-profile summary, .publication-verification summary { cursor: pointer; }
+.publication-verification { display: grid; gap: 6px; min-width: 170px; }
+.publication-verification strong, .publication-verification p { font-size: 12px; }
+.publication-verification button { min-height: 36px; }

@@ -103,9 +103,25 @@ describe('HU11 matching execution trace', () => {
     const h = harness();
     const result = await h.service.suggest();
     expect(row(h.rows, result.trace.executionId).inputSnapshot).toEqual({
-      offers: [{ id: 'offer-1', quantityKwh: '30.00', pricePerKwh: '400.00000', deliveryDate: '2026-09-18', createdAt: '2026-09-16T00:00:00.000Z' }],
-      demands: [{ id: 'demand-1', quantityKwh: '30.00', maxPricePerKwh: '450.00000', deliveryDate: '2026-09-18', createdAt: '2026-09-15T00:00:00.000Z' }],
+      offers: [{ id: 'offer-1', participantKey: null, hour: null, quantityKwh: '30.00', pricePerKwh: '400.00000', deliveryDate: '2026-09-18', createdAt: '2026-09-16T00:00:00.000Z' }],
+      demands: [{ id: 'demand-1', participantKey: null, hour: null, quantityKwh: '30.00', maxPricePerKwh: '450.00000', deliveryDate: '2026-09-18', createdAt: '2026-09-15T00:00:00.000Z' }],
     });
+  });
+
+  test('TRACE-MATCH-SELF: reconstruye exclusión desde snapshot sin identidades personales', async () => {
+    const own = '11111111-1111-4111-8111-111111111111';
+    const external = '22222222-2222-4222-8222-222222222222';
+    const h = harness({}, [offer({ id: 'own-offer', userId: own, hour: 8, pricePerKwh: '300' }), offer({ id: 'external-offer', userId: external, hour: 8 })], [demand({ userId: own, hour: 8 })]);
+    const result = await h.service.suggest();
+    const snapshot = row(h.rows, result.trace.executionId).inputSnapshot as { offers: Omit<MatchingOfferLike, 'status'>[]; demands: Omit<MatchingDemandLike, 'status'>[] };
+    const replay = buildMatchingSuggestions(snapshot.offers.map(value => ({ ...value, status: 'ACTIVE' })), snapshot.demands.map(value => ({ ...value, status: 'ACTIVE' })));
+    expect(replay).toEqual(buildMatchingSuggestions([offer({ id: 'own-offer', userId: own, hour: 8, pricePerKwh: '300' }), offer({ id: 'external-offer', userId: external, hour: 8 })], [demand({ userId: own, hour: 8 })]));
+    expect(replay.matches[0]?.offerId).toBe('external-offer');
+    expect(result.matches).toEqual(replay.matches);
+    expect(snapshot.offers[0]?.participantKey).toBe(snapshot.demands[0]?.participantKey);
+    expect(JSON.stringify(snapshot)).not.toContain(own);
+    expect(JSON.stringify(snapshot)).not.toContain(external);
+    expect(JSON.stringify(snapshot)).not.toContain('userId');
   });
 
   test('TRACE-MATCH-05: snapshots preservan decimales como strings exactos', async () => {
@@ -118,7 +134,7 @@ describe('HU11 matching execution trace', () => {
     const h = harness();
     const result = await h.service.suggest();
     const saved = row(h.rows, result.trace.executionId);
-    expect(saved.criteriaVersion).toBe('matching-v1');
+    expect(saved.criteriaVersion).toBe('matching-hourly-v2');
     expect(saved.criteriaSnapshot).toMatchObject({ activeStatus: 'ACTIVE', allocation: 'greedy' });
   });
 

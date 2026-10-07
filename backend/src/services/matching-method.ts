@@ -1,5 +1,5 @@
 export const matchingMethod = {
-  id: 'matching-v1',
-  version: 'v1',
+  id: 'matching-hourly-v2',
+  version: 'v2',
   type: 'deterministic_method',
 } as const;

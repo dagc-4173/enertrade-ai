@@ -298,3 +298,23 @@ No se recalcula la velocidad completa de S2 porque para ello deben revisarse tod
 Este documento no incluye emails de prueba, passwords, tokens, cookies reales, `DATABASE_URL`, IDs personales ni hosts de PostgreSQL.
 
 No se afirma que HU-10 esté implementada, que exista matching, que el Marketplace esté desplegado en producción ni que existan transacciones reales.
+
+## Refinamiento posterior: publicaciones horarias para siete días
+
+El estudiante autorizó el cambio de granularidad diaria a detalles horarios para mañana hasta los siguientes siete días. No modifica el objetivo general ni convierte el entorno en mercado real. HU-21/HU-22 amplían sus criterios de creación/consulta; HU-10/HU-11 incorporan compatibilidad y trazas de fecha/hora. El resto de este documento conserva estados históricos y no debe leerse como estado técnico actual de HU-10.
+
+Implementación local y resultados ejecutados: [evidencia de publicaciones horarias](../evidencias/publicaciones-horarias/README.md). Decisión y consecuencias: [ADR](../adr/ADR-publicaciones-horarias-siete-dias.md). Incorporación académica, asignación al sprint y validación pendientes; no se inventan fechas de actividades ni estimaciones de esfuerzo.
+
+
+## Refinamiento: verificación simulada informativa
+Se incorporan perfiles horarios declarados, versionado y trazabilidad de verificación voluntaria de publicaciones propias. Impacto HU-21/HU-22 y pruebas HU-20; no acredita disponibilidad física ni bloquea negociación. [Evidencia](../evidencias/verificacion-publicaciones/README.md). Validación académica y formalización del refinamiento pendientes.
+
+
+## Refinamiento: pago simulado interno
+Se implementó el simulador persistente de pagos para acuerdos confirmados, con roles, escenarios, idempotencia, protección ante pagos duplicados, historial y comprobante JSON. No altera el alcance hacia dinero real. Relación C21b y pruebas HU-20; formalización académica pendiente. [Evidencia](../evidencias/pago-simulado/README.md).
+
+Refinamiento C21b/HU-20 (2026-10-07): comprobante del pago simulado descargable en PDF, referencia y valores exactos del snapshot; PAY-PDF-01/02 ejecutadas y aprobadas. Sin nueva HU o estimación retrospectiva.
+
+Refinamiento explícito7/10/2026: verificación de capacidad obligatoria en ambas publicaciones. Sin verificación, rechazo, sin referencia o desactualización desactiva negociación, matching y confirmación pendiente. Históricos confirmados conservados. ADR-verificacion-obligatoria-capacidad.md y evidencias/verificacion-obligatoria registran el cambio respecto al requisito informativo anterior.
+
+Refinamiento C21b/HU-20 el7/10/2026: aviso al comprador para acuerdos confirmados por pagar, separado de pagos pendientes de resolución, con acceso a Transacciones y retirada tras aprobación. Endpoint privado de conteos, pruebas PAY-NOTICE-INT-01/02/03 y NOTICE-UI-01/02/03, evidencia notificacion-pago.

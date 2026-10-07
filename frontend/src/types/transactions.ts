@@ -18,6 +18,7 @@ export interface EnergyTransaction {
   quantityKwh: string
   pricePerKwh: string
   totalAmountCop: string
+  hour?: number | null
   deliveryDate: string
   status: TransactionStatus
   sellerAcceptedAt: string | null

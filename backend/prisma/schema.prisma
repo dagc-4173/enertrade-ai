@@ -257,6 +257,9 @@ model MatchingExecution {
 }
 
 model User {
+  publicationVerifications PublicationVerification[]
+  simulationProfiles SimulationCapacityProfile[]
+  publications EnergyPublication[]
   id String @id @default(uuid()) @db.Uuid
   email String @unique
   name String
@@ -289,7 +292,11 @@ enum EnergyMarketStatus {
 }
 
 model EnergyOffer {
+  verifications PublicationVerification[]
   id           String            @id @default(uuid()) @db.Uuid
+  hour Int?
+  publicationId String? @db.Uuid
+  publication EnergyPublication? @relation(fields: [publicationId], references: [id], onDelete: Restrict)
   userId       String            @db.Uuid
   quantityKwh  Decimal           @db.Decimal(20, 2)
   pricePerKwh  Decimal           @db.Decimal(18, 5)
@@ -303,10 +310,16 @@ model EnergyOffer {
   @@index([userId])
   @@index([status])
   @@index([deliveryDate])
+  @@unique([publicationId, hour])
+  @@index([deliveryDate, hour, status])
 }
 
 model EnergyDemand {
+  verifications PublicationVerification[]
   id             String            @id @default(uuid()) @db.Uuid
+  hour Int?
+  publicationId String? @db.Uuid
+  publication EnergyPublication? @relation(fields: [publicationId], references: [id], onDelete: Restrict)
   userId         String            @db.Uuid
   quantityKwh    Decimal           @db.Decimal(20, 2)
   maxPricePerKwh Decimal           @db.Decimal(18, 5)
@@ -323,6 +336,8 @@ model EnergyDemand {
 }
 
 model EnergyTransaction {
+  batchId String? @db.Uuid
+  hour Int?
   id                  String                  @id @default(uuid()) @db.Uuid
   offerId             String                  @db.Uuid
   demandId            String                  @db.Uuid
@@ -372,4 +387,51 @@ model EnergyTransactionRevision {
   @@unique([transactionId, sequence])
   @@index([transactionId, createdAt])
   @@index([proposedByUserId, createdAt])
+}
+
+// A header groups one user's hourly offer OR demand for one business date.
+model EnergyPublication {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  kind String
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deliveryDate DateTime @db.Date
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  offers EnergyOffer[]
+  demands EnergyDemand[]
+  @@unique([userId, kind, deliveryDate])
+}
+
+model SimulationCapacityProfile {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  kind String
+  version Int
+  source String @default("USER_DECLARED_SIMULATION")
+  limits Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  verifications PublicationVerification[]
+  @@unique([userId, kind, version])
+}
+
+model PublicationVerification {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  offerId String? @db.Uuid
+  demandId String? @db.Uuid
+  profileId String? @db.Uuid
+  ruleId String
+  ruleVersion String
+  resultStatus String
+  inputSnapshot Json
+  resultSnapshot Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  offer EnergyOffer? @relation(fields: [offerId], references: [id], onDelete: Restrict)
+  demand EnergyDemand? @relation(fields: [demandId], references: [id], onDelete: Restrict)
+  profile SimulationCapacityProfile? @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  @@index([offerId, createdAt])
+  @@index([demandId, createdAt])
+  @@index([userId, createdAt])
 }

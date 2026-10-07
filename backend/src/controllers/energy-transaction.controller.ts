@@ -5,6 +5,7 @@ import { createEnergyTransactionService, EnergyTransactionError } from '@/servic
 export function createEnergyTransactionRouter(service = createEnergyTransactionService(), auth = requireAuth()) {
   const router = Router();
   router.use(auth);
+  router.post('/batch', express.json({ limit: '16kb' }), async (req, res, next) => { try { res.status(201).json(await service.createBatch(req.authUser!.id, req.body)); } catch (error) { next(error); } });
   router.get('/mine', async (req, res, next) => { try { res.json({ transactions: await service.findMine(req.authUser!.id, typeof req.query.status === 'string' ? req.query.status : undefined) }); } catch (error) { next(error); } });
   router.get('/:id/revisions', async (req, res, next) => { try { res.json({ revisions: await service.revisions(req.authUser!.id, req.params.id) }); } catch (error) { next(error); } });
   router.get('/:id', async (req, res, next) => { try { res.json({ transaction: await service.findOne(req.authUser!.id, req.params.id) }); } catch (error) { next(error); } });
@@ -24,6 +25,7 @@ export function createEnergyTransactionRouter(service = createEnergyTransactionS
     router.post(path, express.json({ limit: '1kb' }), async (req, res, next) => { try { if (Object.keys(req.body ?? {}).length !== 0) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud no debe incluir cuerpo.'); res.json({ transaction: await service[action](req.authUser!.id, req.params.id) }); } catch (error) { next(error); } });
   }
   const errors: ErrorRequestHandler = (error, _req, res, _next) => {
+    if (error?.code === 'P2034') { res.status(409).json({ error: 'TRANSACTION_CONFLICT', message: 'El saldo cambió durante la negociación. Actualiza el mercado y reintenta.' }); return; }
     if (error instanceof EnergyTransactionError) { res.status(error.status).json({ error: error.code, message: error.message }); return; }
     if (error?.type === 'entity.parse.failed') { res.status(400).json({ error: 'INVALID_TRANSACTION_REQUEST', message: 'El cuerpo debe contener JSON válido.' }); return; }
     res.status(500).json({ error: 'TRANSACTION_OPERATION_FAILED', message: 'No fue posible procesar la transacción.' });

@@ -8,7 +8,7 @@ const decimal = (value: unknown): value is string => text(value) && /^-?\d+(?:\.
 const date = (value: unknown): value is string => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(`${value}T00:00:00Z`))
 const matchingStatuses = new Set(['matched', 'partial', 'no_matches'])
 const compatibilities = new Set(['FULL', 'PARTIAL', 'NO_MATCH'])
-const reasons = new Set(['NO_ACTIVE_OFFERS', 'NO_SAME_DELIVERY_DATE', 'PRICE_ABOVE_MAX', 'INSUFFICIENT_AVAILABLE_QUANTITY', 'FULLY_MATCHED', 'PARTIALLY_MATCHED'])
+const reasons = new Set(['NO_ACTIVE_OFFERS', 'NO_SAME_DELIVERY_DATE', 'NO_SAME_DELIVERY_HOUR', 'PRICE_ABOVE_MAX', 'INSUFFICIENT_AVAILABLE_QUANTITY', 'FULLY_MATCHED', 'PARTIALLY_MATCHED'])
 const warnings = new Set(['NO_ACTIVE_OFFERS', 'NO_ACTIVE_DEMANDS', 'PARTIAL_MATCHES'])
 
 export function parseMatching(value: unknown): MatchingResult {

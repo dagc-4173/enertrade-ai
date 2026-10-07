@@ -9,6 +9,7 @@ export interface MatchingSuggestion {
   suggestedQuantityKwh: string
   offerPricePerKwh: string
   maxDemandPricePerKwh: string
+  hour?: number | null
   deliveryDate: string
 }
 

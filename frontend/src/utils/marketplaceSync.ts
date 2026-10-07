@@ -2,6 +2,7 @@ import type { EnergyDemandDto, EnergyMarketStatus, EnergyOfferDto, MarketDemand,
 
 export const publicationFilters: Array<{ value: EnergyMarketStatus | 'ALL'; label: string }> = [
   { value: 'ACTIVE', label: 'Activas' },
+  { value: 'BLOCKED', label: 'Inactivas' },
   { value: 'FULFILLED', label: 'Completadas' },
   { value: 'EXPIRED', label: 'Vencidas' },
   { value: 'CANCELLED', label: 'Canceladas' },
@@ -18,7 +19,7 @@ export function publicationEmptyLabel(type: 'ofertas' | 'demandas', filter: Ener
 }
 
 export function marketFingerprint(offers: MarketOffer[], demands: MarketDemand[]) {
-  const offerEntries = offers.map(offer => `o:${offer.id}:${offer.availableQuantityKwh}:${offer.pricePerKwh}:${offer.deliveryDate}:${offer.status}`).toSorted()
-  const demandEntries = demands.map(demand => `d:${demand.id}:${demand.availableQuantityKwh}:${demand.maxPricePerKwh}:${demand.deliveryDate}:${demand.status}`).toSorted()
+  const offerEntries = offers.map(offer => `o:${offer.id}:${offer.availableQuantityKwh}:${offer.pricePerKwh}:${offer.deliveryDate}:${offer.hour ?? "legacy"}:${offer.status}`).toSorted()
+  const demandEntries = demands.map(demand => `d:${demand.id}:${demand.availableQuantityKwh}:${demand.maxPricePerKwh}:${demand.deliveryDate}:${demand.hour ?? "legacy"}:${demand.status}`).toSorted()
   return [...offerEntries, ...demandEntries].join('|')
 }

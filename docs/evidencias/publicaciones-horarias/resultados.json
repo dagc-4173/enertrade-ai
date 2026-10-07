@@ -1,0 +1,18 @@
+{
+  "businessDate": "2026-10-06",
+  "timeZone": "America/Bogota",
+  "baselineCommit": "cd7e0d143215c3359a5cbe01b7ae3b0ca2c02304",
+  "backendTests": { "passed": 138, "failed": 0, "files": 11 },
+  "frontendTests": { "passed": 44, "failed": 0, "files": 3 },
+  "integration": { "passed": 10, "failed": 0, "cleanup": "completed", "realPostgreSQL": true },
+  "firstIntegration": { "passedBeforeFailure": 3, "status": "failed", "cleanup": "completed", "cause": "optional matchingExecutionId null rejected by internal create contract", "corrected": true },
+  "backendTypecheck": "passed",
+  "frontendBuild": "passed",
+  "frontendLint": "passed",
+  "diffWhitespaceCheck": "passed",
+  "migration": { "name": "20261007000000_hourly_publications", "status": "applied" },
+  "browserManualReview": "pending",
+  "academicValidation": "pending",
+  "productionDeployment": "not_performed",
+  "gitCommit": "not_created"
+}

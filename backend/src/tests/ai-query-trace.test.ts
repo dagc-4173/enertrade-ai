@@ -41,13 +41,13 @@ describe('HU17 AiQueryTrace', () => {
     expect(price.rows[0]).toMatchObject({ resourceType: 'price_forecast_execution', resourceId: 'price-run', modelId: 'xm-preciobolsnaci-b1' });
     const matching = harness((_req, res) => res.json({ status: 'no_matches', summary: { offersConsidered: 2, demandsConsidered: 3 }, trace: { executionId: 'match-run' } }), true);
     await request(matching.app, '/matches/suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-    expect(matching.rows[0]).toMatchObject({ requesterType: 'authenticated_user', requesterId: '00000000-0000-4000-8000-000000000001', methodId: 'matching-v1', executionStatus: 'empty', resultStatus: 'no_matches', resourceType: 'matching_execution', resourceId: 'match-run', parametersSnapshot: { criteriaVersion: 'matching-v1', offerCount: 2, demandCount: 3 } });
+    expect(matching.rows[0]).toMatchObject({ requesterType: 'authenticated_user', requesterId: '00000000-0000-4000-8000-000000000001', methodId: 'matching-hourly-v2', executionStatus: 'empty', resultStatus: 'no_matches', resourceType: 'matching_execution', resourceId: 'match-run', parametersSnapshot: { criteriaVersion: 'matching-hourly-v2', offerCount: 2, demandCount: 3 } });
   });
 
   test('TRACE-04 y TRACE-11: matching matched registra éxito autenticado y recurso existente', async () => {
     const h = harness((_req, res) => res.json({ status: 'matched', summary: { offersConsidered: 1, demandsConsidered: 1 }, trace: { executionId: 'matched-run' } }), true);
     const result = await request(h.app, '/matches/suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-    expect(h.rows[0]).toMatchObject({ requestId: result.requestId, endpoint: '/matches/suggest', httpMethod: 'POST', requesterType: 'authenticated_user', requesterId: '00000000-0000-4000-8000-000000000001', methodId: 'matching-v1', executionStatus: 'succeeded', resultStatus: 'matched', resourceType: 'matching_execution', resourceId: 'matched-run' });
+    expect(h.rows[0]).toMatchObject({ requestId: result.requestId, endpoint: '/matches/suggest', httpMethod: 'POST', requesterType: 'authenticated_user', requesterId: '00000000-0000-4000-8000-000000000001', methodId: 'matching-hourly-v2', executionStatus: 'succeeded', resultStatus: 'matched', resourceType: 'matching_execution', resourceId: 'matched-run' });
     expect(h.rows[0]!.durationMs).toBeGreaterThanOrEqual(0);
   });
 

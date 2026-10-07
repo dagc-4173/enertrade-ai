@@ -23,6 +23,9 @@ export type TracedMatchingService = { suggest(): Promise<TracedMatchingResponse>
 const criteriaSnapshot: Prisma.InputJsonObject = {
   activeStatus: 'ACTIVE',
   deliveryDate: 'equal',
+  deliveryHour: 'equal; legacy null only matches legacy null',
+  distinctParticipants: true,
+  participantIdentity: 'execution-local participantKey; equal keys exclude self-match',
   priceCompatibility: 'pricePerKwh <= maxPricePerKwh',
   remainingQuantity: 'positive',
   demandOrder: ['createdAt', 'id'],
@@ -39,9 +42,17 @@ function date(value: Date | string): string {
 }
 
 function inputSnapshot(offers: MatchingOfferLike[], demands: MatchingDemandLike[]): Prisma.InputJsonObject {
+  const participants = new Map<string, string>();
+  const participantKey = (userId?: string) => {
+    if (!userId) return null;
+    if (!participants.has(userId)) participants.set(userId, `participant-${participants.size + 1}`);
+    return participants.get(userId)!;
+  };
   return {
     offers: offers.filter(item => item.status === 'ACTIVE').map(item => ({
       id: item.id,
+      participantKey: participantKey(item.userId),
+      hour: item.hour ?? null,
       quantityKwh: decimal(item.quantityKwh),
       pricePerKwh: decimal(item.pricePerKwh),
       deliveryDate: date(item.deliveryDate).slice(0, 10),
@@ -49,6 +60,8 @@ function inputSnapshot(offers: MatchingOfferLike[], demands: MatchingDemandLike[
     })),
     demands: demands.filter(item => item.status === 'ACTIVE').map(item => ({
       id: item.id,
+      participantKey: participantKey(item.userId),
+      hour: item.hour ?? null,
       quantityKwh: decimal(item.quantityKwh),
       maxPricePerKwh: decimal(item.maxPricePerKwh),
       deliveryDate: date(item.deliveryDate).slice(0, 10),

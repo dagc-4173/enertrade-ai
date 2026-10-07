@@ -1,0 +1,1 @@
+export const hourLabel = (hour: number | null | undefined) => hour == null ? 'Histórica: sin hora' : `${String(hour).padStart(2, '0')}:00–${String((hour + 1) % 24).padStart(2, '0')}:00${hour === 23 ? ' (+1 día)' : ''}`

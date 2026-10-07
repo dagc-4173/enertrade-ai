@@ -1,3 +1,4 @@
+import { isPublicationVerification } from './publicationVerificationService'
 import { ApiError, apiRequest, postJson } from './apiClient'
 import type {
   CreateDemandInput,
@@ -26,18 +27,20 @@ const date = (value: unknown): value is string => {
   return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === value
 }
 
-type PublicationBase = Pick<EnergyOfferDto, 'id' | 'quantityKwh' | 'confirmedQuantityKwh' | 'reservedQuantityKwh' | 'availableQuantityKwh' | 'deliveryDate' | 'status' | 'createdAt' | 'updatedAt'>
+type PublicationBase = Pick<EnergyOfferDto, 'id' | 'quantityKwh' | 'confirmedQuantityKwh' | 'reservedQuantityKwh' | 'availableQuantityKwh' | 'deliveryDate' | 'status' | 'createdAt' | 'updatedAt' | 'hour' | 'publicationId' | 'verification'>
 
 function base(value: unknown): PublicationBase | null {
   if (!object(value) || !text(value.id) || !date(value.deliveryDate) ||
-    (value.status !== 'ACTIVE' && value.status !== 'FULFILLED' && value.status !== 'CANCELLED' && value.status !== 'EXPIRED') ||
+    (value.hour !== undefined && value.hour !== null && (typeof value.hour !== 'number' || !Number.isInteger(value.hour) || value.hour < 0 || value.hour > 23)) ||
+    (value.status !== 'ACTIVE' && value.status !== 'BLOCKED' && value.status !== 'FULFILLED' && value.status !== 'CANCELLED' && value.status !== 'EXPIRED') ||
     !text(value.createdAt) || !Number.isFinite(Date.parse(value.createdAt)) || !text(value.updatedAt) || !Number.isFinite(Date.parse(value.updatedAt)) || 'userId' in value) return null
+  if (value.verification !== undefined && value.verification !== null && !isPublicationVerification(value.verification)) return null
   const quantityKwh = decimal(value.quantityKwh)
   const confirmedQuantityKwh = decimal(value.confirmedQuantityKwh)
   const reservedQuantityKwh = decimal(value.reservedQuantityKwh)
   const availableQuantityKwh = decimal(value.availableQuantityKwh)
   if (quantityKwh === null || quantityKwh <= 0 || confirmedQuantityKwh === null || confirmedQuantityKwh < 0 || reservedQuantityKwh === null || reservedQuantityKwh < 0 || availableQuantityKwh === null || availableQuantityKwh < 0) return null
-  return { id: value.id, quantityKwh, confirmedQuantityKwh, reservedQuantityKwh, availableQuantityKwh, deliveryDate: value.deliveryDate, status: value.status, createdAt: value.createdAt, updatedAt: value.updatedAt }
+  return { id: value.id, ...('verification' in value ? { verification: value.verification as EnergyOfferDto['verification'] } : {}), ...('hour' in value ? { hour: value.hour as number | null } : {}), ...('publicationId' in value ? { publicationId: value.publicationId as string | null } : {}), quantityKwh, confirmedQuantityKwh, reservedQuantityKwh, availableQuantityKwh, deliveryDate: value.deliveryDate, status: value.status, createdAt: value.createdAt, updatedAt: value.updatedAt }
 }
 
 function offer(value: unknown): EnergyOfferDto | null {
@@ -124,7 +127,7 @@ export async function cancelDemand(id: string) {
 }
 
 function publicMarketBase(value: unknown): value is Record<string, unknown> {
-  return object(value) && text(value.id) && text(value.availableQuantityKwh) && positiveNumber(Number(value.availableQuantityKwh)) && date(value.deliveryDate) && value.status === 'ACTIVE' && !('userId' in value) && !('email' in value)
+  return object(value) && (value.hour == null || (typeof value.hour === 'number' && Number.isInteger(value.hour) && value.hour >= 0 && value.hour <= 23)) && text(value.id) && text(value.availableQuantityKwh) && positiveNumber(Number(value.availableQuantityKwh)) && date(value.deliveryDate) && value.status === 'ACTIVE' && !('userId' in value) && !('email' in value)
 }
 
 const positiveDecimalText = (value: unknown): value is string => typeof value === 'string' && (decimal(value) ?? 0) > 0
@@ -139,4 +142,14 @@ export function listMarketOffers(signal?: AbortSignal) {
 
 export function listMarketDemands(signal?: AbortSignal) {
   return apiRequest<unknown>('/market/demands', { credentials: 'include', signal }).then(response => list(response, 'demands', parseMarketDemand))
+}
+
+export async function getPublicationWindow(signal?: AbortSignal): Promise<string[]> {
+  const response = await apiRequest<unknown>('/publications/window', { credentials: 'include', signal });
+  if (response.status !== 200 || !object(response.data) || !Array.isArray(response.data.dates) || response.data.dates.length !== 7 || !response.data.dates.every(date)) throw new ApiError('response', 'No fue posible obtener las fechas disponibles.', response.status);
+  return response.data.dates as string[];
+}
+export async function createHourlyPublication(input: { kind: 'offer' | 'demand'; days: { deliveryDate: string; hours: { hour: number; quantityKwh: number; pricePerKwh: number }[] }[] }) {
+  const response = await postJson<unknown>('/publications', input, { credentials: 'include' });
+  if (response.status !== 201 || !object(response.data) || !Array.isArray(response.data.publications)) throw new ApiError('response', 'No fue posible publicar las franjas.', response.status);
 }

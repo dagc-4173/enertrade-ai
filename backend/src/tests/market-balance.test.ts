@@ -11,16 +11,18 @@ const transactions = [
 ];
 
 const database = {
+  simulationCapacityProfile:{findFirst:async()=>({id:'profile'})},
+  publicationVerification:{findFirst:async()=>({id:'v',userId:'u',profileId:'profile',ruleId:'declared-hourly-capacity',ruleVersion:'1.0.0',resultStatus:'APPROVED',createdAt:date,inputSnapshot:{quantityKwh:'30000',deliveryDate:'2026-09-23',hour:8,profileVersion:1},resultSnapshot:{reason:'Cumple',maxQuantityKwh:'30000'}})},
   energyOffer: {
     findMany: async () => [
-      { id: 'offer-1', userId: 'seller', quantityKwh: '30000', pricePerKwh: '950', deliveryDate: date, status: 'ACTIVE', createdAt: date },
-      { id: 'offer-2', userId: 'other', quantityKwh: '30000', pricePerKwh: '950', deliveryDate: date, status: 'ACTIVE', createdAt: date },
+      { id: 'offer-1', userId: 'seller', quantityKwh: '30000', pricePerKwh: '950', deliveryDate: date, status: 'ACTIVE', hour:8, createdAt: date },
+      { id: 'offer-2', userId: 'other', quantityKwh: '30000', pricePerKwh: '950', deliveryDate: date, status: 'ACTIVE', hour:8, createdAt: date },
     ],
   },
   energyDemand: {
     findMany: async () => [
-      { id: 'demand-1', userId: 'buyer', quantityKwh: '30000', maxPricePerKwh: '1000', deliveryDate: date, status: 'ACTIVE', createdAt: date },
-      { id: 'demand-2', userId: 'other', quantityKwh: '30000', maxPricePerKwh: '1000', deliveryDate: date, status: 'ACTIVE', createdAt: date },
+      { id: 'demand-1', userId: 'buyer', quantityKwh: '30000', maxPricePerKwh: '1000', deliveryDate: date, status: 'ACTIVE', hour:8, createdAt: date },
+      { id: 'demand-2', userId: 'other', quantityKwh: '30000', maxPricePerKwh: '1000', deliveryDate: date, status: 'ACTIVE', hour:8, createdAt: date },
     ],
   },
   energyTransaction: {
@@ -34,14 +36,14 @@ const database = {
 };
 
 test('mercado expone saldo derivado y omite publicaciones ACTIVE sin saldo disponible', async () => {
-  const market = createMarketService(database as any);
-  await expect(market.offers('viewer')).resolves.toEqual([{ id: 'offer-1', availableQuantityKwh: '15000', pricePerKwh: '950', deliveryDate: '2026-09-23', status: 'ACTIVE' }]);
-  await expect(market.demands('viewer')).resolves.toEqual([{ id: 'demand-1', availableQuantityKwh: '15000', maxPricePerKwh: '1000', deliveryDate: '2026-09-23', status: 'ACTIVE' }]);
+  const market = createMarketService(database as any,()=>new Date('2026-09-21'));
+  await expect(market.offers('viewer')).resolves.toEqual([{ id: 'offer-1', hour: 8, publicationId: null, availableQuantityKwh: '15000', pricePerKwh: '950', deliveryDate: '2026-09-23', status: 'ACTIVE' }]);
+  await expect(market.demands('viewer')).resolves.toEqual([{ id: 'demand-1', hour: 8, publicationId: null, availableQuantityKwh: '15000', maxPricePerKwh: '1000', deliveryDate: '2026-09-23', status: 'ACTIVE' }]);
 });
 
 test('refrescar mercado vence publicaciones previas y no las expone', async () => {
-  const offerRows = [{ id: 'expired-offer', userId: 'seller', quantityKwh: '1', pricePerKwh: '950', deliveryDate: new Date('2026-09-20T00:00:00.000Z'), status: 'ACTIVE', createdAt: date }];
-  const demandRows = [{ id: 'expired-demand', userId: 'buyer', quantityKwh: '1', maxPricePerKwh: '1000', deliveryDate: new Date('2026-09-20T00:00:00.000Z'), status: 'ACTIVE', createdAt: date }];
+  const offerRows = [{ id: 'expired-offer', userId: 'seller', quantityKwh: '1', pricePerKwh: '950', deliveryDate: new Date('2026-09-20T00:00:00.000Z'), status: 'ACTIVE', hour:8, createdAt: date }];
+  const demandRows = [{ id: 'expired-demand', userId: 'buyer', quantityKwh: '1', maxPricePerKwh: '1000', deliveryDate: new Date('2026-09-20T00:00:00.000Z'), status: 'ACTIVE', hour:8, createdAt: date }];
   const expiringDatabase = {
     energyOffer: {
       updateMany: async () => { offerRows[0]!.status = 'EXPIRED'; return {}; },
