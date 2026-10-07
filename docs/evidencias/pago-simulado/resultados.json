@@ -1,0 +1,31 @@
+{
+  "businessDate": "2026-10-07",
+  "timeZone": "America/Bogota",
+  "backendTests": {
+    "passed": 46,
+    "failed": 0,
+    "files": 3
+  },
+  "frontendTests": {
+    "passed": 39,
+    "failed": 0,
+    "files": 3
+  },
+  "realPostgreSQLIntegration": {
+    "passed": 9,
+    "failed": 0,
+    "cleanup": "completed"
+  },
+  "backendTypecheck": "passed",
+  "frontendLint": "passed",
+  "frontendBuild": "passed",
+  "migration": {
+    "name": "20261007020000_simulated_payments",
+    "status": "applied"
+  },
+  "browserBuyerForm": "verified_without_submission",
+  "browserSellerReadOnlyPanel": "verified",
+  "browserReceiptDownload": "pending",
+  "academicValidation": "pending",
+  "realMoneyMovement": false
+}

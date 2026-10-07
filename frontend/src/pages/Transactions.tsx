@@ -1,3 +1,4 @@
+import { SimulatedPaymentPanel } from '../components/SimulatedPaymentPanel'
 import { hourLabel } from '../utils/hourlyMarket'
 import { useEffect, useEffectEvent, useState, type FormEvent } from 'react'
 import { LocalizedDecimalInput } from '../components/forms/LocalizedDecimalInput'
@@ -121,6 +122,7 @@ export function Transactions() {
         {canReject(item) && <button type="button" className="secondary-button" onClick={() => { void act(item.id, 'reject') }}>Rechazar</button>}
         {canCancel(item) && <button type="button" className="secondary-button" onClick={() => { void act(item.id, 'cancel') }}>{hasRevisions(item) ? 'Cancelar negociación' : 'Cancelar propuesta'}</button>}
       </div>
+      <SimulatedPaymentPanel transaction={item} />
     </article></details></td></tr>)}</tbody></table></div>}
   </div>
 }

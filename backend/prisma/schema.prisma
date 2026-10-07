@@ -266,6 +266,7 @@ model User {
   passwordHash String
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  simulatedPayments SimulatedPaymentAttempt[]
   sessions AuthSession[]
   offers EnergyOffer[]
   demands EnergyDemand[]
@@ -336,6 +337,7 @@ model EnergyDemand {
 }
 
 model EnergyTransaction {
+  paymentAttempts SimulatedPaymentAttempt[]
   batchId String? @db.Uuid
   hour Int?
   id                  String                  @id @default(uuid()) @db.Uuid
@@ -434,4 +436,30 @@ model PublicationVerification {
   @@index([offerId, createdAt])
   @@index([demandId, createdAt])
   @@index([userId, createdAt])
+}
+
+enum SimulatedPaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+model SimulatedPaymentAttempt {
+  id String @id @default(uuid()) @db.Uuid
+  transactionId String @db.Uuid
+  payerUserId String @db.Uuid
+  requestKey String @db.Uuid
+  scenario SimulatedPaymentStatus
+  status SimulatedPaymentStatus
+  amountCop Decimal @db.Decimal(38, 7)
+  currency String @default("COP")
+  providerId String @default("internal-simulator")
+  providerVersion String @default("1.0.0")
+  contractSnapshot Json
+  receiptReference String? @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  resolvedAt DateTime? @db.Timestamptz(3)
+  transaction EnergyTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  payer User @relation(fields: [payerUserId], references: [id], onDelete: Restrict)
+  @@unique([transactionId, requestKey])
+  @@index([transactionId, createdAt])
 }

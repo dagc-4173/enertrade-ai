@@ -1,4 +1,6 @@
 import express, { type ErrorRequestHandler } from 'express'
+import { createSimulatedPaymentRouter } from '@/controllers/simulated-payment.controller';
+import { createSimulatedPaymentService } from '@/services/simulated-payment.service';
 import { router as publicationVerificationRouter } from '@/controllers/publication-verification.controller';
 import { requireAuth } from '@/middlewares/auth.middleware';
 import { router as hourlyPublicationRouter } from '@/controllers/hourly-publication.controller';
@@ -41,6 +43,7 @@ const offerRouter = createOfferRouter(createOfferService(undefined, undefined, e
 const demandRouter = createDemandRouter(createDemandService(undefined, undefined, expire))
 const marketRouter = createMarketRouter(createMarketService(prisma, undefined, options.expirationScope))
 const energyTransactionRouter = createEnergyTransactionRouter(createEnergyTransactionService(undefined, undefined, options.expirationScope))
+const simulatedPaymentRouter = createSimulatedPaymentRouter(createSimulatedPaymentService(prisma, undefined, options.expirationScope))
 
 app.use(requestIdMiddleware)
 app.use(createAiQueryTraceMiddleware())
@@ -89,7 +92,7 @@ app.use('/datasets', datasetJsonError)
 app.use('/external-data', externalDataRouter)
 app.use('/forecasts', forecastRouter)
 if (options.expirationScope) {
-    app.use(['/publication-verifications', '/publications', '/offers', '/demands',  '/transactions', '/market', '/matches'], requireAuth(), (req, res, next) => {
+    app.use(['/publication-verifications', '/publications', '/offers', '/demands',  '/simulated-payments', '/transactions', '/market', '/matches'], requireAuth(), (req, res, next) => {
         if (!options.expirationScope!.userIds.includes(req.authUser!.id)) { res.status(403).json({ error: 'FIXTURE_USER_REQUIRED', message: 'La cuenta no pertenece al fixture.' }); return; }
         next();
     })
@@ -99,6 +102,7 @@ app.use('/publications', hourlyPublicationRouter)
 app.post(['/offers', '/demands'], requireAuth(), (_req, res) => { res.status(410).json({ error: 'HOURLY_PUBLICATION_REQUIRED', message: 'Las nuevas publicaciones deben incluir horas y fechas de los próximos siete días mediante /publications.' }); });
 app.use('/offers', offerRouter)
 app.use('/demands', demandRouter)
+app.use('/simulated-payments', simulatedPaymentRouter)
 app.use('/transactions', energyTransactionRouter)
 app.use('/market', marketRouter)
 app.use('/matches', matchingRouter)
