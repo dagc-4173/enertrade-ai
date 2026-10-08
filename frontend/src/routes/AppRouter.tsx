@@ -1,3 +1,4 @@
+import { BuyerPaymentNotification } from '../components/BuyerPaymentNotification'
 import { useState, type ComponentType } from 'react'
 import { AppShell } from '../components/layout/AppShell'
 import type { PageKey } from '../types/domain'
@@ -22,6 +23,7 @@ export default function AppRouter() {
 
   return (
     <AppShell activePage={activePage} onNavigate={setActivePage}>
+      <BuyerPaymentNotification pageKey={activePage} onNavigate={() => setActivePage('transactions')} />
       <ActivePage />
     </AppShell>
   )

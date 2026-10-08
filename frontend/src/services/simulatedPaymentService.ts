@@ -21,3 +21,11 @@ export async function resolveSimulatedPayment(id:string,outcome:'APPROVED'|'REJE
  if(response.status!==200||!object(response.data)||!isPaymentAttempt(response.data.attempt))throw new ApiError('response','El resultado del pago tiene un formato inesperado.',response.status)
  return response.data.attempt
 }
+
+export type PayableSummary={unpaidCount:number;pendingCount:number;totalCount:number;simulated:true}
+export async function getPayableSummary(signal?:AbortSignal):Promise<PayableSummary>{
+ const response=await apiRequest<unknown>('/simulated-payments/payables',{credentials:'include',signal})
+ const data=response.data
+ if(response.status!==200||!object(data)||data.simulated!==true||!['unpaidCount','pendingCount','totalCount'].every(key=>typeof data[key]==='number'&&Number.isSafeInteger(data[key])&&Number(data[key])>=0)||data.totalCount!==Number(data.unpaidCount)+Number(data.pendingCount))throw new ApiError('response','El aviso de pagos no tiene un formato válido.',response.status)
+ return data as PayableSummary
+}

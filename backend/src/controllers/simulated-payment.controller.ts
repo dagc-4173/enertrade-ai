@@ -3,6 +3,7 @@ import { requireAuth } from '@/middlewares/auth.middleware';
 import { createSimulatedPaymentService, SimulatedPaymentError } from '@/services/simulated-payment.service';
 export function createSimulatedPaymentRouter(service = createSimulatedPaymentService(), auth = requireAuth()) {
  const router=Router();router.use(auth);
+ router.get('/payables',async(req,res,next)=>{try{res.set('Cache-Control','no-store');res.json(await service.payables(req.authUser!.id))}catch(error){next(error)}});
  router.get('/transactions/:id',async(req,res,next)=>{try{res.json(await service.list(req.authUser!.id,req.params.id))}catch(error){next(error)}});
  router.post('/',express.json({limit:'4kb'}),async(req,res,next)=>{try{const result=await service.create(req.authUser!.id,req.body);res.status(result.replayed?200:201).json(result)}catch(error){next(error)}});
  router.post('/:id/resolve',express.json({limit:'1kb'}),async(req,res,next)=>{try{res.json({attempt:await service.resolve(req.authUser!.id,req.params.id,req.body)})}catch(error){next(error)}});

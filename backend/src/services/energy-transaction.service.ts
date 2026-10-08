@@ -17,6 +17,7 @@ type MarketRecord = {
 };
 
 export type TransactionRecord = {
+  paymentAttempts?: { status: string }[];
   id: string;
   offerId: string;
   demandId: string;
@@ -180,6 +181,7 @@ function counterInput(body: unknown) {
 function dto(value: TransactionRecord) {
   return {
     id: value.id,
+    ...(value.paymentAttempts && value.status === 'CONFIRMED' ? { paymentStatus: value.paymentAttempts.some(attempt => attempt.status === 'APPROVED') ? 'PAID' : value.paymentAttempts.some(attempt => attempt.status === 'PENDING') ? 'PENDING' : 'UNPAID' } : {}),
     offerId: value.offerId,
     demandId: value.demandId,
     quantityKwh: decimalString(value.quantityKwh),
@@ -270,8 +272,8 @@ const repository: EnergyTransactionRepository = {
     };
     return action(store);
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }),
-  findMine: async (userId, status) => (await prisma.energyTransaction.findMany({ where: { OR: [{ sellerUserId: userId }, { buyerUserId: userId }], ...(status ? { status } : {}) }, orderBy: { createdAt: 'desc' } })) as TransactionRecord[],
-  findForParticipant: async (id, userId) => (await prisma.energyTransaction.findFirst({ where: { id, OR: [{ sellerUserId: userId }, { buyerUserId: userId }] } })) as TransactionRecord | null,
+  findMine: async (userId, status) => (await prisma.energyTransaction.findMany({ where: { OR: [{ sellerUserId: userId }, { buyerUserId: userId }], ...(status ? { status } : {}) }, orderBy: { createdAt: 'desc' }, include: { paymentAttempts: { select: { status: true }, where: { status: { in: ['APPROVED', 'PENDING'] } } } } })) as TransactionRecord[],
+  findForParticipant: async (id, userId) => (await prisma.energyTransaction.findFirst({ where: { id, OR: [{ sellerUserId: userId }, { buyerUserId: userId }] }, include: { paymentAttempts: { select: { status: true }, where: { status: { in: ['APPROVED', 'PENDING'] } } } } })) as TransactionRecord | null,
   findRevisions: async transactionId => (await prisma.energyTransactionRevision.findMany({ where: { transactionId }, orderBy: { sequence: 'asc' } })) as TransactionRevisionRecord[],
 };
 

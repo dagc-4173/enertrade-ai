@@ -1,3 +1,4 @@
+import {transactionNeedsPayment,transactionPaymentLabel} from '../utils/transactionPayment'
 import { SimulatedPaymentPanel } from '../components/SimulatedPaymentPanel'
 import { hourLabel } from '../utils/hourlyMarket'
 import { useEffect, useEffectEvent, useState, type FormEvent } from 'react'
@@ -63,6 +64,12 @@ export function Transactions() {
   }, [filter, refreshVersion])
 
   useVisiblePolling(signal => refreshTransactions(signal), 5000, true)
+  const refreshPaymentRows = useEffectEvent(() => { void refreshTransactions() })
+  useEffect(() => {
+    const update = () => refreshPaymentRows()
+    window.addEventListener('enertrade:payments-changed', update)
+    return () => window.removeEventListener('enertrade:payments-changed', update)
+  }, [])
 
   function refresh() { setLoading(true); setError(''); setRefreshVersion(value => value + 1) }
   async function act(id: string, action: 'accept' | 'reject' | 'cancel') {
@@ -71,6 +78,7 @@ export function Transactions() {
     setBusy(id); setError('')
     try {
       const result = action === 'accept' ? await acceptTransaction(id) : action === 'reject' ? await rejectTransaction(id) : await cancelTransaction(id)
+      window.dispatchEvent(new Event('enertrade:payments-changed'))
       setNotice(result.status === 'CONFIRMED' ? 'Transacción energética simulada confirmada.' : action === 'reject' ? 'Negociación rechazada y reserva liberada.' : action === 'cancel' ? 'Negociación cancelada y reserva liberada.' : 'Aceptación registrada.')
       refresh()
     } catch (reason) { setError(message(reason)) } finally { setBusy(null) }
@@ -106,7 +114,7 @@ export function Transactions() {
     {error && <div className="panel" role="alert"><p className="marketplace-error">{error}</p><button className="secondary-button" type="button" onClick={refresh}>Reintentar</button></div>}
     {loading && <p role="status">Cargando transacciones…</p>}
     {!loading && !error && items.length === 0 && <section className="panel"><p className="marketplace-empty">No tienes transacciones todavía.</p></section>}
-    {!loading && !error && <div className="table-wrap"><table className="data-table"><thead><tr><th>Fecha</th><th>Hora</th><th>Rol</th><th>Cantidad</th><th>Total</th><th>Estado</th><th>Gestión</th></tr></thead><tbody>{items.map(item => <tr key={item.id}><td>{formatDeliveryDate(item.deliveryDate)}</td><td>{hourLabel(item.hour)}</td><td>{roleLabel(item.role)}</td><td>{formatEnergyKWh(Number(item.quantityKwh))}</td><td>{formatCurrencyCOP(Number(item.totalAmountCop))}</td><td>{statusLabel[item.status]}</td><td><details><summary>Ver negociación</summary><article className="transaction-item">
+    {!loading && !error && <div className="table-wrap"><table className="data-table"><thead><tr><th>Fecha</th><th>Hora</th><th>Rol</th><th>Cantidad</th><th>Total</th><th>Estado</th><th>Gestión</th></tr></thead><tbody>{items.map(item => <tr key={item.id} className={transactionNeedsPayment(item) ? 'transaction-unpaid' : undefined}><td>{formatDeliveryDate(item.deliveryDate)}</td><td>{hourLabel(item.hour)}</td><td>{roleLabel(item.role)}</td><td>{formatEnergyKWh(Number(item.quantityKwh))}</td><td>{formatCurrencyCOP(Number(item.totalAmountCop))}</td><td>{statusLabel[item.status]}{transactionPaymentLabel(item) && <span className="transaction-payment-label">{transactionPaymentLabel(item)}</span>}</td><td><details><summary>Ver negociación</summary><article className="transaction-item">
       <div className="row-between"><strong>Referencia {item.id.slice(0, 8)} · {item.role === 'SELLER' ? 'Vendedor' : 'Comprador'}</strong><StatusBadge tone={tone(item.status)}>{statusLabel[item.status]}</StatusBadge></div>
       <p className="transaction-ownership">{ownershipLabel(item)}</p>
       {hasRevisions(item) ? <><h3>Término vigente</h3><p>Cantidad: {formatEnergyKWh(Number(item.quantityKwh))}</p><p>Precio: {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p><p>Total: {formatCurrencyCOP(Number(item.totalAmountCop))}</p><p>Propuesto por {roleLabel(item.latestRevisionProposedByRole!)}.</p></> : <p>{formatEnergyKWh(Number(item.quantityKwh))} a {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p>}

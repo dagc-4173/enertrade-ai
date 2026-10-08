@@ -11,3 +11,7 @@
 .transaction-history li { display: grid; gap: 2px; color: var(--color-muted); }
 .transaction-history strong { color: var(--color-text); }
 .transaction-notice { margin: 0; padding: 14px 18px; color: var(--color-forest); background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 8px; font-weight: 700; }
+
+.data-table tr.transaction-unpaid > td { background: #fff5d6; }
+.data-table tr.transaction-unpaid > td:first-child { border-left: 4px solid #b77a09; }
+.transaction-payment-label { display: block; margin-top: 5px; font-size: 12px; font-weight: 700; color: #76500d; }

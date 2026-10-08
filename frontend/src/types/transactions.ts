@@ -12,6 +12,7 @@ export interface TransactionRevision {
 }
 
 export interface EnergyTransaction {
+  paymentStatus?: 'UNPAID' | 'PENDING' | 'PAID'
   id: string
   offerId: string
   demandId: string

@@ -29,7 +29,14 @@ function snapshot(transaction: EnergyTransaction): Prisma.InputJsonObject {
 export function createSimulatedPaymentService(database = prisma, now: () => Date = () => new Date(), scope?: PublicationExpirationScope) {
  const transactionWhere = (id: string): Prisma.EnergyTransactionWhereUniqueInput => ({ id, ...(scope ? { sellerUserId: { in: [...scope.userIds] }, buyerUserId: { in: [...scope.userIds] }, offer: { userId: { in: [...scope.userIds] } }, demand: { userId: { in: [...scope.userIds] } } } : {}) });
  return {
-
+  async payables(userId: string) {
+   return database.$transaction(async tx => {
+    const base: Prisma.EnergyTransactionWhereInput = { buyerUserId: userId, status: 'CONFIRMED', ...(scope ? { sellerUserId: { in: [...scope.userIds] }, buyerUserId: { equals: userId, in: [...scope.userIds] }, offer: { userId: { in: [...scope.userIds] } }, demand: { userId: { in: [...scope.userIds] } } } : {}) };
+    const unpaidCount = await tx.energyTransaction.count({ where: { ...base, AND: [{ paymentAttempts: { none: { status: 'APPROVED' } } }, { paymentAttempts: { none: { status: 'PENDING' } } }] } });
+    const pendingCount = await tx.energyTransaction.count({ where: { ...base, AND: [{ paymentAttempts: { none: { status: 'APPROVED' } } }, { paymentAttempts: { some: { status: 'PENDING' } } }] } });
+    return { unpaidCount, pendingCount, totalCount: unpaidCount + pendingCount, simulated: true };
+   }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });
+  },
   async list(userId: string, transactionId: string) {
    if (!uuid(transactionId)) throw new SimulatedPaymentError(400,'INVALID_TRANSACTION_ID','El identificador de transacción no es válido.');
   const transaction = participant(await database.energyTransaction.findUnique({ where: transactionWhere(transactionId) }),userId,scope);

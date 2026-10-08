@@ -717,3 +717,6 @@ main {
   }
 
 }
+
+.buyer-payment-notice { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 20px; border: 1px solid #d9bb68; border-radius: 12px; background: #fff8e5; color: #4d3d16; }
+.buyer-payment-notice p { margin: 6px 0 0; }
