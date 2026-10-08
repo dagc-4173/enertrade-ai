@@ -1,0 +1,21 @@
+{
+  "notificationPercentages": [
+    80,
+    100
+  ],
+  "cloudComputeCU": 0.25,
+  "cloudSuspendAfterMinutes": 5,
+  "hardSpendingCap": false,
+  "monthlySpendingNotificationUSD": 5,
+  "date": "2026-10-07",
+  "restorationTested": false,
+  "evidenceKind": "operational_cloud_compute_configuration",
+  "functionalValidation": false,
+  "c4Validation": false,
+  "productionDeployment": false,
+  "architectureDecision": "temporary development fallback only; Neon remains the planned cloud PostgreSQL service",
+  "sanitization": {
+    "projectBranchHostname": "redacted in screenshot copy",
+    "backupHashCountsAndIdentity": "omitted"
+  }
+}
