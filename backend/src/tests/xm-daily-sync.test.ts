@@ -18,13 +18,13 @@ test('DemaSIN coverage preserves latest received and excludes only severe observ
 });
 
 function dependencies(overrides: Partial<XmDailySyncDependencies> = {}) {
-  const calls = { query: [] as string[], ingest: [] as string[], materialize: [] as string[], prepare: [] as number[] };
+  const calls = { query: [] as string[], ingest: [] as string[], materialize: [] as string[], validate: [] as number[], prepare: [] as number[] };
   const defaults: XmDailySyncDependencies = {
     readCoverage: async () => coverage(),
     query: async input => { calls.query.push(`${input.dataset}:${input.startDate}`); return { records: records(input.dataset, input.startDate) }; },
     ingest: async input => { calls.ingest.push(`${input.metric}:${input.from}:${input.to}`); return { manifestId: calls.ingest.length, energyDatasetId: 900 + calls.ingest.length, reused: false }; },
     materialize: async input => { calls.materialize.push(`${input.metric}:${input.from}:${input.to}`); return { consolidatedDatasetId: 70, energyDatasetId: 970 }; },
-    validate: async () => ({ status: 'aprobado', canProceed: true }),
+    validate: async id => { calls.validate.push(id); return { status: 'aprobado', canProceed: true }; },
     prepare: async id => { calls.prepare.push(id); return { preparedDatasetId: 80, profileId: 'xm_gene_preparacion_base', profileVersion: '1.0.0' }; },
     now: () => new Date('2026-09-23T12:00:00Z'),
     readSupplyPrepared: async () => [{
@@ -39,6 +39,148 @@ function dependencies(overrides: Partial<XmDailySyncDependencies> = {}) {
   };
   return { calls, service: createXmDailySyncService({ ...defaults, ...overrides }) };
 }
+
+test.each([
+  ['Gene', '2026-10-08'],
+  ['DemaSIN', '2026-10-08'],
+  ['PrecBolsNaci', '2026-10-05'],
+] as const)('%s explicitly reports NO_NEW_DATA without any artifact pipeline calls', async (metric, persisted) => {
+  const { service, calls } = dependencies({
+    readCoverage: async () => coverage(persisted),
+    now: () => new Date('2026-10-08T17:00:00Z'),
+    query: async input => {
+      calls.query.push(`${input.dataset}:${input.startDate}:${input.endDate}`);
+      return { records: input.startDate === persisted ? records(input.dataset, persisted) : [] };
+    },
+  });
+  expect((await service.sync(metric)).metrics).toEqual([expect.objectContaining({
+    metric, status: 'up_to_date', outcome: 'NO_NEW_DATA', persistedUntil: persisted,
+    latestCompleteAvailableDate: persisted, requestedFrom: offsetDate(persisted, 1),
+    requestedTo: persisted, newDays: 0, ingestedRows: 0, windowsCreatedOrReused: [],
+  })]);
+  expect(calls.query.at(-1)).toBe(`${metric}:${persisted}:${persisted}`);
+  expect(calls.ingest).toEqual([]);
+  expect(calls.materialize).toEqual([]);
+  expect(calls.validate).toEqual([]);
+  expect(calls.prepare).toEqual([]);
+});
+
+test('price three-day increment requests exactly October 6..8 and reports 72 new rows', async () => {
+  const { service, calls } = dependencies({
+    readCoverage: async () => coverage('2026-10-05'),
+    now: () => new Date('2026-10-08T17:00:00Z'),
+  });
+  expect((await service.sync('PrecBolsNaci')).metrics[0]).toMatchObject({
+    outcome: 'SYNCED', status: 'synchronized', latestCompleteAvailableDate: '2026-10-08',
+    requestedFrom: '2026-10-06', requestedTo: '2026-10-08', newDays: 3, ingestedRows: 72,
+  });
+  expect(calls.query).toEqual(['PrecBolsNaci:2026-10-08']);
+  expect(calls.ingest).toEqual(['PrecBolsNaci:2026-10-06:2026-10-08']);
+  expect(calls.materialize).toEqual(['PrecBolsNaci:2024-01-01:2026-10-08']);
+  expect(calls.validate).toEqual([970]);
+  expect(calls.prepare).toEqual([970]);
+});
+
+test('first daily sync without consolidated coverage preserves the explicit missing-coverage error', async () => {
+  const { service, calls } = dependencies({ readCoverage: async () => null });
+  expect((await service.sync('Gene')).metrics[0]).toMatchObject({
+    status: 'failed', error: { code: 'XM_SYNC_COVERAGE_MISSING' },
+  });
+  expect(calls).toEqual({ query: [], ingest: [], materialize: [], validate: [], prepare: [] });
+});
+
+test('provider date below persisted coverage never downloads backwards', async () => {
+  const { service, calls } = dependencies({
+    readCoverage: async () => coverage('2026-10-09'),
+    now: () => new Date('2026-10-08T17:00:00Z'),
+  });
+  expect((await service.sync('Gene')).metrics[0]).toMatchObject({
+    outcome: 'NO_NEW_DATA', persistedUntil: '2026-10-09', latestCompleteAvailableDate: '2026-10-08',
+    requestedFrom: '2026-10-10', requestedTo: '2026-10-08', newDays: 0, ingestedRows: 0,
+  });
+  expect(calls.query).toEqual(['Gene:2026-10-08']);
+  expect(calls.ingest).toEqual([]); expect(calls.materialize).toEqual([]);
+  expect(calls.validate).toEqual([]); expect(calls.prepare).toEqual([]);
+});
+
+test.each(['EXTERNAL_NETWORK_ERROR', 'DATABASE_UNAVAILABLE'])('%s is never reported as NO_NEW_DATA', async code => {
+  const fail = async (): Promise<never> => { throw Object.assign(new Error('connection failed'), { code }); };
+  const { service, calls } = dependencies(code === 'DATABASE_UNAVAILABLE' ? { readCoverage: fail } : { query: fail });
+  const result = (await service.sync('Gene')).metrics[0]!;
+  expect(result).toMatchObject({ status: 'failed', error: { code } });
+  expect(result.outcome).toBeUndefined();
+  expect(calls.ingest).toEqual([]); expect(calls.materialize).toEqual([]);
+  expect(calls.validate).toEqual([]); expect(calls.prepare).toEqual([]);
+});
+
+test('partial latest price day does not advance beyond the confirmed complete day', async () => {
+  const { service, calls } = dependencies({
+    readCoverage: async () => coverage('2026-10-05'),
+    now: () => new Date('2026-10-08T17:00:00Z'),
+    query: async input => ({ records: records(input.dataset, input.startDate, input.startDate !== '2026-10-08') }),
+  });
+  expect((await service.sync('PrecBolsNaci')).metrics[0]).toMatchObject({
+    outcome: 'SYNCED', latestCompleteAvailableDate: '2026-10-07', persistedUntil: '2026-10-07',
+    requestedFrom: '2026-10-06', requestedTo: '2026-10-07', newDays: 2, ingestedRows: 48,
+  });
+  expect(calls.ingest).toEqual(['PrecBolsNaci:2026-10-06:2026-10-07']);
+});
+
+test('no complete day confirmed leaves provider metadata null rather than inventing a date', async () => {
+  const { service, calls } = dependencies({ query: async () => ({ records: [] }) });
+  expect((await service.sync('Gene')).metrics[0]).toMatchObject({
+    outcome: 'NO_NEW_DATA', latestCompleteAvailableDate: null, requestedTo: null,
+    newDays: 0, ingestedRows: 0,
+  });
+  expect(calls.ingest).toEqual([]); expect(calls.materialize).toEqual([]);
+  expect(calls.validate).toEqual([]); expect(calls.prepare).toEqual([]);
+});
+
+test.each(['DemaSIN', 'PrecBolsNaci'] as const)('%s with news remains independent of Gene without news', async changedMetric => {
+  const { service, calls } = dependencies({
+    readCoverage: async () => coverage('2026-10-05'),
+    now: () => new Date('2026-10-08T17:00:00Z'),
+    query: async input => ({ records: input.dataset === changedMetric || input.startDate === '2026-10-05'
+      ? records(input.dataset, input.startDate) : [] }),
+  });
+  const result = await service.sync();
+  expect(result.metrics.find(item => item.metric === changedMetric)).toMatchObject({ outcome: 'SYNCED', newDays: 3 });
+  for (const item of result.metrics.filter(item => item.metric !== changedMetric)) {
+    expect(item).toMatchObject({ outcome: 'NO_NEW_DATA', newDays: 0, ingestedRows: 0 });
+  }
+  expect(calls.ingest).toEqual([`${changedMetric}:2026-10-06:2026-10-08`]);
+  expect(calls.materialize).toHaveLength(1); expect(calls.validate).toHaveLength(1); expect(calls.prepare).toHaveLength(1);
+});
+
+test('reused complete ingestion windows do not count as newly ingested rows', async () => {
+  const { service } = dependencies({
+    ingest: async () => ({ manifestId: 1, energyDatasetId: 901, reused: true }),
+  });
+  expect((await service.sync('Gene')).metrics[0]).toMatchObject({ outcome: 'SYNCED', newDays: 2, ingestedRows: 0 });
+});
+
+test('price without news does not suppress simultaneous Gene and DemaSIN increments', async () => {
+  const { service, calls } = dependencies({
+    readCoverage: async () => coverage('2026-10-05'),
+    now: () => new Date('2026-10-08T17:00:00Z'),
+    query: async input => ({ records: input.dataset !== 'PrecBolsNaci' || input.startDate === '2026-10-05'
+      ? records(input.dataset, input.startDate) : [] }),
+  });
+  const result = await service.sync();
+  expect(result.metrics.map(item => item.outcome)).toEqual(['SYNCED', 'SYNCED', 'NO_NEW_DATA']);
+  expect(calls.ingest).toEqual(['Gene:2026-10-06:2026-10-08', 'DemaSIN:2026-10-06:2026-10-08']);
+  expect(calls.materialize).toHaveLength(2); expect(calls.validate).toHaveLength(2); expect(calls.prepare).toHaveLength(2);
+});
+
+test('an incomplete internal ingestion day fails without materializing or claiming advanced coverage', async () => {
+  const { service, calls } = dependencies({
+    ingest: async () => { throw Object.assign(new Error('XM no devolvio una ventana completa.'), { code: 'XM_WINDOW_INCOMPLETE' }); },
+  });
+  const result = (await service.sync('PrecBolsNaci')).metrics[0]!;
+  expect(result).toMatchObject({ status: 'failed', error: { code: 'XM_WINDOW_INCOMPLETE' } });
+  expect(result.persistedUntil).toBeUndefined(); expect(result.outcome).toBeUndefined();
+  expect(calls.materialize).toEqual([]); expect(calls.validate).toEqual([]); expect(calls.prepare).toEqual([]);
+});
 
 test('no new XM data returns up_to_date without creating artifacts', async () => {
   const { service, calls } = dependencies({ readCoverage: async () => coverage('2026-09-23') });

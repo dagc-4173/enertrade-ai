@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import express from 'express';
 import { createXmDailySyncRouter } from '@/controllers/xm-daily-sync.controller';
+import { createXmDailySyncService } from '@/services/xm-daily-sync.service';
 
 const availability = [{ series: 'Gene', latestObservationDate: '2026-09-15', nextForecastDate: '2026-09-16', supportedHorizonDays: 1 }];
 const service = { availability: async () => availability, sync: async (metric?: 'Gene' | 'DemaSIN' | 'PrecBolsNaci') => ({ metrics: [{ metric: metric ?? 'Gene', status: 'up_to_date' }] }) };
@@ -35,4 +36,31 @@ test('global availability database failure remains HTTP 500 and never a partial 
     (_req, _res, next) => next(), { error: event => events.push(event) }));
   expect((await request(app, '/forecast-availability')).status).toBe(500);
   expect(events).toHaveLength(1);
+});
+
+test('single-metric sync exposes additive NO_NEW_DATA metadata without invoking artifact services', async () => {
+  const metrics: string[] = [];
+  const forbidden = async (): Promise<never> => { throw new Error('Artifact operation forbidden.'); };
+  const syncService = createXmDailySyncService({
+    readCoverage: async metric => {
+      metrics.push(metric);
+      return { historicalFrom: '2024-01-01', persistedUntil: '2026-10-05', latestReceivedDate: '2026-10-05',
+        latestIndividuallyUsableDate: '2026-10-05', semanticExcludedDates: [] };
+    },
+    now: () => new Date('2026-10-08T17:00:00Z'),
+    query: async input => ({ records: input.startDate === '2026-10-05'
+      ? Array.from({ length: 24 }, (_, index) => ({ date: input.startDate, hour: index + 1, value: index })) : [] }),
+    ingest: forbidden, materialize: forbidden, validate: forbidden, prepare: forbidden,
+  });
+  const app = express(); app.use(createXmDailySyncRouter(syncService, (_req, _res, next) => next()));
+  const result = await request(app, '/admin/xm/sync', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"metric":"PrecBolsNaci"}',
+  });
+  expect(result.status).toBe(200);
+  expect(result.body).toMatchObject({ metrics: [{
+    metric: 'PrecBolsNaci', status: 'up_to_date', outcome: 'NO_NEW_DATA',
+    persistedUntil: '2026-10-05', latestCompleteAvailableDate: '2026-10-05',
+    requestedFrom: '2026-10-06', requestedTo: '2026-10-05', newDays: 0, ingestedRows: 0,
+  }] });
+  expect(metrics).toEqual(['PrecBolsNaci']);
 });
