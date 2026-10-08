@@ -1,9 +1,17 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { performance } from 'node:perf_hooks';
-import { app } from '../src/app';
-import { authCookieName } from '../src/services/auth.service';
-import { prisma } from '../src/lib/prisma';
+import { configureIsolatedIntegrationDatabase } from './integration-safety';
+
+// Legacy HU-20 runner: fixed dataset identifiers/versions and legacy marketplace setup.
+// Excluded from current C4; explicit opt-in does not validate the legacy fixture.
+if (process.env.ENERTRADE_HU20_LEGACY_DATASET_FIXTURE !== 'true') {
+  throw new Error('HU-20 full runner is excluded from C4: fixed dataset identifiers/versions are not portable; opt-in does not validate the fixture.');
+}
+configureIsolatedIntegrationDatabase();
+const { createApp } = await import('../src/app');
+const { authCookieName } = await import('../src/services/auth.service');
+const { prisma } = await import('../src/lib/prisma');
 
 type Json = Record<string, unknown>;
 type Http = { endpoint: string; status: number; body: Json; requestId: string; durationMs: number };
@@ -14,6 +22,7 @@ type Counts = Record<'aiQueryTrace' | 'priceForecastExecution' | 'matchingExecut
 const runId = `hu20-integration-${randomUUID()}`;
 const traceIds: string[] = [], priceExecutionIds: string[] = [], matchingExecutionIds: string[] = [], patternAnalysisIds: string[] = [];
 const offerIds: string[] = [], demandIds: string[] = [], sessionIds: string[] = [], userIds: string[] = [], requestIds: string[] = [];
+const app = createApp({ expirationScope: { userIds } });
 const cases: Case[] = [];
 let baseline: Counts | undefined;
 let finalCounts: Counts | undefined;
@@ -205,5 +214,5 @@ const cleanupMatches = JSON.stringify(baseline) === JSON.stringify(finalCounts);
 cases.push({ id: 'INT20-12', status: cleanupError || !cleanupMatches ? 'FAIL' : 'PASS', expected: 'conteos finales iguales al baseline', observed: cleanupMatches ? 'Conteos restaurados.' : 'Conteos distintos al baseline.', ...(cleanupError ? { error: safeError(cleanupError) } : {}) });
 if (mainError) cases.push({ id: 'RUNNER', status: 'FAIL', expected: 'ejecucion aislada', observed: 'Fallo fuera de un caso.', error: safeError(mainError) });
 const requiredFailures = cases.filter(item => /^INT20-(0[1-9]|1[0-2])$/.test(item.id) && item.status !== 'PASS');
-console.log(JSON.stringify({ runId, baseline, finalCounts, cases, tracked: { traceIds, priceExecutionIds, matchingExecutionIds, patternAnalysisIds, offerIds, demandIds, sessionIds, userIds } }, null, 2));
+console.log(JSON.stringify({ runId, baseline, finalCounts, cases, trackedCounts: { traces: traceIds.length, priceExecutions: priceExecutionIds.length, matchingExecutions: matchingExecutionIds.length, patternAnalyses: patternAnalysisIds.length, offers: offerIds.length, demands: demandIds.length, sessions: sessionIds.length, users: userIds.length } }, null, 2));
 if (requiredFailures.length || mainError || cleanupError) process.exitCode = 1;
