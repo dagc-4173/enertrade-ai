@@ -16,8 +16,8 @@ function label(dataset: PreparedDatasetSummary) {
   return `#${dataset.id} · ${dataset.dataType} · ${dataset.profileId}@${dataset.profileVersion} · ${dataset.recordCount} filas · ${new Date(dataset.preparedAt).toLocaleDateString('es-CO', { timeZone: 'UTC' })}`
 }
 
-export function PreparedDatasetSelectContent({ state, value, onChange, requirements }: { state: SelectState; value: string; onChange: (value: string) => void; requirements?: PreparedDatasetCompatibility[] }) {
-  const datasets = state.kind === 'success' ? state.datasets.filter(dataset => compatible(dataset, requirements)) : []
+export function PreparedDatasetSelectContent({ state, value, onChange, requirements, eligibleIds }: { state: SelectState; value: string; onChange: (value: string) => void; requirements?: PreparedDatasetCompatibility[]; eligibleIds?: number[] }) {
+  const datasets = state.kind === 'success' ? state.datasets.filter(dataset => compatible(dataset, requirements) && (!eligibleIds || eligibleIds.includes(dataset.id))) : []
   return <>
     <label>Dataset preparado compatible
       <select value={value} onChange={event => onChange(event.target.value)} disabled={state.kind !== 'success' || datasets.length === 0} required>
@@ -31,12 +31,12 @@ export function PreparedDatasetSelectContent({ state, value, onChange, requireme
   </>
 }
 
-export function PreparedDatasetSelect({ value, onChange, requirements }: { value: string; onChange: (value: string) => void; requirements?: PreparedDatasetCompatibility[] }) {
+export function PreparedDatasetSelect({ value, onChange, requirements, eligibleIds }: { value: string; onChange: (value: string) => void; requirements?: PreparedDatasetCompatibility[]; eligibleIds?: number[] }) {
   const [state, setState] = useState<SelectState>({ kind: 'loading' })
   useEffect(() => {
     const controller = new AbortController()
     getPreparedDatasets(controller.signal).then(datasets => { if (!controller.signal.aborted) setState({ kind: 'success', datasets }) }).catch(error => { if (!controller.signal.aborted) setState({ kind: 'error', message: errorMessage(error) }) })
     return () => controller.abort()
   }, [])
-  return <PreparedDatasetSelectContent state={state} value={value} onChange={onChange} requirements={requirements} />
+  return <PreparedDatasetSelectContent state={state} value={value} onChange={onChange} requirements={requirements} eligibleIds={eligibleIds} />
 }

@@ -33,6 +33,16 @@ test('selector renders loading, compatible option, empty and safe error states',
   expect(renderToStaticMarkup(<PreparedDatasetSelectContent {...common} state={{ kind: 'error', message: 'No fue posible cargar los datasets preparados.' }} />)).toContain('role="alert"')
 })
 
+test('B1 selector excludes compatible artifacts without a buildable source day', () => {
+  const price = { ...dataset, id: 77, dataType: 'precios', profileId: 'xm_preciobolsnaci_preparacion_base', sourceRulesetId: 'xm_preciobolsnaci_base' }
+  const older = { ...price, id: 76 }
+  const requirements = [{ profileId: price.profileId, profileVersion: price.profileVersion, sourceRulesetId: price.sourceRulesetId, sourceRulesetVersion: price.sourceRulesetVersion }]
+  const html = renderToStaticMarkup(<PreparedDatasetSelectContent value="" onChange={() => {}} requirements={requirements} eligibleIds={[77]} state={{ kind: 'success', datasets: [older, price] }} />)
+  expect(html).toContain('value="77"')
+  expect(html).not.toContain('value="76"')
+  expect(renderToStaticMarkup(<PreparedDatasetSelectContent value="" onChange={() => {}} requirements={requirements} eligibleIds={[]} state={{ kind: 'success', datasets: [price] }} />)).not.toContain('value="77"')
+})
+
 test('rejects unexpected catalog and keeps no prepared dataset IDs hardcoded at runtime', async () => {
   spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ preparedDatasets: [{ ...dataset, id: '71' }] }))
   await expect(getPreparedDatasets()).rejects.toMatchObject({ kind: 'response' })

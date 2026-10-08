@@ -12,6 +12,7 @@ import { coverageFromConsolidated } from '@/services/xm-coverage.service';
 import { createXmDailySyncService, type XmDailySyncDependencies } from '@/services/xm-daily-sync.service';
 import { createForecastRouter } from '@/controllers/forecast.controller';
 import { createXmDailySyncRouter } from '@/controllers/xm-daily-sync.controller';
+import { ForecastError } from '@/services/forecast.contract';
 
 const records = Array.from({ length: 70 }, (_, index) => ({ fecha_xm: addDays('2026-10-04', index - 69), demanda_kwh: ['2026-09-16', '2026-09-28', '2026-09-29', '2026-10-04'].includes(addDays('2026-10-04', index - 69)) ? 1 : 220_000_000 + (index % 3) * 1_000_000 }));
 const coverage = () => coverageFromConsolidated('DemaSIN', [{ energyDataset: { content: { records } } }])!;
@@ -135,11 +136,11 @@ test('every announced V5 target resolves HTTP POST with exactly the same origin,
 });
 
 test('availability never advertises a missing model and conflicts are also rejected by forecast', async () => {
-  const load = (horizon: number) => { if (horizon === 5) throw new Error('missing h5'); return loadDirectDemandV5Model(horizon); };
+  const load = (horizon: number) => { if (horizon === 5) throw new ForecastError(409, 'FORECAST_MODEL_INCOMPATIBLE'); return loadDirectDemandV5Model(horizon); };
   const sync = createXmDailySyncService(availabilityDependencies(load));
   expect((await sync.availability()).find(item => item.series === 'DemaSIN')!.eligibleFutureTargetDates).toEqual(['2026-10-07', '2026-10-09']);
   const forecast = createDemandV5ForecastService(async () => [prepared(1)], async () => coverage(), load, now);
-  await expect(forecast({ targetDate: '2026-10-08' })).rejects.toThrow('missing h5');
+  await expect(forecast({ targetDate: '2026-10-08' })).rejects.toMatchObject({ code: 'FORECAST_MODEL_INCOMPATIBLE' });
   const changed = prepared(2, records.map(row => row.fecha_xm === '2026-10-02' ? { ...row, demanda_kwh: row.demanda_kwh + 1 } : row));
   const badSync = createXmDailySyncService(availabilityDependencies(loadDirectDemandV5Model, [prepared(1), changed]));
   await expect(badSync.availability()).rejects.toMatchObject({ code: 'PREPARED_DATASET_INCONSISTENT' });

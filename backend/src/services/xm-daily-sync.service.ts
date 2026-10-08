@@ -10,9 +10,16 @@ import { demandCompatibility, type Prepared } from './demand-direct-forecast.ser
 import { loadDirectDemandV5Model, type DirectDemandV5Model } from '@/models/xm-demandasin-ridge-direct-v5/model-loader';
 import { buildResolvedDemandV5Target, resolveDemandV5Origin } from './demand-v5-origin.service';
 import { demandV5CalendarDate } from './demand-v5-features';
+import { candidateFutureDates, productMaxHorizonDays, type AvailabilityReason } from './forecast-future-dates';
+import { ForecastError } from './forecast.contract';
+import { mergeSupplyPrepared, supplyCompatibility, type StoredPrepared } from './forecast.service';
+import { buildDirectSupplyFeatures } from '@/models/xm-gene-ridge-direct-v2/features';
+import { loadDirectSupplyModel, type DirectSupplyModel } from '@/models/xm-gene-ridge-direct-v2/model-loader';
+import { priceCompatibility, readPriceReferenceDay, type PreparedPrice } from './price-forecast.service';
+import { loadRule } from '@/models/xm-preciobolsnaci-b1/rule-loader';
 
 export type XmSyncMetric = XmMetric;
-export type ForecastAvailability = { series: XmSyncMetric; currentDate: string; latestObservationDate: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[]; eligibleFutureTargetDates: string[]; nextForecastDate: string; supportedHorizonDays: 1 | 6 | 7; supportedHorizonMinDays?: 1; supportedHorizonMaxDays?: 6; modelMinTargetDate: string; modelMaxTargetDate: string; effectiveFutureMinDate: string | null; effectiveFutureMaxDate: string | null; hasFutureForecastWindow: boolean; dataFreshnessDays: number };
+export type ForecastAvailability = { series: XmSyncMetric; currentDate: string; latestObservationDate: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[]; modelMaxHorizonDays: 1 | 6 | 7; productMaxHorizonDays: 7; candidateFutureTargetDates: string[]; availabilityReason: AvailabilityReason; eligiblePreparedDatasetIds?: number[]; eligibleFutureTargetDates: string[]; nextForecastDate: string; supportedHorizonDays: 1 | 6 | 7; supportedHorizonMinDays?: 1; supportedHorizonMaxDays?: 6; modelMinTargetDate: string; modelMaxTargetDate: string; effectiveFutureMinDate: string | null; effectiveFutureMaxDate: string | null; hasFutureForecastWindow: boolean; dataFreshnessDays: number };
 type ExternalRecord = { date: string; hour: number | null; value: number };
 type SyncWindow = { from: string; to: string; manifestId: number; energyDatasetId: number; reused: boolean };
 type Materialized = { consolidatedDatasetId: number; energyDatasetId: number };
@@ -29,6 +36,9 @@ export type XmDailySyncDependencies = {
   now: () => Date;
   readDemandPrepared?: () => Promise<Prepared[]>;
   loadDemandModel?: (horizonDays: number) => DirectDemandV5Model;
+  readSupplyPrepared?: () => Promise<StoredPrepared[]>;
+  loadSupplyModel?: (horizonDays: number) => DirectSupplyModel;
+  readPricePrepared?: () => Promise<PreparedPrice[]>;
 };
 
 export type XmMetricSyncResult = {
@@ -57,6 +67,7 @@ export class XmDailySyncError extends Error {
 const metrics: XmSyncMetric[] = ['Gene', 'DemaSIN', 'PrecBolsNaci'];
 const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
 const date = (value: Date) => value.toISOString().slice(0, 10);
+const dayDifference = (from: string, to: string) => (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000;
 
 function addDays(value: string, days: number) {
   const current = new Date(`${value}T00:00:00Z`);
@@ -104,6 +115,8 @@ const defaultDependencies: XmDailySyncDependencies = {
   },
   now: () => new Date(),
   readDemandPrepared: () => prisma.preparedDataset.findMany({ where: demandCompatibility, select: { id: true, sourceDatasetId: true, profileId: true, profileVersion: true, sourceRulesetId: true, sourceRulesetVersion: true, content: true } }),
+  readSupplyPrepared: () => prisma.preparedDataset.findMany({ where: supplyCompatibility, select: { id: true, sourceDatasetId: true, profileId: true, profileVersion: true, sourceRulesetId: true, sourceRulesetVersion: true, content: true } }),
+  readPricePrepared: () => prisma.preparedDataset.findMany({ where: priceCompatibility, select: { id: true, sourceDatasetId: true, profileId: true, profileVersion: true, sourceRulesetId: true, sourceRulesetVersion: true, content: true } }),
 };
 
 function failure(metric: XmSyncMetric, error: unknown): XmMetricSyncResult {
@@ -119,28 +132,72 @@ export function createXmDailySyncService(dependencies: XmDailySyncDependencies =
     if (!coverage) throw new XmDailySyncError(404, 'XM_SYNC_COVERAGE_MISSING', 'No existe cobertura XM consolidada para la métrica.');
     const observedNow = dependencies.now();
     const currentDate = metric === 'DemaSIN' ? demandV5CalendarDate(observedNow) : localCalendarDate(observedNow); const supportedHorizonDays = metric === 'Gene' ? 7 : metric === 'DemaSIN' ? 6 : 1;
-    const latestObservationDate = coverage.latestIndividuallyUsableDate; let eligibleFutureTargetDates: string[] = [];
+    const candidateFutureTargetDates = candidateFutureDates(currentDate, supportedHorizonDays);
+    const latestObservationDate = coverage.latestIndividuallyUsableDate; const eligibleFutureTargetDates: string[] = [];
+    let availabilityReason: AvailabilityReason = 'NO_BUILDABLE_ORIGIN';
+    const eligiblePreparedDatasetIds: number[] = [];
     let demandOrigin: string | null = null;
     if (metric === 'DemaSIN') {
       const resolved = resolveDemandV5Origin(coverage, dependencies.readDemandPrepared ? await dependencies.readDemandPrepared() : [], observedNow);
       demandOrigin = resolved?.forecastOriginDate ?? null;
-      if (resolved) for (let horizon = 1; horizon <= 6; horizon++) {
-        const target = addDays(resolved.forecastOriginDate, horizon);
-        if (target <= currentDate || target <= coverage.latestReceivedDate) continue;
+      if (resolved) for (const target of candidateFutureTargetDates) {
+        if (target <= coverage.latestReceivedDate) continue;
+        const horizon = dayDifference(resolved.forecastOriginDate, target);
+        if (horizon < 1 || horizon > 6) { availabilityReason = 'SOURCE_DATA_STALE'; continue; }
         try {
           const model = (dependencies.loadDemandModel ?? loadDirectDemandV5Model)(horizon);
           const built = buildResolvedDemandV5Target(resolved, target);
-          if (model.horizonDays !== built.horizonDays) continue;
-        } catch { continue; }
+          if (model.horizonDays !== built.horizonDays) throw new ForecastError(409, 'FORECAST_MODEL_INCOMPATIBLE');
+        } catch (error) {
+          if (!(error instanceof ForecastError)) throw error;
+          if (error.code === 'FORECAST_SEMANTIC_DATA_UNAVAILABLE') { availabilityReason = 'NO_BUILDABLE_ORIGIN'; continue; }
+          if (error.code === 'FORECAST_MODEL_INCOMPATIBLE') { availabilityReason = 'MODEL_HORIZON_LIMIT'; continue; }
+          throw error;
+        }
         eligibleFutureTargetDates.push(target);
       }
+    } else if (metric === 'Gene') {
+      const origin = coverage.persistedUntil;
+      const { values } = mergeSupplyPrepared(dependencies.readSupplyPrepared ? await dependencies.readSupplyPrepared() : []);
+      for (const target of candidateFutureTargetDates) {
+        const horizon = dayDifference(origin, target);
+        if (horizon < 1 || horizon > 7) { availabilityReason = 'SOURCE_DATA_STALE'; continue; }
+        try {
+          const model = (dependencies.loadSupplyModel ?? loadDirectSupplyModel)(horizon);
+          if (model.horizonDays !== horizon) throw new ForecastError(409, 'FORECAST_MODEL_INCOMPATIBLE');
+        } catch (error) {
+          if (!(error instanceof ForecastError) || error.code !== 'FORECAST_MODEL_INCOMPATIBLE') throw error;
+          availabilityReason = 'MODEL_HORIZON_LIMIT'; continue;
+        }
+        const buildable = Array.from({ length: 24 }, (_, index) => buildDirectSupplyFeatures(
+          (date, period) => date <= origin ? values.get(`${date}|${period}`) : undefined, origin, target, index + 1,
+        )).every(built => built !== null && built.sourceObservations.every(row => row.date <= origin));
+        if (buildable) eligibleFutureTargetDates.push(target);
+        else availabilityReason = 'NO_BUILDABLE_ORIGIN';
+      }
     } else {
-      const min = calendarNextDate(currentDate) > calendarNextDate(latestObservationDate) ? calendarNextDate(currentDate) : calendarNextDate(latestObservationDate); const max = addDays(latestObservationDate, supportedHorizonDays);
-      for (let target = min; target <= max; target = addDays(target, 1)) eligibleFutureTargetDates.push(target);
+      const rule = loadRule();
+      const prepared = dependencies.readPricePrepared ? await dependencies.readPricePrepared() : [];
+      const target = candidateFutureTargetDates[0]!;
+      let hasReferenceDay = false;
+      for (const p of prepared) {
+        if (p.profileId !== priceCompatibility.profileId || p.profileVersion !== priceCompatibility.profileVersion ||
+          p.sourceRulesetId !== priceCompatibility.sourceRulesetId || p.sourceRulesetVersion !== priceCompatibility.sourceRulesetVersion) continue;
+        if (object(p.content) && Array.isArray(p.content.records) && p.content.records.some((row: unknown) => object(row) && row.fecha_xm === currentDate)) hasReferenceDay = true;
+        try {
+          readPriceReferenceDay(p, target, rule);
+          eligiblePreparedDatasetIds.push(p.id);
+        } catch (error) {
+          if (!(error instanceof ForecastError) || !['FORECAST_DATA_INSUFFICIENT', 'PREPARED_DATASET_INCONSISTENT'].includes(error.code)) throw error;
+        }
+      }
+      if (eligiblePreparedDatasetIds.length > 0) eligibleFutureTargetDates.push(target);
+      availabilityReason = hasReferenceDay ? 'INCOMPLETE_SOURCE_DAY' : latestObservationDate < currentDate ? 'SOURCE_DATA_STALE' : 'NO_BUILDABLE_ORIGIN';
     }
+    if (eligibleFutureTargetDates.length > 0) availabilityReason = 'AVAILABLE';
     const modelMinTargetDate = calendarNextDate(demandOrigin ?? latestObservationDate); const modelMaxTargetDate = addDays(demandOrigin ?? latestObservationDate, supportedHorizonDays);
     const effectiveFutureMinDate = eligibleFutureTargetDates[0] ?? null; const effectiveFutureMaxDate = eligibleFutureTargetDates.at(-1) ?? null;
-    return { series: metric, currentDate, latestObservationDate, latestReceivedDate: coverage.latestReceivedDate, latestIndividuallyUsableDate: latestObservationDate, semanticExcludedDates: [...coverage.semanticExcludedDates], eligibleFutureTargetDates, nextForecastDate: effectiveFutureMinDate ?? (metric === 'DemaSIN' && currentDate >= latestObservationDate ? calendarNextDate(currentDate) : modelMinTargetDate), supportedHorizonDays, ...(metric === 'DemaSIN' ? { supportedHorizonMinDays: 1 as const, supportedHorizonMaxDays: 6 as const } : {}), modelMinTargetDate, modelMaxTargetDate, effectiveFutureMinDate, effectiveFutureMaxDate, hasFutureForecastWindow: eligibleFutureTargetDates.length > 0, dataFreshnessDays: Math.max(0, Math.floor((Date.parse(`${currentDate}T00:00:00Z`) - Date.parse(`${latestObservationDate}T00:00:00Z`)) / 86_400_000)) };
+    return { series: metric, currentDate, latestObservationDate, latestReceivedDate: coverage.latestReceivedDate, latestIndividuallyUsableDate: latestObservationDate, semanticExcludedDates: [...coverage.semanticExcludedDates], modelMaxHorizonDays: supportedHorizonDays, productMaxHorizonDays, candidateFutureTargetDates, availabilityReason, ...(metric === 'PrecBolsNaci' ? { eligiblePreparedDatasetIds: eligiblePreparedDatasetIds.sort((a, b) => a - b) } : {}), eligibleFutureTargetDates, nextForecastDate: effectiveFutureMinDate ?? (metric === 'DemaSIN' && currentDate >= latestObservationDate ? calendarNextDate(currentDate) : modelMinTargetDate), supportedHorizonDays, ...(metric === 'DemaSIN' ? { supportedHorizonMinDays: 1 as const, supportedHorizonMaxDays: 6 as const } : {}), modelMinTargetDate, modelMaxTargetDate, effectiveFutureMinDate, effectiveFutureMaxDate, hasFutureForecastWindow: eligibleFutureTargetDates.length > 0, dataFreshnessDays: Math.max(0, Math.floor((Date.parse(`${currentDate}T00:00:00Z`) - Date.parse(`${latestObservationDate}T00:00:00Z`)) / 86_400_000)) };
   }
 
   async function availableUntil(metric: XmSyncMetric, nextDate: string, today: string) {

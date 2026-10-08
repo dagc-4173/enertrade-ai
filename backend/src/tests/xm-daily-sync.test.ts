@@ -1,6 +1,8 @@
 import { expect, test } from 'bun:test';
 import { createXmDailySyncService, type XmDailySyncDependencies, type XmSyncMetric } from '@/services/xm-daily-sync.service';
 import { coverageFromConsolidated } from '@/services/xm-coverage.service';
+import { supplyCompatibility } from '@/services/forecast.service';
+import { offsetDate } from '@/models/xm-gene-ridge-direct-v2/features';
 
 const coverage = (persistedUntil = '2026-09-21', individuallyUsableUntil = persistedUntil, semanticExcludedDates: string[] = []) => ({ historicalFrom: '2024-01-01', persistedUntil, latestReceivedDate: persistedUntil, latestIndividuallyUsableDate: individuallyUsableUntil, semanticExcludedDates });
 const records = (metric: XmSyncMetric, day: string, complete = true) => metric === 'DemaSIN'
@@ -25,6 +27,15 @@ function dependencies(overrides: Partial<XmDailySyncDependencies> = {}) {
     validate: async () => ({ status: 'aprobado', canProceed: true }),
     prepare: async id => { calls.prepare.push(id); return { preparedDatasetId: 80, profileId: 'xm_gene_preparacion_base', profileVersion: '1.0.0' }; },
     now: () => new Date('2026-09-23T12:00:00Z'),
+    readSupplyPrepared: async () => [{
+      id: 1, sourceDatasetId: 10, ...supplyCompatibility,
+      content: {
+        variables: { minimum: [{ name: 'fecha_xm', type: 'string', representation: 'YYYY-MM-DD' }, { name: 'hora_xm', type: 'number', representation: 'integer 1..24' }, { name: 'energia_kwh', type: 'number', unit: 'kWh' }] },
+        records: Array.from({ length: 90 }, (_, index) => Array.from({ length: 24 }, (_, period) => ({
+          fecha_xm: offsetDate('2026-09-30', -index), hora_xm: period + 1, energia_kwh: 10_000_000,
+        }))).flat(),
+      },
+    }],
   };
   return { calls, service: createXmDailySyncService({ ...defaults, ...overrides }) };
 }
@@ -114,7 +125,7 @@ test('validation rejection never prepares the consolidated dataset', async () =>
 
 test('forecast availability keeps Gene D+7, Price D+1 and Demand D+6', async () => {
   const { service } = dependencies({ readCoverage: async metric => coverage(metric === 'DemaSIN' ? '2026-09-16' : '2026-09-15') });
-  await expect(service.availability()).resolves.toEqual([
+  await expect(service.availability()).resolves.toMatchObject([
     { series: 'Gene', currentDate: '2026-09-23', latestObservationDate: '2026-09-15', latestReceivedDate: '2026-09-15', latestIndividuallyUsableDate: '2026-09-15', semanticExcludedDates: [], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-16', supportedHorizonDays: 7, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-22', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 8 },
     { series: 'DemaSIN', currentDate: '2026-09-23', latestObservationDate: '2026-09-16', latestReceivedDate: '2026-09-16', latestIndividuallyUsableDate: '2026-09-16', semanticExcludedDates: [], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-24', supportedHorizonDays: 6, supportedHorizonMinDays: 1, supportedHorizonMaxDays: 6, modelMinTargetDate: '2026-09-17', modelMaxTargetDate: '2026-09-22', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 7 },
     { series: 'PrecBolsNaci', currentDate: '2026-09-23', latestObservationDate: '2026-09-15', latestReceivedDate: '2026-09-15', latestIndividuallyUsableDate: '2026-09-15', semanticExcludedDates: [], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-16', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-16', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 8 },

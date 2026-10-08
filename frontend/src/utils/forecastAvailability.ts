@@ -7,7 +7,7 @@ export function lastForecastDate(availability: ForecastAvailability) { return ad
 
 export function effectiveRange(availability: ForecastAvailability) { return availability.hasFutureForecastWindow && availability.effectiveFutureMinDate && availability.effectiveFutureMaxDate ? { min: availability.effectiveFutureMinDate, max: availability.effectiveFutureMaxDate } : null }
 
-export function selectedHorizonDays(targetDate: string, availability: ForecastAvailability) { const origin = availability.series === 'DemaSIN' ? addCalendarDays(availability.modelMinTargetDate, -1) : availability.latestObservationDate; return (Date.parse(`${targetDate}T00:00:00Z`) - Date.parse(`${origin}T00:00:00Z`)) / 86_400_000 }
+export function selectedHorizonDays(targetDate: string, availability: ForecastAvailability) { if (availability.series === 'PrecBolsNaci') return 1; const origin = addCalendarDays(availability.modelMinTargetDate, -1); return (Date.parse(`${targetDate}T00:00:00Z`) - Date.parse(`${origin}T00:00:00Z`)) / 86_400_000 }
 
 export function horizonMessage(availability: ForecastAvailability) {
   return availability.series === 'Gene'
@@ -19,5 +19,5 @@ export function horizonMessage(availability: ForecastAvailability) {
 
 export function exceedsSupportedHorizon(targetDate: string, availability: ForecastAvailability) {
   const range = effectiveRange(availability)
-  return !range || targetDate < range.min || targetDate > range.max || (availability.series === 'DemaSIN' && !availability.eligibleFutureTargetDates.includes(targetDate))
+  return !range || targetDate < range.min || targetDate > range.max || !availability.eligibleFutureTargetDates.includes(targetDate)
 }

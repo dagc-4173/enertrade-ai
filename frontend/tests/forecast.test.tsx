@@ -6,7 +6,7 @@ import { Predictions } from '../src/pages/Predictions'
 import { ApiError } from '../src/services/apiClient'
 import { forecastSupply, forecastDemand, forecastPrice, getSupplyMetrics, getDemandMetrics } from '../src/services/forecastService'
 import { getForecastAvailability, parseForecastAvailability } from '../src/services/forecastAvailabilityService'
-import { ForecastAvailabilityView, ForecastPanel, ForecastRunOutcome, ResultView } from '../src/components/forecasts/ForecastPanel'
+import { ForecastAvailabilityView, ForecastPanel, ForecastRunOutcome, ForecastTargetDateSelect, ResultView } from '../src/components/forecasts/ForecastPanel'
 import { exceedsSupportedHorizon, horizonMessage, lastForecastDate, selectedHorizonDays } from '../src/utils/forecastAvailability'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
@@ -232,6 +232,57 @@ test('Availability común conserva etiquetas, aviso sin target y error', () => {
   const errorHtml = renderToStaticMarkup(<ForecastAvailabilityView state={{ kind: 'error', message: 'Sin conexión' }} />)
   expect(errorHtml).toContain('role="alert"'); expect(errorHtml).toContain('Error de disponibilidad')
   expect(renderToStaticMarkup(<ForecastRunOutcome title="Precio de referencia" state={{ kind: 'error', message: 'Sin conexión' }} />)).toContain('Error de forecast')
+})
+
+test('all date selectors offer only backend eligible dates, including Gene holes', () => {
+  const gene = { ...availability[0]!, eligibleFutureTargetDates: ['2026-09-21', '2026-09-23', '2026-09-27'] }
+  expect(exceedsSupportedHorizon('2026-09-22', gene)).toBe(true)
+  expect(exceedsSupportedHorizon('2026-09-23', gene)).toBe(false)
+  const html = renderToStaticMarkup(<ForecastTargetDateSelect dates={gene.eligibleFutureTargetDates} value="2026-09-23" onChange={() => {}} />)
+  expect(html).toContain('<select')
+  for (const date of gene.eligibleFutureTargetDates) expect(html).toContain(`value="${date}"`)
+  expect(html).not.toContain('value="2026-09-22"')
+  expect(html).not.toContain('type="date"')
+})
+
+test('extended availability validates candidate dates and model/product limits', () => {
+  const extended = availability.map(item => ({
+    ...item, modelMaxHorizonDays: item.supportedHorizonDays, productMaxHorizonDays: 7,
+    candidateFutureTargetDates: Array.from({ length: item.supportedHorizonDays }, (_, index) => {
+      const date = new Date(`${item.currentDate}T00:00:00Z`); date.setUTCDate(date.getUTCDate() + index + 1); return date.toISOString().slice(0, 10)
+    }),
+    availabilityReason: item.hasFutureForecastWindow ? 'AVAILABLE' : 'SOURCE_DATA_STALE',
+  }))
+  expect(parseForecastAvailability({ availability: extended })).toEqual(extended)
+  for (const change of [
+    { ...extended[0], eligibleFutureTargetDates: ['2026-09-20'] },
+    { ...extended[0], eligibleFutureTargetDates: ['2026-09-28'] },
+    { ...extended[1], eligibleFutureTargetDates: ['2026-10-08'] },
+    { ...extended[2], eligibleFutureTargetDates: ['2026-09-22'] },
+    { ...extended[0], productMaxHorizonDays: 8 },
+    { ...extended[0], modelMaxHorizonDays: 6 },
+    { ...extended[0], candidateFutureTargetDates: ['2026-09-21'] },
+    { ...extended[0], availabilityReason: 'SOURCE_DATA_STALE' },
+  ]) {
+    const items = extended.map(item => item.series === change.series ? change : item)
+    expect(() => parseForecastAvailability({ availability: items })).toThrow(ApiError)
+  }
+})
+
+test('availability UI reports incomplete B1 sources instead of declaring all failures stale', () => {
+  const p = { ...availability[2]!, availabilityReason: 'INCOMPLETE_SOURCE_DAY' as const }
+  const html = renderToStaticMarkup(<ForecastAvailabilityView state={{ kind: 'success', availability: p }} />)
+  expect(html).toContain('24 periodos únicos')
+  expect(html).not.toContain('Datos desactualizados.')
+  expect(selectedHorizonDays('2026-09-21', p)).toBe(1)
+})
+
+test('B1 availability validates buildable prepared IDs consistently with the target', () => {
+  const complete = { ...availability[2]!, currentDate: '2026-09-15', eligibleFutureTargetDates: ['2026-09-16'], hasFutureForecastWindow: true, effectiveFutureMinDate: '2026-09-16', effectiveFutureMaxDate: '2026-09-16', eligiblePreparedDatasetIds: [77] }
+  expect(parseForecastAvailability({ availability: [availability[0], availability[1], complete] })[2]).toEqual(complete)
+  for (const eligiblePreparedDatasetIds of [[], [0], [77, 77], ['77']]) {
+    expect(() => parseForecastAvailability({ availability: [availability[0], availability[1], { ...complete, eligiblePreparedDatasetIds }] })).toThrow(ApiError)
+  }
 })
 
 function v5MetricsResponse(horizonDays: number) {
