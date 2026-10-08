@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-07",
+  "timezone": "America/Bogota",
+  "scope": "Navegador Edge, frontend127.0.0.1:5174/API127.0.0.1:3001, PostgreSQL configurado compartido, cuentas y publicaciones temporales",
+  "academicValidation": "pending",
+  "status": "partially_verified_external_blocker",
+  "tests": [
+    {
+      "id": "E2E-01",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Inicio de sesión de cuentas temporales vendedor/comprador",
+      "expected": "Acceso desde ambas cuentas",
+      "observed": "Acceso correcto antes de la pausa",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-02",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Publicar vendedor: 08/10 21-22 y 14/10 22-23, 23-00",
+      "expected": "Tres franjas, dos cabeceras diarias, cantidades independientes",
+      "observed": "Tabla mostró 2, 5 y 10.25 kWh respectivamente",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-03",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Verificar oferta 23-00 sin perfil",
+      "expected": "Sin referencia simulada",
+      "observed": "Sin referencia simulada",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-04",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Perfil ficticio: límite 23=10.25 y 22=4; verificar ofertas",
+      "expected": "23 aprobada; 22 excede límite",
+      "observed": "Verificada en simulación; Supera el límite simulado",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-05",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Publicar comprador 14/10: 22-23=5, 23-00=10.25, máximo1000",
+      "expected": "Dos demandas activas por hora",
+      "observed": "Publicaciones registradas y coincidencias compatibles",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-06",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Sugerir emparejamientos",
+      "expected": "Dos asignaciones por fecha/hora",
+      "observed": "2 demandas,3 ofertas,2 asignaciones,15.25kWh,pendiente0",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-07",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Ir a negociar desde coincidencia de 23-00",
+      "expected": "Hora seleccionada y términos exactos",
+      "observed": "10,25 kWh y 980,12345 COP/kWh prellenados",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-08",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Seleccionar también 22-23, precio950 y enviar lote",
+      "expected": "Dos acuerdos independientes",
+      "observed": "2 negociaciones registradas; cantidades10.25 y5, totales10046.2653625 y4750",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-09",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Abrir comprador pendiente y confirmar ambas desde vendedor",
+      "expected": "Comprador aceptado al proponer; pago espera vendedor; despuésCONFIRMED",
+      "observed": "Sin pago antes de confirmar; ambos acuerdos confirmados por vendedor",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-10",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Comprador registra REJECTED sobre23-00",
+      "expected": "Historial rechazado,reintento,sinPDF",
+      "observed": "Rechazado conservado; botón nuevo intento;0 botonesPDF",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-11",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Reintentar PENDING",
+      "expected": "Pendiente y ningún nuevo intento disponible",
+      "observed": "Intento pendiente; botones resolver; formulario nuevo intento oculto",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-12",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Resolver APPROVED",
+      "expected": "PAID,comprobante,historial,sinsegundo pago",
+      "observed": "Pagado en simulación; referenciaSIM-FFD88AB1-8C0B-4727-858D-3B57D2A6C44B; rechazado y aprobado;0 botonesnuevointento",
+      "status": "Aprobada"
+    },
+    {
+      "id": "E2E-13",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Descargar PDF comprador y abrir",
+      "expected": "ArchivoPDF descargado y legible",
+      "observed": "No ejecutada: la sesión expiró durante pausa y nuevo acceso falla por cuota de base de datos",
+      "status": "Bloqueada"
+    },
+    {
+      "id": "E2E-14",
+      "related": "C21b/HU-20 y refinamientos Mercado horario",
+      "steps": "Vendedor consulta pago y descarga mismoPDF",
+      "expected": "Solo lectura,misma referencia e importe",
+      "observed": "No ejecutada en estos fixtures por cuota de base de datos",
+      "status": "Bloqueada"
+    }
+  ],
+  "fixtureCleanup": "pending_database_quota",
+  "fixtureRunId": "3614cbf792a6",
+  "fixtureUserIds": [
+    "209ad221-171e-42b5-a7c9-e595f4b8a81c",
+    "d4d9fe0b-172e-48c0-822c-bdd82e85bb06"
+  ],
+  "secretsIncluded": false
+}
