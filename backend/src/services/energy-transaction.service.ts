@@ -150,29 +150,29 @@ function dateOnly(value: Date) { return value.toISOString().slice(0, 10); }
 function quantity(value: unknown): string {
   const text = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : '';
   if (!/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(text) || compare(text, '0') <= 0) {
-    throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_QUANTITY', 'La cantidad debe ser decimal positiva con m+Ìximo dos decimales.');
+    throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_QUANTITY', 'La cantidad debe ser decimal positiva con m√°ximo dos decimales.');
   }
   return text;
 }
 
 function createInput(body: unknown) {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacci+¶n no es v+Ìlida.');
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacci√≥n no es v√°lida.');
   const value = body as Record<string, unknown>;
   if (Object.keys(value).some(key => !['offerId', 'demandId', 'quantityKwh', 'pricePerKwh', 'matchingExecutionId'].includes(key)) || typeof value.offerId !== 'string' || typeof value.demandId !== 'string' || (value.matchingExecutionId !== undefined && (typeof value.matchingExecutionId !== 'string' || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value.matchingExecutionId)))) {
-    throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacci+¶n no es v+Ìlida.');
+    throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacci√≥n no es v√°lida.');
   }
   return { offerId: value.offerId, demandId: value.demandId, quantityKwh: quantity(value.quantityKwh), pricePerKwh: price(value.pricePerKwh), matchingExecutionId: value.matchingExecutionId ?? null };
 }
 
 function editInput(body: unknown) {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacci+¶n no es v+Ìlida.');
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de transacci√≥n no es v√°lida.');
   const value = body as Record<string, unknown>;
   if (Object.keys(value).length !== 1 || !Object.hasOwn(value, 'quantityKwh')) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'Solo se permite modificar quantityKwh.');
   return { quantityKwh: quantity(value.quantityKwh) };
 }
 
 function counterInput(body: unknown) {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de contrapropuesta no es v+Ìlida.');
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La solicitud de contrapropuesta no es v√°lida.');
   const value = body as Record<string, unknown>;
   if (Object.keys(value).length !== 2 || !Object.hasOwn(value, 'quantityKwh') || !Object.hasOwn(value, 'pricePerKwh')) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_REQUEST', 'La contrapropuesta requiere cantidad y precio.');
   return { quantityKwh: quantity(value.quantityKwh), pricePerKwh: price(value.pricePerKwh) };
@@ -311,7 +311,7 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
       if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).length !== 1 || !('proposals' in body) || !Array.isArray(body.proposals) || body.proposals.length < 1 || body.proposals.length > 24) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_BATCH', 'Selecciona entre una y 24 horas.');
       const inputs = body.proposals.map(createInput);
       if (new Set(inputs.map(input => input.offerId)).size !== inputs.length || new Set(inputs.map(input => input.demandId)).size !== inputs.length) throw new EnergyTransactionError(400, 'DUPLICATE_BATCH_SLOT', 'Cada franja debe aparecer una sola vez.');
-      if (inputs.some(input => ![input.offerId, input.demandId].every(id => /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id)))) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_BATCH', 'Los identificadores de las franjas no son v+Ìlidos.');
+      if (inputs.some(input => ![input.offerId, input.demandId].every(id => /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id)))) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_BATCH', 'Los identificadores de las franjas no son v√°lidos.');
       if (!repo.withLockedBatch) throw new EnergyTransactionError(501, 'TRANSACTION_BATCH_UNSUPPORTED', 'El repositorio no admite lotes atomicos.');
       const batchId = randomUUID();
       return repo.withLockedBatch(inputs, async storeFor => {
@@ -321,7 +321,7 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
           const [offer, demand] = await Promise.all([store.offer(), store.demand()]);
           if (!offer || !demand || offer.hour == null || demand.hour == null || !offer.publicationId || !demand.publicationId) throw new EnergyTransactionError(409, 'HOURLY_BATCH_REQUIRED', 'El lote requiere publicaciones horarias.');
           const key = `${dateOnly(offer.deliveryDate)}:${offer.publicationId}:${demand.publicationId}`;
-          if (group !== null && key !== group) throw new EnergyTransactionError(409, 'BATCH_GROUP_MISMATCH', 'Selecciona horas de una misma pareja de publicaciones y d+°a.');
+          if (group !== null && key !== group) throw new EnergyTransactionError(409, 'BATCH_GROUP_MISMATCH', 'Selecciona horas de una misma pareja de publicaciones y d√≠a.');
           group = key;
           return action({ ...store, create: data => store.create({ ...data, batchId }) });
         } };
@@ -338,13 +338,13 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
         const [offer, demand, reservedOffer, reservedDemand, duplicate] = await Promise.all([store.offer(), store.demand(), store.reservedOfferQuantity(), store.reservedDemandQuantity(), store.activeDuplicate(input.quantityKwh)]);
         if (!offer) throw new EnergyTransactionError(404, 'OFFER_NOT_FOUND', 'La oferta no existe.');
         if (!demand) throw new EnergyTransactionError(404, 'DEMAND_NOT_FOUND', 'La demanda no existe.');
-        if (offer.status === 'EXPIRED' || demand.status === 'EXPIRED') throw new EnergyTransactionError(409, 'PUBLICATION_EXPIRED', 'La oferta o demanda est+Ì vencida y no admite nuevas propuestas.');
+        if (offer.status === 'EXPIRED' || demand.status === 'EXPIRED') throw new EnergyTransactionError(409, 'PUBLICATION_EXPIRED', 'La oferta o demanda est√° vencida y no admite nuevas propuestas.');
         if (offer.status !== 'ACTIVE' || demand.status !== 'ACTIVE') throw new EnergyTransactionError(409, 'PUBLICATION_NOT_ACTIVE', 'La oferta y demanda deben estar activas.');
         if (offer.userId === demand.userId) throw new EnergyTransactionError(409, 'SAME_TRANSACTION_PARTICIPANT', 'La oferta y demanda deben pertenecer a usuarios distintos.');
-        if (userId !== offer.userId && userId !== demand.userId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede proponer la transacci+¶n.');
+        if (userId !== offer.userId && userId !== demand.userId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede proponer la transacci√≥n.');
         if (dateOnly(offer.deliveryDate) !== dateOnly(demand.deliveryDate)) throw new EnergyTransactionError(409, 'DELIVERY_DATE_MISMATCH', 'La fecha de entrega debe coincidir.');
         if ((offer.hour ?? null) !== (demand.hour ?? null)) throw new EnergyTransactionError(409, 'DELIVERY_HOUR_MISMATCH', 'La hora de entrega debe coincidir.');
-        if (offer.hour != null && dateOnly(offer.deliveryDate) <= businessDateInColombia(now())) throw new EnergyTransactionError(409, 'HOURLY_MARKET_CLOSED', 'La fecha de entrega ya est+Ì cerrada para nuevas negociaciones.');
+        if (offer.hour != null && dateOnly(offer.deliveryDate) <= businessDateInColombia(now())) throw new EnergyTransactionError(409, 'HOURLY_MARKET_CLOSED', 'La fecha de entrega ya est√° cerrada para nuevas negociaciones.');
         await requireVerified(store);
         if (duplicate) throw new EnergyTransactionError(409, 'DUPLICATE_ACTIVE_PROPOSAL', 'Ya existe una propuesta activa equivalente.');
         const offerAvailable = subtract(decimalString(offer.quantityKwh), reservedOffer);
@@ -363,14 +363,14 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
       const input = editInput(body);
       return participantDto(await repo.withLockedTransaction(id, async store => {
         const current = await store.transaction();
-        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci+¶n no existe.');
-        if (current.hour != null && dateOnly(current.deliveryDate) <= businessDateInColombia(now())) throw new EnergyTransactionError(409, 'HOURLY_MARKET_CLOSED', 'La negociaci+¶n horaria cerr+¶ al comenzar la fecha de entrega. Cancela o rechaza para liberar su reserva.');
-        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci+¶n ya no admite edici+¶n.');
-        if (current.proposedByUserId === null) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta hist+¶rica no tiene creador verificable y no puede editarse.');
-        if (current.proposedByUserId !== userId) throw new EnergyTransactionError(403, 'TRANSACTION_PROPOSER_REQUIRED', 'Solo quien cre+¶ la propuesta puede editarla.');
-        if (await store.latestRevision?.()) throw new EnergyTransactionError(409, 'TRANSACTION_NEGOTIATION_IMMUTABLE', 'Una negociaci+¶n versionada debe cambiarse mediante contrapropuesta.');
+        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci√≥n no existe.');
+        if (current.hour != null && dateOnly(current.deliveryDate) <= businessDateInColombia(now())) throw new EnergyTransactionError(409, 'HOURLY_MARKET_CLOSED', 'La negociaci√≥n horaria cerr√≥ al comenzar la fecha de entrega. Cancela o rechaza para liberar su reserva.');
+        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci√≥n ya no admite edici√≥n.');
+        if (current.proposedByUserId === null) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta hist√≥rica no tiene creador verificable y no puede editarse.');
+        if (current.proposedByUserId !== userId) throw new EnergyTransactionError(403, 'TRANSACTION_PROPOSER_REQUIRED', 'Solo quien cre√≥ la propuesta puede editarla.');
+        if (await store.latestRevision?.()) throw new EnergyTransactionError(409, 'TRANSACTION_NEGOTIATION_IMMUTABLE', 'Una negociaci√≥n versionada debe cambiarse mediante contrapropuesta.');
         const [offer, demand, reservedOffer, reservedDemand] = await Promise.all([store.offer(), store.demand(), store.reservedOfferQuantity(), store.reservedDemandQuantity()]);
-        if (!offer || !demand) throw new EnergyTransactionError(409, 'TRANSACTION_PUBLICATION_UNAVAILABLE', 'La propuesta referencia una publicaci+¶n no disponible.');
+        if (!offer || !demand) throw new EnergyTransactionError(409, 'TRANSACTION_PUBLICATION_UNAVAILABLE', 'La propuesta referencia una publicaci√≥n no disponible.');
         await requireVerified(store);
         const ownQuantity = decimalString(current.quantityKwh);
         const offerAvailable = subtract(subtract(decimalString(offer.quantityKwh), reservedOffer), `-${ownQuantity}`);
@@ -384,15 +384,15 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
       const input = counterInput(body);
       const countered = await repo.withLockedTransaction(id, async store => {
         const current = await store.transaction();
-        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci+¶n no existe.');
-        if (current.hour != null && dateOnly(current.deliveryDate) <= businessDateInColombia(now())) throw new EnergyTransactionError(409, 'HOURLY_MARKET_CLOSED', 'La negociaci+¶n horaria cerr+¶ al comenzar la fecha de entrega. Cancela o rechaza para liberar su reserva.');
-        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci+¶n ya no admite contrapropuestas.');
+        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci√≥n no existe.');
+        if (current.hour != null && dateOnly(current.deliveryDate) <= businessDateInColombia(now())) throw new EnergyTransactionError(409, 'HOURLY_MARKET_CLOSED', 'La negociaci√≥n horaria cerr√≥ al comenzar la fecha de entrega. Cancela o rechaza para liberar su reserva.');
+        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci√≥n ya no admite contrapropuestas.');
         if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede realizar una contrapropuesta.');
         const latest = await store.latestRevision?.();
-        if (!latest) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta hist+¶rica no admite contrapropuestas.');
+        if (!latest) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta hist√≥rica no admite contrapropuestas.');
         if (latest.proposedByUserId === userId) throw new EnergyTransactionError(409, 'COUNTERPARTY_REQUIRED', 'La contrapropuesta debe ser realizada por la contraparte.');
         const [offer, demand, reservedOffer, reservedDemand] = await Promise.all([store.offer(), store.demand(), store.reservedOfferQuantity(), store.reservedDemandQuantity()]);
-        if (!offer || !demand) throw new EnergyTransactionError(409, 'TRANSACTION_PUBLICATION_UNAVAILABLE', 'La propuesta referencia una publicaci+¶n no disponible.');
+        if (!offer || !demand) throw new EnergyTransactionError(409, 'TRANSACTION_PUBLICATION_UNAVAILABLE', 'La propuesta referencia una publicaci√≥n no disponible.');
         await requireVerified(store);
         const ownQuantity = decimalString(current.quantityKwh);
         const offerAvailable = subtract(subtract(decimalString(offer.quantityKwh), reservedOffer), `-${ownQuantity}`);
@@ -409,10 +409,10 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
     async accept(userId: string, id: string) {
       return participantDto(await repo.withLockedTransaction(id, async store => {
         const current = await store.transaction();
-        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci+¶n no existe.');
-        if (current.hour != null && dateOnly(current.deliveryDate) <= businessDateInColombia(now())) throw new EnergyTransactionError(409, 'HOURLY_MARKET_CLOSED', 'La negociaci+¶n horaria cerr+¶ al comenzar la fecha de entrega. Cancela o rechaza para liberar su reserva.');
-        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci+¶n ya no admite aceptaci+¶n.');
-        if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede aceptar la transacci+¶n.');
+        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci√≥n no existe.');
+        if (current.hour != null && dateOnly(current.deliveryDate) <= businessDateInColombia(now())) throw new EnergyTransactionError(409, 'HOURLY_MARKET_CLOSED', 'La negociaci√≥n horaria cerr√≥ al comenzar la fecha de entrega. Cancela o rechaza para liberar su reserva.');
+        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci√≥n ya no admite aceptaci√≥n.');
+        if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede aceptar la transacci√≥n.');
         await requireVerified(store);
         const sellerAcceptedAt = userId === current.sellerUserId ? current.sellerAcceptedAt ?? now() : current.sellerAcceptedAt;
         const buyerAcceptedAt = userId === current.buyerUserId ? current.buyerAcceptedAt ?? now() : current.buyerAcceptedAt;
@@ -420,12 +420,12 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
         if (confirmed) {
           const offer = await store.offer();
           const demand = await store.demand();
-          if (!offer || !demand) throw new EnergyTransactionError(409, 'TRANSACTION_PUBLICATION_UNAVAILABLE', 'La propuesta referencia una publicaci+¶n no disponible.');
+          if (!offer || !demand) throw new EnergyTransactionError(409, 'TRANSACTION_PUBLICATION_UNAVAILABLE', 'La propuesta referencia una publicaci√≥n no disponible.');
           const ownQuantity = new Prisma.Decimal(decimalString(current.quantityKwh));
           const confirmedOffer = new Prisma.Decimal(await store.confirmedOfferQuantity(current.id));
           const confirmedDemand = new Prisma.Decimal(await store.confirmedDemandQuantity(current.id));
-          if (confirmedOffer.plus(ownQuantity).gt(new Prisma.Decimal(decimalString(offer.quantityKwh)))) throw new EnergyTransactionError(409, 'OFFER_CONFIRMATION_CAPACITY_EXCEEDED', 'La capacidad vigente de la oferta no cubre esta confirmaci+¶n.');
-          if (confirmedDemand.plus(ownQuantity).gt(new Prisma.Decimal(decimalString(demand.quantityKwh)))) throw new EnergyTransactionError(409, 'DEMAND_CONFIRMATION_CAPACITY_EXCEEDED', 'La capacidad vigente de la demanda no cubre esta confirmaci+¶n.');
+          if (confirmedOffer.plus(ownQuantity).gt(new Prisma.Decimal(decimalString(offer.quantityKwh)))) throw new EnergyTransactionError(409, 'OFFER_CONFIRMATION_CAPACITY_EXCEEDED', 'La capacidad vigente de la oferta no cubre esta confirmaci√≥n.');
+          if (confirmedDemand.plus(ownQuantity).gt(new Prisma.Decimal(decimalString(demand.quantityKwh)))) throw new EnergyTransactionError(409, 'DEMAND_CONFIRMATION_CAPACITY_EXCEEDED', 'La capacidad vigente de la demanda no cubre esta confirmaci√≥n.');
         }
         const updated = await store.update({ sellerAcceptedAt, buyerAcceptedAt, ...(confirmed ? { status: 'CONFIRMED', confirmedAt: now() } : {}) });
         return confirmed ? ensureConfirmedPublicationStatuses(store, updated) : updated;
@@ -434,37 +434,37 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
     async reject(userId: string, id: string) {
       return participantDto(await repo.withLockedTransaction(id, async store => {
         const current = await store.transaction();
-        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci+¶n no existe.');
-        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci+¶n ya no admite rechazo.');
-        if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede rechazar la transacci+¶n.');
+        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci√≥n no existe.');
+        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci√≥n ya no admite rechazo.');
+        if (userId !== current.sellerUserId && userId !== current.buyerUserId) throw new EnergyTransactionError(403, 'TRANSACTION_PARTICIPANT_REQUIRED', 'Solo un participante puede rechazar la transacci√≥n.');
         const latest = await store.latestRevision?.();
         const proposerId = latest?.proposedByUserId ?? current.proposedByUserId;
-        if (proposerId !== null && proposerId === userId) throw new EnergyTransactionError(403, 'TRANSACTION_RECIPIENT_REQUIRED', 'Quien propuso el t+Ærmino vigente debe cancelarlo, no rechazarlo.');
+        if (proposerId !== null && proposerId === userId) throw new EnergyTransactionError(403, 'TRANSACTION_RECIPIENT_REQUIRED', 'Quien propuso el t√©rmino vigente debe cancelarlo, no rechazarlo.');
         return store.update({ status: 'REJECTED' });
       }), userId);
     },
     async cancel(userId: string, id: string) {
       return participantDto(await repo.withLockedTransaction(id, async store => {
         const current = await store.transaction();
-        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci+¶n no existe.');
-        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci+¶n ya no admite cancelaci+¶n.');
-        if (current.proposedByUserId === null) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta hist+¶rica no tiene creador verificable y no puede cancelarse.');
-        if (current.proposedByUserId !== userId) throw new EnergyTransactionError(403, 'TRANSACTION_PROPOSER_REQUIRED', 'Solo quien cre+¶ la propuesta puede cancelarla.');
+        if (!current) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci√≥n no existe.');
+        if (current.status !== 'PENDING_ACCEPTANCE') throw new EnergyTransactionError(409, 'TRANSACTION_NOT_PENDING', 'La transacci√≥n ya no admite cancelaci√≥n.');
+        if (current.proposedByUserId === null) throw new EnergyTransactionError(409, 'TRANSACTION_LEGACY_IMMUTABLE', 'La propuesta hist√≥rica no tiene creador verificable y no puede cancelarse.');
+        if (current.proposedByUserId !== userId) throw new EnergyTransactionError(403, 'TRANSACTION_PROPOSER_REQUIRED', 'Solo quien cre√≥ la propuesta puede cancelarla.');
         return store.update({ status: 'CANCELLED', cancelledAt: now() });
       }), userId);
     },
     async findMine(userId: string, status?: string) {
-      if (status && !Object.values(EnergyTransactionStatus).includes(status as EnergyTransactionStatus)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_STATUS', 'El estado de transacci+¶n no es v+Ìlido.');
+      if (status && !Object.values(EnergyTransactionStatus).includes(status as EnergyTransactionStatus)) throw new EnergyTransactionError(400, 'INVALID_TRANSACTION_STATUS', 'El estado de transacci√≥n no es v√°lido.');
       return Promise.all((await repo.findMine(userId, status as EnergyTransactionStatus | undefined)).map(async value => participantDto(value, userId, (await repo.findRevisions?.(value.id))?.at(-1))));
     },
     async findOne(userId: string, id: string) {
       const value = await repo.findForParticipant(id, userId);
-      if (!value) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci+¶n no existe.');
+      if (!value) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci√≥n no existe.');
       return participantDto(value, userId, (await repo.findRevisions?.(id))?.at(-1));
     },
     async revisions(userId: string, id: string) {
       const transaction = await repo.findForParticipant(id, userId);
-      if (!transaction) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci+¶n no existe.');
+      if (!transaction) throw new EnergyTransactionError(404, 'TRANSACTION_NOT_FOUND', 'La transacci√≥n no existe.');
       return (await repo.findRevisions?.(id) ?? []).map(value => revisionDto(value, transaction));
     },
   };
@@ -473,10 +473,10 @@ export function createEnergyTransactionService(repo: EnergyTransactionRepository
 function price(value: unknown): string {
   const text = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : '';
   if (!/^(?:0|[1-9]\d*)(?:\.\d{1,5})?$/.test(text) || compare(text, '0') <= 0) {
-    throw new EnergyTransactionError(400, 'INVALID_NEGOTIATION_PRICE', 'El precio debe ser decimal positivo con m+Ìximo cinco decimales.');
+    throw new EnergyTransactionError(400, 'INVALID_NEGOTIATION_PRICE', 'El precio debe ser decimal positivo con m√°ximo cinco decimales.');
   }
   return text;
 }
 async function requireVerified(store: { verificationApproved?(): Promise<boolean> }) {
- if (await store.verificationApproved?.() !== true) throw new EnergyTransactionError(409, 'PUBLICATION_VERIFICATION_REQUIRED', 'La oferta y la demanda deben tener una verificaci+¶n de capacidad aprobada y vigente antes de negociar o confirmar.');
+ if (await store.verificationApproved?.() !== true) throw new EnergyTransactionError(409, 'PUBLICATION_VERIFICATION_REQUIRED', 'La oferta y la demanda deben tener una verificaci√≥n de capacidad aprobada y vigente antes de negociar o confirmar.');
 }
