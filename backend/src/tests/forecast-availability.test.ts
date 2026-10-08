@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { candidateFutureDates } from '@/services/forecast-future-dates';
-import { createXmDailySyncService, type XmDailySyncDependencies } from '@/services/xm-daily-sync.service';
+import { createXmDailySyncService, XmDailySyncError, type XmDailySyncDependencies } from '@/services/xm-daily-sync.service';
 import { coverageFromConsolidated } from '@/services/xm-coverage.service';
 import { supplyCompatibility, type StoredPrepared } from '@/services/forecast.service';
 import { demandCompatibility } from '@/services/demand-direct-forecast.service';
@@ -8,6 +8,7 @@ import { priceCompatibility } from '@/services/price-forecast.service';
 import { offsetDate } from '@/models/xm-gene-ridge-direct-v2/features';
 import { loadDirectSupplyModel } from '@/models/xm-gene-ridge-direct-v2/model-loader';
 import { ForecastError } from '@/services/forecast.contract';
+import { ForecastCoverageError } from '@/services/forecast-availability-coverage';
 
 const currentDate = '2026-10-08';
 const dates = (count: number) => Array.from({ length: count }, (_, index) => offsetDate(currentDate, index + 1));
@@ -97,7 +98,9 @@ test('HU04: missing origin features or conflicting artifacts never advertise tar
   second.id = 4;
   const content = second.content as { records: { energia_kwh: number }[] };
   content.records[0]!.energia_kwh++;
-  await expect(service({ overrides: { readSupplyPrepared: async () => [first, second] } }).availability()).rejects.toMatchObject({ code: 'PREPARED_DATASET_INCONSISTENT' });
+  expect((await service({ overrides: { readSupplyPrepared: async () => [first, second] } }).availability())[0]).toMatchObject({
+    hasFutureForecastWindow: false, availabilityError: { code: 'PREPARED_DATASET_INCONSISTENT' },
+  });
 });
 
 test('HU06 A: six candidates, but latest closed origin October 7 permits only October 9..13', async () => {
@@ -147,4 +150,61 @@ test.each(['absent', 'incomplete', 'split', 'duplicate', 'invalid'] as const)('H
 
 test('unexpected availability failures are surfaced, not silently filtered', async () => {
   await expect(service({ overrides: { loadSupplyModel: () => { throw new Error('model IO failure'); } } }).availability()).rejects.toThrow('model IO failure');
+});
+
+test.each(['Gene', 'DemaSIN', 'PrecBolsNaci'] as const)('available %s survives missing coverage in both other metrics', async availableMetric => {
+  const demandRows = demandRecords();
+  const result = await service({ overrides: { readCoverage: async metric => {
+    if (metric !== availableMetric) return null;
+    return metric === 'DemaSIN' ? coverageFromConsolidated(metric, [{ energyDataset: { content: { records: demandRows } } }])
+      : { historicalFrom: '2026-07-01', persistedUntil: currentDate, latestReceivedDate: currentDate, latestIndividuallyUsableDate: currentDate, semanticExcludedDates: [] };
+  } } }).availability();
+  expect(result).toHaveLength(3);
+  expect(result.find(item => item.series === availableMetric)!.hasFutureForecastWindow).toBe(true);
+  for (const missing of result.filter(item => item.series !== availableMetric)) {
+    expect(missing).toMatchObject({ hasFutureForecastWindow: false, latestObservationDate: null,
+      eligibleFutureTargetDates: [], availabilityError: { code: 'XM_SYNC_COVERAGE_MISSING' } });
+  }
+});
+
+test('a domain coverage failure is isolated but a database failure stays global', async () => {
+  const successfulCoverage = { historicalFrom: '2026-07-01', persistedUntil: currentDate, latestReceivedDate: currentDate, latestIndividuallyUsableDate: currentDate, semanticExcludedDates: [] };
+  const result = await service({ overrides: { readCoverage: async metric => {
+    if (metric === 'DemaSIN') throw new XmDailySyncError(404, 'XM_SYNC_COVERAGE_MISSING', 'Sin cobertura de demanda.');
+    return successfulCoverage;
+  } } }).availability();
+  expect(result[0]!.hasFutureForecastWindow).toBe(true);
+  expect(result[2]!.hasFutureForecastWindow).toBe(true);
+  expect(result[1]).toMatchObject({ availabilityError: { code: 'XM_SYNC_COVERAGE_MISSING' } });
+  await expect(service({ overrides: { readCoverage: async () => { throw new Error('database unavailable'); } } }).availability()).rejects.toThrow('database unavailable');
+});
+
+test('fixed October 8 regression retains Gene 09/10, V5 09 and stale B1', async () => {
+  const result = await service({ supplyOrigin: '2026-10-03', demandRows: demandRecords('2026-10-03'),
+    priceRows: [price('2026-10-05')] }).availability();
+  expect(result[0]!.eligibleFutureTargetDates).toEqual(['2026-10-09', '2026-10-10']);
+  expect(result[1]!.eligibleFutureTargetDates).toEqual(['2026-10-09']);
+  expect(result[2]).toMatchObject({ eligibleFutureTargetDates: [], availabilityReason: 'SOURCE_DATA_STALE' });
+});
+
+test('availability uses its optimized coverage reader once per metric and never the sync reader', async () => {
+  const calls: string[] = [];
+  const result = await service({ overrides: {
+    readCoverage: async () => { throw new Error('Full consolidated read forbidden.'); },
+    readAvailabilityCoverage: async metric => { calls.push(metric); return null; },
+  } }).availability();
+  expect(calls).toEqual(['Gene', 'DemaSIN', 'PrecBolsNaci']);
+  expect(result.every(item => !item.hasFutureForecastWindow)).toBe(true);
+});
+
+test('conflicting consolidated demand is isolated with a specific coverage error', async () => {
+  const result = await service({ overrides: { readCoverage: async metric => {
+    if (metric === 'DemaSIN') throw new ForecastCoverageError();
+    return { historicalFrom: '2026-07-01', persistedUntil: currentDate, latestReceivedDate: currentDate,
+      latestIndividuallyUsableDate: currentDate, semanticExcludedDates: [] };
+  } } }).availability();
+  expect(result[0]!.hasFutureForecastWindow).toBe(true);
+  expect(result[2]!.hasFutureForecastWindow).toBe(true);
+  expect(result[1]).toMatchObject({ availabilityReason: 'NO_BUILDABLE_ORIGIN',
+    availabilityError: { code: 'XM_COVERAGE_CONFLICT' }, eligibleFutureTargetDates: [] });
 });

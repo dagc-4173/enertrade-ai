@@ -1,7 +1,7 @@
 export type ForecastSeries = 'Gene' | 'DemaSIN' | 'PrecBolsNaci'
 export type AvailabilityReason = 'AVAILABLE' | 'SOURCE_DATA_STALE' | 'INCOMPLETE_SOURCE_DAY' | 'NO_BUILDABLE_ORIGIN' | 'MODEL_HORIZON_LIMIT'
 
-export interface ForecastAvailability {
+export interface AvailableForecastAvailability {
   series: ForecastSeries
   latestObservationDate: string
   latestReceivedDate: string
@@ -15,6 +15,7 @@ export interface ForecastAvailability {
   productMaxHorizonDays?: 7
   candidateFutureTargetDates?: string[]
   availabilityReason?: AvailabilityReason
+  availabilityError?: never
   eligiblePreparedDatasetIds?: number[]
   supportedHorizonMinDays?: 1
   supportedHorizonMaxDays?: 6
@@ -25,3 +26,16 @@ export interface ForecastAvailability {
   hasFutureForecastWindow: boolean
   dataFreshnessDays: number
 }
+
+export type ForecastAvailability = AvailableForecastAvailability | (
+  Omit<AvailableForecastAvailability, 'latestObservationDate' | 'latestReceivedDate' | 'latestIndividuallyUsableDate' | 'nextForecastDate' | 'modelMinTargetDate' | 'modelMaxTargetDate' | 'dataFreshnessDays' | 'availabilityError'> & {
+    latestObservationDate: null
+    latestReceivedDate: null
+    latestIndividuallyUsableDate: null
+    nextForecastDate: null
+    modelMinTargetDate: null
+    modelMaxTargetDate: null
+    dataFreshnessDays: null
+    availabilityError: { code: string; message: string }
+  }
+)

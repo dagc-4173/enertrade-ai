@@ -41,6 +41,25 @@ const availability = [
   { series: 'PrecBolsNaci', currentDate: '2026-09-20', latestObservationDate: '2026-09-15', latestReceivedDate: '2026-09-15', latestIndividuallyUsableDate: '2026-09-15', semanticExcludedDates: [], eligibleFutureTargetDates: [], nextForecastDate: '2026-09-16', supportedHorizonDays: 1, modelMinTargetDate: '2026-09-16', modelMaxTargetDate: '2026-09-16', effectiveFutureMinDate: null, effectiveFutureMaxDate: null, hasFutureForecastWindow: false, dataFreshnessDays: 5 },
 ]
 const originalFetch = globalThis.fetch
+
+test('one metric error does not discard available peers or invent observation dates', () => {
+  const missing = { ...availability[1], latestObservationDate: null, latestReceivedDate: null,
+    latestIndividuallyUsableDate: null, nextForecastDate: null, modelMinTargetDate: null, modelMaxTargetDate: null,
+    dataFreshnessDays: null, semanticExcludedDates: [], availabilityReason: 'NO_BUILDABLE_ORIGIN',
+    modelMaxHorizonDays: 6, productMaxHorizonDays: 7,
+    candidateFutureTargetDates: ['2026-10-02', '2026-10-03', '2026-10-04', '2026-10-05', '2026-10-06', '2026-10-07'],
+    availabilityError: { code: 'XM_SYNC_COVERAGE_MISSING', message: 'No existe cobertura XM consolidada para la metrica.' } };
+  const result = parseForecastAvailability({ availability: [availability[0], missing, availability[2]] });
+  expect(result[0]!.hasFutureForecastWindow).toBe(true);
+  expect(result[1]!.latestObservationDate).toBeNull();
+  expect(exceedsSupportedHorizon('2026-10-02', result[1]!)).toBe(true);
+  expect(horizonMessage(result[1]!)).toContain('No existe cobertura');
+  const html = renderToStaticMarkup(<ForecastAvailabilityView state={{ kind: 'success', availability: result[1]! }} />);
+  expect(html).toContain('role="alert"');
+  expect(html).toContain('No existe cobertura');
+  expect(() => parseForecastAvailability({ availability: [availability[0], { ...missing, hasFutureForecastWindow: true }, availability[2]] })).toThrow();
+  expect(() => parseForecastAvailability({ availability: [availability[0], { ...missing, availabilityError: undefined }, availability[2]] })).toThrow();
+});
 afterEach(() => { globalThis.fetch = originalFetch })
 function respond(body: unknown, status = 200) {
   return spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }))

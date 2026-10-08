@@ -143,7 +143,9 @@ test('availability never advertises a missing model and conflicts are also rejec
   await expect(forecast({ targetDate: '2026-10-08' })).rejects.toMatchObject({ code: 'FORECAST_MODEL_INCOMPATIBLE' });
   const changed = prepared(2, records.map(row => row.fecha_xm === '2026-10-02' ? { ...row, demanda_kwh: row.demanda_kwh + 1 } : row));
   const badSync = createXmDailySyncService(availabilityDependencies(loadDirectDemandV5Model, [prepared(1), changed]));
-  await expect(badSync.availability()).rejects.toMatchObject({ code: 'PREPARED_DATASET_INCONSISTENT' });
+  expect((await badSync.availability()).find(item => item.series === 'DemaSIN')).toMatchObject({
+    hasFutureForecastWindow: false, availabilityError: { code: 'PREPARED_DATASET_INCONSISTENT' },
+  });
   const badForecast = createDemandV5ForecastService(async () => [prepared(1), changed], async () => coverage(), loadDirectDemandV5Model, now);
   await expect(badForecast({ targetDate: '2026-10-07' })).rejects.toMatchObject({ code: 'PREPARED_DATASET_INCONSISTENT' });
 });

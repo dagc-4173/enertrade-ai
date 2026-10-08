@@ -58,9 +58,10 @@ la cobertura existente; no se reemplaza por `currentDate`.
 | NO_BUILDABLE_ORIGIN | No hay origen/features preparados construibles. |
 | MODEL_HORIZON_LIMIT | El cargador no confirma un modelo compatible para los horizontes requeridos. |
 
-Las inconsistencias entre preparados y los errores inesperados siguen
-propagandose al manejador de errores de la API. B1 informa expresamente la
-indisponibilidad del dia fuente invalido/incompleto; nunca fabrica un fallback.
+Las inconsistencias conocidas entre preparados se informan como error de su
+metrica, sin descartar las otras. Los errores inesperados/estructurales y de DB
+siguen propagandose al manejador de errores de la API. B1 informa expresamente
+la indisponibilidad del dia fuente invalido/incompleto; nunca fabrica un fallback.
 
 El frontend acepta respuestas anteriores sin los campos nuevos, valida los
 limites en ambos contratos y ofrece un selector discreto de fechas elegibles
@@ -120,3 +121,105 @@ Esta evidencia valida el servicio nuevo y los consumidores con mocks; no
 afirma despliegue ni una nueva ejecucion real de forecasts. No se sincronizo
 XM ni se escribio en Neon. Los tests HTTP de regresion usan servidores y
 repositorios mock aislados. Los cambios quedaron sin commit ni push.
+
+## Optimizacion de cobertura y aislamiento por metrica (2026-10-08)
+
+Relacion con HU-04, HU-06 y HU-08: conserva la construibilidad y las fuentes XM
+anteriores; mejora la consulta y permite informar indisponibilidad individual.
+No cambia el runtime, features, modelos, horizontes ni los criterios B1/V5.
+
+Antes, `readXmCoverage` descargaba todos los `EnergyDataset.content` de los
+consolidados de cada metrica, incluidos historicos superpuestos.
+`Promise.all` rechazaba la respuesta completa si una metrica no tenia cobertura.
+
+Ahora la disponibilidad usa un lector separado, con una consulta SQL
+parametrizada por metrica:
+
+- Gene y Precio reciben una fila de metadata (`min(fecha_xm)`, `max(fecha_xm)` y
+  comprobaciones estructurales/calendario), sin observaciones consolidadas.
+- Demanda recibe pares distintos fecha/valor diario, sin documentos completos
+  ni repeticion de valores identicos por historicos superpuestos. Sigue usando
+  la evaluacion semantica original y `resolveDemandV5Origin`.
+- No se usa `requestedTo` como sustituto de fechas observadas ni se presume
+  que el ultimo consolidado contiene todo el union historico.
+- PostgreSQL todavia inspecciona los consolidados almacenados para agregar y
+  detectar contenido corrupto/conflictos. Esta mejora elimina la descarga y
+  procesamiento de sus JSON completos en la aplicacion, no todos los scans
+  historicos en DB.
+- El historial diario unico de Demanda se conserva: las exclusiones semanticas
+  del contrato y la comparacion preparado/consolidado requieren ese contexto.
+- Los preparados compatibles siguen leyendose completos: sus validadores
+  compartidos comprueban inconsistencias/duplicados del artefacto y entre
+  artefactos. Recortarlos sin conservar esas comprobaciones cambiaria criterios.
+- El lector original usado por sync y forecasts POST permanece sin cambios.
+  No se crea esquema, cache ni metadata persistida nueva.
+
+La agregacion usa `Promise.allSettled`. Solo se convierten en resultados
+individuales los errores de dominio explicitamente reconocidos: cobertura
+ausente, conflicto consolidado de Demanda, preparados inconsistentes, datos
+insuficientes/semanticamente no utilizables o modelo incompatible.
+Una metrica fallida tiene `hasFutureForecastWindow=false`, lista elegible vacia,
+`availabilityReason` concreto y `availabilityError={code,message}` opcional.
+Sus fechas observadas/origen y `dataFreshnessDays` son `null`: no se inventa
+una fecha fuente. Conserva `currentDate`, horizontes y candidatos.
+Las respuestas correctas conservan sus campos/valores anteriores.
+
+DB indisponible y errores estructurales/inesperados siguen siendo fallos
+globales HTTP 500; autenticacion sigue siendo 401. El frontend fue adaptado
+solo para validar esta variante explicita y mostrar el error en su modulo,
+sin descartar peers ni habilitar fechas del modulo fallido.
+
+### Evidencia de eficiencia real en Neon
+
+Ejecucion final: `2026-10-08T19:22:03.559Z` (14:22 UTC-05).
+Transaccion `BEGIN READ ONLY`, `transaction_read_only=on`, final `ROLLBACK`.
+No escrituras, sync, preparacion ni inferencia.
+
+| Metrica | Antes: JSON consolidados descargados | Antes: registros consolidados transferidos | Despues: JSON completos descargados | Despues: resultado de cobertura |
+| --- | ---: | ---: | ---: | --- |
+| Gene | 6 | 119904 | 0 | 1 fila metadata; 0 observaciones |
+| DemaSIN | 4 | 3004 | 0 | 1 fila con 1008 pares diarios distintos |
+| PrecBolsNaci | 6 | 120264 | 0 | 1 fila metadata; 0 observaciones |
+
+Las llamadas principales siguen siendo 3 consultas de cobertura y 3 de
+preparados: no se afirma reduccion de llamadas, latencia, MB o costo monetario.
+Los conteos anteriores se obtuvieron con agregados SQL, sin imprimir registros.
+Se comprobo la paridad del SQL contra el lector anterior usando consolidados
+superpuestos aislados para las tres metricas y cuatro casos de fecha invalida.
+
+Con fecha fija `2026-10-08`, la logica optimizada sobre Neon devuelve:
+
+- Gene: ultima observacion 03/10; elegibles 09/10 y 10/10.
+- DemaSIN: ultima observacion 03/10; elegible 09/10.
+- PrecBolsNaci: ultima observacion 05/10; sin elegibles, `SOURCE_DATA_STALE`.
+
+Precio no esta recuperado. La validacion es del servicio con lectores
+inyectados en la transaccion read-only; no afirma despliegue del endpoint.
+
+Pruebas nuevas: `forecast-availability-coverage.test.ts` instrumenta una llamada
+de cobertura/fila por metrica, proyeccion metadata, deduplicacion y errores;
+`forecast-availability.test.ts` prueba peers disponibles con otras metricas
+ausentes, error de cobertura, conflicto, error global DB y regresion 08/10.
+Los tests HTTP mantienen 401/500 y los frontend validan/renderizan errores
+individuales sin perder la disponibilidad de las otras series.
+
+| ID | HU | Precondicion / pasos | Resultado obtenido |
+| --- | --- | --- | --- |
+| AV-OPT-01 | HU-04 / HU-06 / HU-08 | Consultar fixtures aisladas, una metrica disponible y las otras sin cobertura; repetir para las tres. | Las disponibles conservan targets; las ausentes tienen error individual; probado. |
+| AV-OPT-02 | HU-04 / HU-06 / HU-08 | Simular error de cobertura/conflicto, DB global y autenticacion HTTP. | Dominio aislado por metrica; DB 500; auth 401; probado. |
+| AV-OPT-03 | HU-04 / HU-06 / HU-08 | Instrumentar lectores mock; prohibir lector completo de sync durante availability; comprobar proyeccion. | Una query por metrica, sin lectura completa en la aplicacion; probado. |
+| AV-OPT-NEON-01 | HU-04 / HU-06 / HU-08 | BEGIN READ ONLY; ejecutar SQL/servicio con fecha fija 08/10; contar metadata; ROLLBACK. | Conteos de la tabla anterior y elegibles 09,10 / 09 / ninguno; validado read-only. |
+
+Validacion final ejecutada:
+
+- `bun run typecheck` backend: aprobado.
+- `bun test` sobre availability, coverage, sync, controller, Gene, V5 y B1:
+  **181 pass, 0 fail, 630 aserciones**, siete archivos.
+- Frontend forecast/prepared-datasets: **62 pass, 0 fail, 231 aserciones**.
+- `bunx tsc -b --pretty false` frontend y ESLint dirigido a los cuatro archivos
+  frontend de implementacion modificados: aprobados. Backend no tiene script
+  ni configuracion de lint; se uso su typecheck existente.
+- Diagnosticos del editor y `git diff --check`: sin errores.
+
+No se hizo commit ni push. El servicio fue validado en lectura; no se afirma
+una medicion de latencia ni despliegue/reinicio del backend.

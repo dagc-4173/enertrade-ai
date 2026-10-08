@@ -139,6 +139,7 @@ export function ForecastAvailabilityView({ state }: { state: ForecastAvailabilit
   if (state.kind === 'loading') return <p role="status">Consultando disponibilidad de datos…</p>
   if (state.kind === 'error') return <p className="forecast-availability" role="alert">Error de disponibilidad: {state.message}</p>
   const { availability } = state
+  if (availability.availabilityError) return <p className="forecast-availability" role="alert">Error de disponibilidad: {availability.availabilityError.message}</p>
   const range = effectiveRange(availability)
   const demand = availability.series === 'DemaSIN'
   const eligible = availability.eligibleFutureTargetDates

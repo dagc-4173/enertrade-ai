@@ -27,3 +27,12 @@ test('authenticated routes validate input and expose only requested XM metric', 
   expect((await request(app, '/admin/xm/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"metric":"Other"}' })).status).toBe(400);
   expect((await request(app, '/admin/xm/sync', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: '{}' })).status).toBe(415);
 });
+
+test('global availability database failure remains HTTP 500 and never a partial success', async () => {
+  const events: unknown[] = [];
+  const app = express();
+  app.use(createXmDailySyncRouter({ ...service, availability: async () => { throw new Error('database unavailable'); } },
+    (_req, _res, next) => next(), { error: event => events.push(event) }));
+  expect((await request(app, '/forecast-availability')).status).toBe(500);
+  expect(events).toHaveLength(1);
+});

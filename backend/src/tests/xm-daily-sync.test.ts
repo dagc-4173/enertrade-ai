@@ -205,5 +205,7 @@ test('DemaSIN availability does not advertise targets when prepared history disa
   const observations = Array.from({ length: 31 }, (_, index) => ({ date: `2026-05-${String(index + 1).padStart(2, '0')}`, value: 220_000_000 + (index % 3) * 2_000_000 }));
   const prepared = { id: 1, sourceDatasetId: 10, profileId: 'xm_demandasin_preparacion_base', profileVersion: '1.0.0', sourceRulesetId: 'xm_demandasin_base', sourceRulesetVersion: '1.0.0', content: { variables: { minimum: [{ name: 'fecha_xm', type: 'string', representation: 'YYYY-MM-DD' }, { name: 'demanda_kwh', type: 'number', unit: 'kWh' }] }, records: observations.filter(item => item.date !== '2026-05-25').map(item => ({ fecha_xm: item.date, demanda_kwh: item.value })) } };
   const { service } = dependencies({ now: () => new Date('2026-05-31T12:00:00'), readCoverage: async metric => metric === 'DemaSIN' ? { ...coverage('2026-05-31'), demandObservations: observations } : coverage('2026-05-31'), readDemandPrepared: async () => [prepared] });
-  await expect(service.availability()).rejects.toMatchObject({ code: 'PREPARED_DATASET_INCONSISTENT' });
+  expect((await service.availability()).find(item => item.series === 'DemaSIN')).toMatchObject({
+    hasFutureForecastWindow: false, availabilityError: { code: 'PREPARED_DATASET_INCONSISTENT' },
+  });
 });

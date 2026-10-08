@@ -17,9 +17,16 @@ import { buildDirectSupplyFeatures } from '@/models/xm-gene-ridge-direct-v2/feat
 import { loadDirectSupplyModel, type DirectSupplyModel } from '@/models/xm-gene-ridge-direct-v2/model-loader';
 import { priceCompatibility, readPriceReferenceDay, type PreparedPrice } from './price-forecast.service';
 import { loadRule } from '@/models/xm-preciobolsnaci-b1/rule-loader';
+import { ForecastCoverageError, readAvailabilityCoverage } from './forecast-availability-coverage';
 
 export type XmSyncMetric = XmMetric;
 export type ForecastAvailability = { series: XmSyncMetric; currentDate: string; latestObservationDate: string; latestReceivedDate: string; latestIndividuallyUsableDate: string; semanticExcludedDates: string[]; modelMaxHorizonDays: 1 | 6 | 7; productMaxHorizonDays: 7; candidateFutureTargetDates: string[]; availabilityReason: AvailabilityReason; eligiblePreparedDatasetIds?: number[]; eligibleFutureTargetDates: string[]; nextForecastDate: string; supportedHorizonDays: 1 | 6 | 7; supportedHorizonMinDays?: 1; supportedHorizonMaxDays?: 6; modelMinTargetDate: string; modelMaxTargetDate: string; effectiveFutureMinDate: string | null; effectiveFutureMaxDate: string | null; hasFutureForecastWindow: boolean; dataFreshnessDays: number };
+type MissingAvailability = Omit<ForecastAvailability, 'latestObservationDate' | 'latestReceivedDate' | 'latestIndividuallyUsableDate' | 'nextForecastDate' | 'modelMinTargetDate' | 'modelMaxTargetDate' | 'dataFreshnessDays'> & {
+  latestObservationDate: null; latestReceivedDate: null; latestIndividuallyUsableDate: null;
+  nextForecastDate: null; modelMinTargetDate: null; modelMaxTargetDate: null; dataFreshnessDays: null;
+  availabilityError: { code: string; message: string };
+};
+export type ForecastAvailabilityResult = ForecastAvailability | MissingAvailability;
 type ExternalRecord = { date: string; hour: number | null; value: number };
 type SyncWindow = { from: string; to: string; manifestId: number; energyDatasetId: number; reused: boolean };
 type Materialized = { consolidatedDatasetId: number; energyDatasetId: number };
@@ -28,6 +35,7 @@ type Preparation = { preparedDatasetId: number; profileId: string; profileVersio
 
 export type XmDailySyncDependencies = {
   readCoverage: (metric: XmSyncMetric) => Promise<XmCoverage | null>;
+  readAvailabilityCoverage?: (metric: XmSyncMetric) => Promise<XmCoverage | null>;
   query: (input: { provider: 'xm'; dataset: XmSyncMetric; startDate: string; endDate: string }) => Promise<{ records: ExternalRecord[] }>;
   ingest: (input: { metric: XmSyncMetric; from: string; to: string }) => Promise<{ manifestId: number; energyDatasetId: number; reused: boolean }>;
   materialize: (input: { metric: XmSyncMetric; from: string; to: string }) => Promise<Materialized>;
@@ -97,6 +105,7 @@ const consolidation = createXmConsolidatedDatasetService();
 
 const defaultDependencies: XmDailySyncDependencies = {
   readCoverage: readXmCoverage,
+  readAvailabilityCoverage,
   query: input => external.query({ provider: 'xm', dataset: input.dataset, startDate: input.startDate, endDate: input.endDate }),
   async ingest(input) { return ingestion.ingest(input); },
   async materialize(input) { return consolidation.materialize(input); },
@@ -128,7 +137,7 @@ function failure(metric: XmSyncMetric, error: unknown): XmMetricSyncResult {
 export function createXmDailySyncService(dependencies: XmDailySyncDependencies = defaultDependencies) {
   let running = false;
   async function availability(metric: XmSyncMetric): Promise<ForecastAvailability> {
-    const coverage = await dependencies.readCoverage(metric);
+    const coverage = await (dependencies.readAvailabilityCoverage ?? dependencies.readCoverage)(metric);
     if (!coverage) throw new XmDailySyncError(404, 'XM_SYNC_COVERAGE_MISSING', 'No existe cobertura XM consolidada para la métrica.');
     const observedNow = dependencies.now();
     const currentDate = metric === 'DemaSIN' ? demandV5CalendarDate(observedNow) : localCalendarDate(observedNow); const supportedHorizonDays = metric === 'Gene' ? 7 : metric === 'DemaSIN' ? 6 : 1;
@@ -239,7 +248,32 @@ export function createXmDailySyncService(dependencies: XmDailySyncDependencies =
   }
 
   return {
-    availability: async () => Promise.all(metrics.map(availability)),
+    availability: async () => {
+      const results = await Promise.allSettled(metrics.map(availability));
+      return results.map((result, index): ForecastAvailabilityResult => {
+        if (result.status === 'fulfilled') return result.value;
+        const error: unknown = result.reason;
+        const metric = metrics[index]!;
+        const isMissing = error instanceof XmDailySyncError && error.code === 'XM_SYNC_COVERAGE_MISSING';
+        const isMetricError = error instanceof ForecastError && [
+          'PREPARED_DATASET_INCONSISTENT', 'FORECAST_DATA_INSUFFICIENT',
+          'FORECAST_SEMANTIC_DATA_UNAVAILABLE', 'FORECAST_MODEL_INCOMPATIBLE',
+        ].includes(error.code);
+        if (!isMissing && !isMetricError && !(error instanceof ForecastCoverageError)) throw error;
+        const currentDate = metric === 'DemaSIN' ? demandV5CalendarDate(dependencies.now()) : localCalendarDate(dependencies.now());
+        const horizon = metric === 'Gene' ? 7 : metric === 'DemaSIN' ? 6 : 1;
+        return { series: metric, currentDate, latestObservationDate: null, latestReceivedDate: null,
+          latestIndividuallyUsableDate: null, semanticExcludedDates: [], modelMaxHorizonDays: horizon,
+          productMaxHorizonDays, candidateFutureTargetDates: candidateFutureDates(currentDate, horizon),
+          availabilityReason: error.code === 'FORECAST_MODEL_INCOMPATIBLE' ? 'MODEL_HORIZON_LIMIT' : 'NO_BUILDABLE_ORIGIN',
+          availabilityError: { code: error.code, message: error.message },
+          ...(metric === 'PrecBolsNaci' ? { eligiblePreparedDatasetIds: [] } : {}),
+          eligibleFutureTargetDates: [], nextForecastDate: null, supportedHorizonDays: horizon,
+          ...(metric === 'DemaSIN' ? { supportedHorizonMinDays: 1, supportedHorizonMaxDays: 6 } : {}),
+          modelMinTargetDate: null, modelMaxTargetDate: null, effectiveFutureMinDate: null, effectiveFutureMaxDate: null,
+          hasFutureForecastWindow: false, dataFreshnessDays: null };
+      });
+    },
     sync: async (metric?: XmSyncMetric) => {
       if (running) return { metrics: (metric ? [metric] : metrics).map(current => ({ metric: current, status: 'failed' as const, error: { code: 'XM_SYNC_IN_PROGRESS', message: 'La sincronización XM ya está en ejecución.' } })) };
       running = true;
