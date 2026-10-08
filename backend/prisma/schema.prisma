@@ -334,6 +334,8 @@ model EnergyDemand {
   @@index([userId])
   @@index([status])
   @@index([deliveryDate])
+  @@unique([publicationId, hour])
+  @@index([deliveryDate, hour, status])
 }
 
 model EnergyTransaction {
