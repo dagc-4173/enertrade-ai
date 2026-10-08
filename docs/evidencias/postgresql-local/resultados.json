@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-07",
+  "timezone": "America/Bogota",
+  "version": "PostgreSQL 17.11",
+  "host": "127.0.0.1",
+  "port": 55433,
+  "databases": [
+    "enertrade_dev",
+    "enertrade_integration_test"
+  ],
+  "auth": "scram-sha-256",
+  "migrationsPerDatabase": 19,
+  "health": {
+    "status": "ok",
+    "database": "ok"
+  },
+  "integration": {
+    "hourly": 10,
+    "verification": 9,
+    "payment": 9,
+    "failures": 0,
+    "cleanup": "completed"
+  },
+  "browser": {
+    "publication": "passed",
+    "matching": "passed",
+    "prefilledNegotiation": "passed",
+    "sellerConfirmation": "passed",
+    "paymentRejected": "passed",
+    "paymentPending": "passed",
+    "pendingResolutionApproved": "passed",
+    "sellerReadOnly": "passed",
+    "buyerPdfDownload": "passed",
+    "sellerPdfDownload": "passed",
+    "pdfVisualReview": "passed",
+    "pdfs": [
+      {
+        "file": "comprobante-local-comprador.pdf",
+        "size": 5665,
+        "expectedFieldsPresent": true
+      },
+      {
+        "file": "comprobante-local-vendedor.pdf",
+        "size": 5665,
+        "expectedFieldsPresent": true
+      }
+    ],
+    "cleanup": "completed; remaining users and payments = 0"
+  },
+  "neonDataCopied": false,
+  "academicValidation": "pending"
+}
