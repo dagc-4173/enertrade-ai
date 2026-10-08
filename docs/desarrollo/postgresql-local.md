@@ -23,6 +23,10 @@ bun run dev
 
 Para iniciar únicamente la base: `backend/scripts/start-local-database.ps1`. No se inicia automáticamente con Windows. No borrar la carpeta data; contiene los registros persistentes. Reiniciar PostgreSQL requiere detener/iniciar su instancia propia con administración PostgreSQL; no eliminar archivos ni reutilizar directorios temporales de integración.
 
+### Arranque controlado sin sincronización XM automática
+
+Para desarrollo/diagnóstico, definir `XM_AUTO_SYNC_ENABLED=false` en el entorno antes de iniciar el backend evita la sincronización XM al arrancar y su programación diaria. En PowerShell: `$env:XM_AUTO_SYNC_ENABLED = 'false'`. El servidor continúa arrancando y registra que solo el scheduler automático está deshabilitado: XM y los endpoints manuales de sincronización siguen habilitados. Esta opción no convierte el backend en solo lectura ni bloquea otras escrituras. Sin la variable, con `true` o con cualquier valor distinto de la cadena exacta `false`, el comportamiento automático sigue habilitado. Para recuperar el valor por defecto en esa terminal: `Remove-Item Env:XM_AUTO_SYNC_ENABLED`.
+
 ## Recuperación de Neon
 Existe una exportación lógica de solo lectura documentada en `docs/evidencias/neon-ahorro/`; no es un `pg_dump` nativo y su restauración no se ha probado. Neon sigue siendo el servicio cloud previsto cuando está disponible; PostgreSQL local es un fallback temporal para desarrollo/pruebas, no un destino productivo ni una arquitectura permanente. Si se restaura el respaldo, hacerlo en una base local nueva y separada, verificar versión/schema, constraints y conteos, y conciliar datos antes de decidir cualquier actualización de `enertrade_dev`. No restaurar encima de datos nuevos sin plan de conciliación.
 

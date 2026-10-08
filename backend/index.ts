@@ -11,5 +11,9 @@ if (!Number.isSafeInteger(port) || port < 1 || port > 65535) {
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
-    xmDailyScheduler.start();
+    if (process.env.XM_AUTO_SYNC_ENABLED !== 'false') {
+        xmDailyScheduler.start();
+    } else {
+        console.log('Automatic XM scheduler disabled; XM functionality and manual synchronization endpoints remain enabled.');
+    }
 })
