@@ -107,7 +107,7 @@ export function Transactions() {
   }
 
   return <div className="page-grid transactions-page">
-    <section className="panel transactions-intro"><SectionHeader eyebrow="Transacciones" title="Mis transacciones" description="Registro de intercambios energéticos simulados. La pasarela de pagos y la liquidación financiera no forman parte de esta versión." />
+    <section className="panel transactions-intro"><SectionHeader eyebrow="Transacciones" title="Mis transacciones" description="Registro de intercambios energéticos simulados. Incluye pago simulado y comprobante. El simulador no mueve dinero real ni realiza liquidación financiera." />
       <div className="transaction-filters">{filters.map(item => <button key={item.label} type="button" className={filter === item.value ? 'primary-button' : 'secondary-button'} onClick={() => { setLoading(true); setError(''); setFilter(item.value) }}>{item.label}</button>)}</div>
     </section>
     {notice && <p className="transaction-notice" role="status">{notice}</p>}
