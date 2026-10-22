@@ -38,3 +38,5 @@ docs/contexto/*.docx
 docs/contexto/*.pdf
 docs/gestion/*.docx
 docs/gestion/*.pdf
+# Evidencia local de inferencia Chronos (no contiene pesos en Git)
+backend/data/chronos-forecasts/

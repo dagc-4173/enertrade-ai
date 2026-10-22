@@ -1,0 +1,42 @@
+{
+  "bolt": {
+    "name": "Chronos-Bolt Small",
+    "modelId": "amazon/chronos-bolt-small",
+    "revision": "772f3d25d38aec6d914c8949dab4462e2d46f5d8",
+    "contextPeriods": 672,
+    "historicalMetrics": {
+      "range": {
+        "start": "2025-07-01",
+        "end": "2025-12-31"
+      },
+      "n": 4416,
+      "MAE": 176027.09240715578,
+      "RMSE": 277917.8994572446,
+      "WAPE_percent": 1.8226232052109073,
+      "bias": 26536.14436820652,
+      "coverageQ10Q90": 0.855072463768116,
+      "evaluationType": "shared_retrospective_comparison",
+      "corpusSha256": "e52819f935bb22c6d01cfd4546b23c192d6848ecd748c352d2c2e355881f4fa6"
+    }
+  },
+  "chronos2": {
+    "name": "Chronos-2",
+    "modelId": "amazon/chronos-2",
+    "revision": "29ec3766d36d6f73f0696f85560a422f50e8498c",
+    "contextPeriods": 672,
+    "historicalMetrics": {
+      "range": {
+        "start": "2025-07-01",
+        "end": "2025-12-31"
+      },
+      "n": 4416,
+      "MAE": 166051.50639266305,
+      "RMSE": 263990.01975722687,
+      "WAPE_percent": 1.719333795001614,
+      "bias": 736.243892663037,
+      "coverageQ10Q90": 0.7110507246376812,
+      "evaluationType": "shared_retrospective_comparison",
+      "corpusSha256": "e52819f935bb22c6d01cfd4546b23c192d6848ecd748c352d2c2e355881f4fa6"
+    }
+  }
+}

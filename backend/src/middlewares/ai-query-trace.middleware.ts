@@ -10,6 +10,11 @@ const object = (value: unknown): value is JsonObject => value !== null && typeof
 type Route = { endpoint: string; capability: string; authenticated: boolean };
 function route(req: { method: string; path: string }): Route | null {
   const key = `${req.method} ${req.path}`;
+  const hourly = /^\/forecasts\/(?:hourly-(supply|demand|price)|hourly-ridge\/(demand|price))\/?$/.exec(req.path);
+  if (req.method === 'POST' && hourly) {
+    const series = hourly[1] ?? hourly[2];
+    return { endpoint: req.path.replace(/\/$/, ''), capability: series === 'price' ? 'forecasts_hourly_price' : `forecasts_${series}`, authenticated: true };
+  }
   if (['POST /forecasts/supply', 'POST /forecasts/demand', 'POST /forecasts/price', 'GET /forecasts/supply/metrics', 'GET /forecasts/demand/metrics', 'POST /matches/suggest', 'POST /patterns/analyze', 'GET /patterns', 'GET /models', 'GET /capabilities/versions', 'GET /indicators'].includes(key)) {
     const endpoint = key.slice(req.method.length + 1);
     return { endpoint, capability: endpoint === '/capabilities/versions' ? 'capability_versions' : endpoint === '/indicators' ? 'engine_indicators' : endpoint.replaceAll('/', '_').replace(/^_/, ''), authenticated: key.includes('/matches') || key.includes('/patterns') };
@@ -25,7 +30,7 @@ function allowed(input: unknown, keys: string[]): JsonObject {
 function metadata(req: Parameters<RequestHandler>[0], target: Route, response: unknown, status: number, startedAt: Date, durationMs: number): AiQueryTraceInput {
   const data = object(response) ? response : {};
   const endpoint = target.endpoint;
-  const parametersSnapshot = endpoint.startsWith('/forecasts/') ? allowed(req.body, ['preparedDatasetId', 'targetDate'])
+  const parametersSnapshot = endpoint.startsWith('/forecasts/') ? allowed(req.body, ['preparedDatasetId', 'targetDate', 'model'])
     : endpoint === '/patterns/analyze' ? allowed(req.body, ['preparedDatasetId'])
     : endpoint === '/patterns' ? allowed(req.query, ['from', 'to', 'dataType', 'variable'])
     : endpoint.startsWith('/models/:id') ? { modelId: req.path.split('/')[2] ?? '' }
@@ -47,7 +52,7 @@ function metadata(req: Parameters<RequestHandler>[0], target: Route, response: u
     ...(object(data.method) && typeof data.method.id === 'string' ? { methodId: data.method.id, methodVersion: typeof data.method.version === 'string' ? data.method.version : undefined } : {}),
     executionStatus: empty ? 'empty' : status >= 400 ? 'failed' : 'succeeded', ...(resultStatus ? { resultStatus } : {}),
     ...(status >= 400 && typeof data.error === 'string' ? { errorCode: data.error } : {}),
-    ...(resourceId ? { resourceId, resourceType: endpoint === '/forecasts/price' ? 'price_forecast_execution' : endpoint === '/matches/suggest' ? 'matching_execution' : 'pattern_analysis' } : {}),
+    ...(resourceId ? { resourceId, resourceType: endpoint.includes('/hourly-') ? 'local_forecast_evidence' : endpoint === '/forecasts/price' ? 'price_forecast_execution' : endpoint === '/matches/suggest' ? 'matching_execution' : 'pattern_analysis' } : {}),
   };
 }
 

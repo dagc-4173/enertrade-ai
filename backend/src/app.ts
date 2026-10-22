@@ -1,3 +1,7 @@
+import { router as hourlyRidgeRouter } from '@/controllers/hourly-ridge.controller';
+import { chronosSupplyService, chronosPriceService } from '@/services/chronos-hourly.service';
+import { createChronosHourlyRouter } from '@/controllers/chronos-hourly.controller';
+import { router as chronosHourlyRouter } from '@/controllers/chronos-hourly.controller';
 import express, { type ErrorRequestHandler } from 'express'
 import { createSimulatedPaymentRouter } from '@/controllers/simulated-payment.controller';
 import { createSimulatedPaymentService } from '@/services/simulated-payment.service';
@@ -90,6 +94,10 @@ const datasetJsonError: ErrorRequestHandler = (error, _req, res, _next) => {
 app.use('/datasets', datasetJsonError)
 
 app.use('/external-data', externalDataRouter)
+app.use('/forecasts/hourly-ridge', hourlyRidgeRouter)
+app.use('/forecasts/hourly-demand', chronosHourlyRouter)
+app.use('/forecasts/hourly-supply', createChronosHourlyRouter(chronosSupplyService))
+app.use('/forecasts/hourly-price', createChronosHourlyRouter(chronosPriceService))
 app.use('/forecasts', forecastRouter)
 if (options.expirationScope) {
     app.use(['/publication-verifications', '/publications', '/offers', '/demands',  '/simulated-payments', '/transactions', '/market', '/matches'], requireAuth(), (req, res, next) => {

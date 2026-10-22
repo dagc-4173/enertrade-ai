@@ -21,18 +21,21 @@ export function createIndicatorsService(source: IndicatorsStore = store, version
   return {
     async get(): Promise<IndicatorsResult> {
       const traceFilter = { capability: { not: 'engine_indicators' } };
-      const [supply, demand, priceEstimates, executionGroups, matchingRows, patternRows] = await Promise.all([
+      const [supply, demand, legacyPrices, hourlyPrices, executionGroups, matchingRows, patternRows] = await Promise.all([
         source.aiQueryTrace.count({ where: { capability: 'forecasts_supply', executionStatus: 'succeeded' } }),
         source.aiQueryTrace.count({ where: { capability: 'forecasts_demand', executionStatus: 'succeeded' } }),
         source.priceForecastExecution.count({ where: { status: 'succeeded' } }),
+        source.aiQueryTrace.count({ where: { capability: 'forecasts_hourly_price', executionStatus: 'succeeded' } }),
         source.aiQueryTrace.groupBy({ by: ['executionStatus'], where: traceFilter, _count: true, _sum: { durationMs: true } }),
         source.$queryRaw<{ total: bigint | number | null }[]>(Prisma.sql`SELECT COALESCE(SUM(jsonb_array_length("resultSnapshot"->'matches')), 0) AS total FROM "MatchingExecution" WHERE "executionStatus" = 'succeeded' AND "matchingStatus" IN ('matched', 'partial')`),
         source.$queryRaw<{ total: bigint | number | null }[]>(Prisma.sql`SELECT COALESCE(SUM(jsonb_array_length("resultSnapshot"->'patterns')), 0) AS total FROM "PatternAnalysis" WHERE status IN ('completed', 'partial')`),
       ]);
+      const priceEstimates = legacyPrices + hourlyPrices;
       const matchingSuggestions = asNumber(matchingRows[0]?.total);
       const patternsIdentified = asNumber(patternRows[0]?.total);
       const total = supply + demand;
-      const capabilities = activeCapabilities(versions.list());
+      const registered = versions.list();
+      const capabilities = activeCapabilities(registered);
       const byArtifactType = { mlModel: capabilities.filter(item => item.artifactType === 'ml_model').length, deterministicRule: capabilities.filter(item => item.artifactType === 'deterministic_rule').length, deterministicMethod: capabilities.filter(item => item.artifactType === 'deterministic_method').length };
       // succeeded/empty/failed provienen de un único groupBy; total y el promedio se derivan de esos mismos grupos, sin restas entre consultas independientes.
       const countByStatus = (status: ExecutionGroup['executionStatus']) => executionGroups.find(group => group.executionStatus === status)?._count ?? 0;
@@ -46,7 +49,7 @@ export function createIndicatorsService(source: IndicatorsStore = store, version
       const warnings: string[] = [];
       if (executionsTotal === 0) warnings.push('NO_TRACE_DATA');
       if (total === 0 && priceEstimates === 0 && matchingSuggestions === 0 && patternsIdentified === 0) warnings.push('NO_FUNCTIONAL_RECORDS');
-      return { indicators: { forecasts: { supply, demand, total }, priceEstimates, matchingSuggestions, patternsIdentified, errors: { total: failed }, executions: { total: executionsTotal, succeeded, empty, failed, successRate }, averageResponseTimeMs, capabilities: { active: capabilities.length, total: versions.list().length, byArtifactType } }, sample: { traceCount: executionsTotal }, warnings };
+      return { indicators: { forecasts: { supply, demand, total }, priceEstimates, matchingSuggestions, patternsIdentified, errors: { total: failed }, executions: { total: executionsTotal, succeeded, empty, failed, successRate }, averageResponseTimeMs, capabilities: { active: capabilities.length, total: registered.length, byArtifactType } }, sample: { traceCount: executionsTotal }, warnings };
     },
   };
 }

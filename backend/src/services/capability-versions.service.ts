@@ -1,5 +1,6 @@
-import { loadModel as loadGeneModel, type ForecastModel as GeneModel } from '@/models/xm-gene-ridge/model-loader';
-import { loadModel as loadDemandModel, type ForecastModel as DemandModel } from '@/models/xm-demandasin-ridge/model-loader';
+import { loadHourlyRidge } from '@/models/hourly-ridge/model-loader';
+import { loadDirectSupplyModel } from '@/models/xm-gene-ridge-direct-v2/model-loader';
+import { loadDirectDemandV5Model } from '@/models/xm-demandasin-ridge-direct-v5/model-loader';
 import { loadRule, type PriceRule } from '@/models/xm-preciobolsnaci-b1/rule-loader';
 import { matchingMethod } from '@/services/matching-method';
 import { patternMethod } from '@/services/pattern-analysis.service';
@@ -11,16 +12,17 @@ export type CapabilityVersion = {
   date: null; dateStatus: 'not_recorded';
 };
 
-type Loaders = { gene: () => GeneModel; demand: () => DemandModel; price: () => PriceRule };
-const defaultLoaders: Loaders = { gene: loadGeneModel, demand: loadDemandModel, price: loadRule };
+type Loaders = { gene: typeof loadDirectSupplyModel; demand: typeof loadDirectDemandV5Model; price: () => PriceRule };
+const defaultLoaders: Loaders = { gene: loadDirectSupplyModel, demand: loadDirectDemandV5Model, price: loadRule };
 
 export function createCapabilityVersionsService(loaders: Loaders = defaultLoaders) {
   return {
     list(): CapabilityVersion[] {
-      const gene = loaders.gene(); const demand = loaders.demand(); const price = loaders.price();
+      const price = loaders.price();
       return [
-        { capability: 'supply_forecast', artifactType: 'ml_model', id: gene.modelId, version: gene.modelVersion, status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
-        { capability: 'demand_forecast', artifactType: 'ml_model', id: demand.modelId, version: demand.modelVersion, status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
+        ...(['demand', 'price'] as const).flatMap(series => (series === 'demand' ? [1,2,3,4,5,6,7] : [4,5,6]).map((h): CapabilityVersion => { const m = loadHourlyRidge(series, h); return { capability: series === 'price' ? 'price_estimation' : 'demand_forecast', artifactType: 'ml_model', id: m.modelId, version: m.modelVersion, status: 'active', active: true, date: null, dateStatus: 'not_recorded' } })),
+        ...Array.from({ length: 7 }, (_, i): CapabilityVersion => { const m = loaders.gene(i + 1); return { capability: 'supply_forecast', artifactType: 'ml_model', id: m.modelId, version: m.modelVersion, status: 'active', active: true, date: null, dateStatus: 'not_recorded' } }),
+        ...Array.from({ length: 6 }, (_, i): CapabilityVersion => { const m = loaders.demand(i + 1); return { capability: 'demand_forecast', artifactType: 'ml_model', id: m.modelId, version: m.modelVersion, status: 'active', active: true, date: null, dateStatus: 'not_recorded' } }),
         { capability: 'price_estimation', artifactType: 'deterministic_rule', id: price.ruleId, version: price.ruleVersion, status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
         { capability: 'matching', artifactType: matchingMethod.type, id: matchingMethod.id, version: matchingMethod.version, status: 'active', active: true, date: null, dateStatus: 'not_recorded' },
         { capability: 'pattern_recognition', artifactType: 'deterministic_method', id: patternMethod.id, version: patternMethod.version, status: 'active', active: true, date: null, dateStatus: 'not_recorded' },

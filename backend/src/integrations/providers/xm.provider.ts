@@ -16,7 +16,7 @@ function numeric(value: unknown): number {
   return Number(value);
 }
 
-function normalize(raw: unknown, query: ExternalQuery, dataset: ExternalDataset): ExternalDataResult {
+export function normalizeXmResponse(raw: unknown, query: ExternalQuery, dataset: ExternalDataset): ExternalDataResult {
   if (!isObject(raw) || !isObject(raw.Metric) || raw.Metric.Id !== dataset.id || !Array.isArray(raw.Items)) throw malformed();
   const records: ExternalDataResult['records'] = [];
   const dates = new Set<string>();
@@ -75,7 +75,7 @@ export class XmProvider implements ExternalDataProvider {
         if (controller.signal.aborted) throw new Error('aborted');
         throw malformed();
       }
-      return normalize(raw, query, dataset);
+      return normalizeXmResponse(raw, query, dataset);
     } catch (error) {
       if (controller.signal.aborted) throw new ExternalDataError(504, 'EXTERNAL_TIMEOUT', 'El proveedor no respondió dentro del tiempo permitido.');
       if (error instanceof ExternalDataError) throw error;

@@ -96,3 +96,25 @@ describe('HU17 AiQueryTrace', () => {
     expect(await request(h.app, '/forecasts/demand', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ preparedDatasetId: 1, targetDate: '2024-01-01' }) })).toMatchObject({ status: 200, body: { status: 'available' } });
   });
 });
+
+test('TRACE-HOURLY: rutas horarias autenticadas conservan identidad, evidencia y resultado', async () => {
+  for (const [path, capability] of [
+    ['/forecasts/hourly-supply', 'forecasts_supply'],
+    ['/forecasts/hourly-demand', 'forecasts_demand'],
+    ['/forecasts/hourly-price', 'forecasts_hourly_price'],
+    ['/forecasts/hourly-ridge/demand', 'forecasts_demand'],
+    ['/forecasts/hourly-ridge/price', 'forecasts_hourly_price'],
+  ]) {
+    const h = harness((_req, res) => res.json({ status: 'available', modelId: 'model', modelVersion: 'revision', trace: { executionId: 'local-run' } }), true);
+    await request(h.app, path!, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetDate: '2026-10-22', model: 'bolt', token: 'ignored' }) });
+    expect(h.rows).toHaveLength(1);
+    expect(h.rows[0]).toMatchObject({ capability, modelId: 'model', modelVersion: 'revision', executionStatus: 'succeeded', resourceId: 'local-run', resourceType: 'local_forecast_evidence', parametersSnapshot: { targetDate: '2026-10-22', model: 'bolt' } });
+    expect(JSON.stringify(h.rows[0])).not.toContain('token');
+  }
+  const denied = harness((_req, res) => res.status(401).json({ error: 'UNAUTHORIZED' }));
+  await request(denied.app, '/forecasts/hourly-price', { method: 'POST' });
+  expect(denied.rows).toHaveLength(0);
+  const failed = harness((_req, res) => res.status(503).json({ error: 'CHRONOS_FAILED' }), true);
+  await request(failed.app, '/forecasts/hourly-demand', { method: 'POST' });
+  expect(failed.rows[0]).toMatchObject({ executionStatus: 'failed', errorCode: 'CHRONOS_FAILED' });
+});

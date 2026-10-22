@@ -34,7 +34,7 @@ test('IND-02 a IND-09: consolida fuentes canónicas, empty/failed y excluye engi
     { capability: 'forecasts_supply', executionStatus: 'succeeded', durationMs: 10 }, { capability: 'forecasts_demand', executionStatus: 'succeeded', durationMs: 20 },
     { capability: 'forecasts_supply', executionStatus: 'empty', durationMs: 30 }, { capability: 'models', executionStatus: 'failed', durationMs: 40 }, { capability: 'engine_indicators', executionStatus: 'failed', durationMs: 999 },
   ], 1, 3, 5));
-  expect(await service.get()).toMatchObject({ indicators: { forecasts: { supply: 1, demand: 1, total: 2 }, priceEstimates: 1, matchingSuggestions: 3, patternsIdentified: 5, errors: { total: 1 }, executions: { total: 4, succeeded: 2, empty: 1, failed: 1, successRate: 50 }, averageResponseTimeMs: 25, capabilities: { active: 5, total: 5, byArtifactType: { mlModel: 2, deterministicRule: 1, deterministicMethod: 2 } } }, sample: { traceCount: 4 }, warnings: [] });
+  expect(await service.get()).toMatchObject({ indicators: { forecasts: { supply: 1, demand: 1, total: 2 }, priceEstimates: 1, matchingSuggestions: 3, patternsIdentified: 5, errors: { total: 1 }, executions: { total: 4, succeeded: 2, empty: 1, failed: 1, successRate: 50 }, averageResponseTimeMs: 25, capabilities: { active: 26, total: 26, byArtifactType: { mlModel: 23, deterministicRule: 1, deterministicMethod: 2 } } }, sample: { traceCount: 4 }, warnings: [] });
 });
 
 test('IND-EXEC-01: calcula total, tasa de éxito redondeada a 2 decimales y coherencia con errors.total', async () => {
@@ -65,7 +65,7 @@ test('IND-13 e IND-14: endpoint público no filtra datos internos y valida reque
   expect((await fetch(`${base}/indicators?from=2024-01-01`)).status).toBe(400);
   const status = await new Promise<number>((resolve, reject) => { const request = httpRequest({ hostname: '127.0.0.1', port: address.port, path: '/indicators', method: 'GET', headers: { 'Content-Length': '2' } }, response => resolve(response.statusCode ?? 0)); request.on('error', reject); request.end('{}'); });
   expect(status).toBe(400);
-  expect(capabilityVersionsService.list()).toHaveLength(5);
+  expect(capabilityVersionsService.list()).toHaveLength(26);
 });
 
 test('IND-12: la traza HU17 se crea después de responder sin autocontarse', async () => {
@@ -79,4 +79,17 @@ test('IND-12: la traza HU17 se crea después de responder sin autocontarse', asy
     expect(body.sample.traceCount).toBe(0); await new Promise(resolve => setImmediate(resolve));
     expect(rows).toHaveLength(1); expect(rows[0]).toMatchObject({ requestId: response.headers.get('x-request-id'), capability: 'engine_indicators', endpoint: '/indicators', httpMethod: 'GET', requesterType: 'system', executionStatus: 'succeeded' });
   } finally { await new Promise<void>(resolve => listener.close(() => resolve())); }
+});
+
+test('IND-HOURLY: precios horarios se suman al B1 persistido sin duplicar su traza', async () => {
+  const result = await createIndicatorsService(store([
+    { capability: 'forecasts_hourly_price', executionStatus: 'succeeded', durationMs: 100 },
+    { capability: 'forecasts_hourly_price', executionStatus: 'failed', durationMs: 200 },
+    { capability: 'forecasts_price', executionStatus: 'succeeded', durationMs: 20 },
+    { capability: 'forecasts_demand', executionStatus: 'succeeded', durationMs: 80 },
+  ], 1)).get();
+  expect(result.indicators.priceEstimates).toBe(2);
+  expect(result.indicators.forecasts.demand).toBe(1);
+  expect(result.indicators.executions).toMatchObject({ total: 4, succeeded: 3, failed: 1, successRate: 75 });
+  expect(result.indicators.averageResponseTimeMs).toBe(100);
 });

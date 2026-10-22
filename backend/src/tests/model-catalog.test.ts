@@ -17,12 +17,12 @@ if (!address || typeof address === 'string') throw Error('listener');
 const base = `http://127.0.0.1:${address.port}`;
 afterAll(() => new Promise<void>(resolve => server.close(() => resolve())));
 
-test('GET /models exposes exactly three deterministic summaries', async () => {
+test('GET /models exposes all active horizons and preserves historical artifacts', async () => {
   const response = await fetch(`${base}/models`);
   expect(response.status).toBe(200);
   const body = await response.json() as { artifacts: { id: string; kind: string; type: string }[] };
-  expect(body.artifacts.map(artifact => artifact.id)).toEqual(['xm-gene-ridge', 'xm-demandasin-ridge', 'xm-preciobolsnaci-b1']);
-  expect(body.artifacts).toHaveLength(3);
+  expect(body.artifacts.map(artifact => artifact.id)).toEqual([...Array.from({ length: 7 }, (_, i) => `xm-gene-ridge-direct-h${i + 1}-v2`), ...Array.from({ length: 6 }, (_, i) => `xm-demandasin-ridge-direct-h${i + 1}-v5`), ...Array.from({ length: 7 }, (_, i) => `xm-demareal-ridge-direct-h${i + 1}-v1`), ...[4,5,6].map(h => `xm-preciobolsnaci-ridge-direct-h${h}-v1`), 'xm-gene-ridge', 'xm-demandasin-ridge', 'xm-preciobolsnaci-b1']);
+  expect(body.artifacts).toHaveLength(26);
   expect(body.artifacts.find(artifact => artifact.id === 'xm-gene-ridge')).toMatchObject({ kind: 'model', type: 'ridge' });
   expect(body.artifacts.find(artifact => artifact.id === 'xm-demandasin-ridge')).toMatchObject({ kind: 'model', type: 'ridge' });
   expect(body.artifacts.find(artifact => artifact.id === 'xm-preciobolsnaci-b1')).toMatchObject({ kind: 'rule', type: 'deterministic_baseline' });
@@ -84,4 +84,16 @@ test('incompatible loader fails safely', async () => {
   expect(response.status).toBe(500);
   expect(await response.text()).not.toContain('private detail');
   isolatedServer.close();
+});
+test('current catalog identifies every runtime horizon and keeps V5 validation distinct', async () => {
+  const service = createModelCatalogService();
+  for (const a of service.list()) {
+    const detail = service.get(a.id)!;
+    if (a.id === 'xm-gene-ridge' || a.id === 'xm-demandasin-ridge') { expect(a.activeInRuntime).toBe(false); continue }
+    expect(a.activeInRuntime).toBe(true);
+    const metrics = service.metrics(a.id, a.version);
+    expect(metrics.id).toBe(a.id); expect(metrics.version).toBe(a.version);
+    if (a.id.endsWith('-v5')) { expect(detail.lifecycle.promoted).toBe(false); expect(metrics.evaluationType).toBe('validation_technical') }
+    if (a.id.endsWith('-v2')) expect(metrics.evaluationType).toBe('external_temporal_holdout');
+  }
 });
