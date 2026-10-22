@@ -80,6 +80,7 @@ export type HourlyDemandAcquisition = {
   rawBody: string; catalogRawBody: string;
   normalized: ReturnType<typeof normalizeHourlyDemand>;
   manifest: {
+    requestAttempts?: { catalog?: { attempt: number; outcome: string }[]; data?: { attempt: number; outcome: string }[] };
     status: 'validated'; adapterVersion: string; normalizerVersion: string;
     requestedRange: HourlyDemandRange; catalogRetrievedAt: string; retrievedAt: string;
     rawSha256: string; catalogSha256: string; normalizedSha256: string;
@@ -89,13 +90,15 @@ export type HourlyDemandAcquisition = {
   };
 };
 
-export async function requestXmHourly(path: '/Lists' | '/hourly', body: object, transport: Transport, timeoutMs: number) {
+class RetryableXmHttpError extends ExternalDataError {}
+
+async function requestXmHourlyOnce(path: '/Lists' | '/hourly', body: object, transport: Transport, timeoutMs: number) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await transport(`${base}${path}`, { method: 'POST', redirect: 'error', signal: controller.signal,
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });
-    if (!response.ok) { await response.body?.cancel(); return fail('EXTERNAL_HTTP_ERROR', 'XM devolvió un estado HTTP no exitoso.', 502); }
+    if (!response.ok) { await response.body?.cancel(); if ([408, 429, 502, 503, 504].includes(response.status)) throw new RetryableXmHttpError(502, 'EXTERNAL_HTTP_ERROR', 'XM devolvió un estado HTTP transitorio.'); return fail('EXTERNAL_HTTP_ERROR', 'XM devolvió un estado HTTP no exitoso.', 502); }
     if (!response.body) return fail('EXTERNAL_RESPONSE_INVALID', 'XM devolvió una respuesta vacía.', 502);
     const reader = response.body.getReader();
     const chunks: Uint8Array[] = [];
@@ -109,7 +112,9 @@ export async function requestXmHourly(path: '/Lists' | '/hourly', body: object, 
         chunks.push(value);
       }
     } finally { reader.releaseLock(); }
-    const rawBody = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(Buffer.concat(chunks));
+    let rawBody: string;
+    try { rawBody = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(Buffer.concat(chunks)); }
+    catch { return fail('EXTERNAL_RESPONSE_INVALID', 'XM devolvió una codificación inválida.', 502); }
     if (controller.signal.aborted) return fail('EXTERNAL_TIMEOUT', 'XM no respondió a tiempo.', 504);
     return { rawBody, retrievedAt: new Date().toISOString() };
   } catch (error) {
@@ -117,6 +122,26 @@ export async function requestXmHourly(path: '/Lists' | '/hourly', body: object, 
     if (error instanceof ExternalDataError) throw error;
     return fail('EXTERNAL_NETWORK_ERROR', 'No fue posible completar la consulta XM.', 502);
   } finally { clearTimeout(timer); }
+}
+
+// Only read-only XM queries are retried; schema/content validation never is.
+export async function requestXmHourly(path: '/Lists' | '/hourly', body: object, transport: Transport, timeoutMs: number,
+  wait: (ms: number) => Promise<void> = ms => new Promise(resolve => setTimeout(resolve, ms))): Promise<{ rawBody: string; retrievedAt: string; attempts?: { attempt: number; outcome: string }[] }> {
+  const attempts: { attempt: number; outcome: string }[] = [];
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const receipt = await requestXmHourlyOnce(path, body, transport, timeoutMs);
+      attempts.push({ attempt, outcome: 'succeeded' });
+      return { ...receipt, attempts };
+    } catch (error) {
+      const code = error instanceof ExternalDataError ? error.code : 'EXTERNAL_NETWORK_ERROR';
+      attempts.push({ attempt, outcome: code });
+      const retryable = error instanceof RetryableXmHttpError || code === 'EXTERNAL_TIMEOUT' || code === 'EXTERNAL_NETWORK_ERROR';
+      if (!retryable || attempt === 2) throw Object.assign(error instanceof Error ? error : new Error('XM request failed'), { attempts });
+      await wait(750);
+    }
+  }
+  throw new Error('XM retry loop exhausted');
 }
 
 export async function acquireHourlyDemand(range: HourlyDemandRange, transport: Transport = fetch, timeoutMs = 15_000): Promise<HourlyDemandAcquisition> {
@@ -127,7 +152,7 @@ export async function acquireHourlyDemand(range: HourlyDemandRange, transport: T
   const acquired = await requestXmHourly('/hourly', { MetricId: 'DemaReal', Entity: 'Sistema', StartDate: range.startDate, EndDate: range.endDate, Filter: [] }, transport, timeoutMs);
   const normalized = normalizeHourlyDemand(acquired.rawBody, range);
   return { rawBody: acquired.rawBody, catalogRawBody: catalog.rawBody, normalized,
-    manifest: { status: 'validated', adapterVersion: version, normalizerVersion: version, requestedRange: { ...range },
+    manifest: { requestAttempts: { catalog: catalog.attempts, data: acquired.attempts }, status: 'validated', adapterVersion: version, normalizerVersion: version, requestedRange: { ...range },
       catalogRetrievedAt: catalog.retrievedAt, retrievedAt: acquired.retrievedAt,
       rawSha256: sha256(acquired.rawBody), catalogSha256: sha256(catalog.rawBody), normalizedSha256: sha256(JSON.stringify(normalized)), catalogEntry: entry,
       quality: { rulesetId: 'xm_demareal_hourly_capture', rulesetVersion: version, completeDays: calendar.length, recordCount: normalized.records.length, missingPeriods: 0, duplicatePeriods: 0, negativeValues: 0 },

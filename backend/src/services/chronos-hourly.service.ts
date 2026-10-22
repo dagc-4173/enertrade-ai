@@ -119,7 +119,7 @@ export function createChronosHourlyService(dependencies: Partial<Dependencies> =
         return result;
       } catch (failure) {
         const safe = failure instanceof ChronosError ? failure : failure instanceof ExternalDataError ? new ChronosError(failure.status, failure.code, failure.message) : new ChronosError(503, 'CHRONOS_FAILED', 'No fue posible completar o conservar el pronóstico experimental.');
-        if (directory) await writeFile(resolve(directory, 'failure.json'), JSON.stringify({ status: 'failed', executionId, code: safe.code, failedAt: d.now().toISOString() }), { flag: 'wx' }).catch(() => {});
+        if (directory) await writeFile(resolve(directory, 'failure.json'), JSON.stringify({ status: 'failed', executionId, code: safe.code, requestAttempts: failure instanceof ExternalDataError && 'attempts' in failure ? failure.attempts : undefined, failedAt: d.now().toISOString() }), { flag: 'wx' }).catch(() => {});
         throw safe;
       } finally { running = false; }
     },

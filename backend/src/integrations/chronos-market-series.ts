@@ -66,7 +66,7 @@ export function createMarketSeriesAdapter(kind: MarketSeries, transport: Transpo
       const entry = matches[0];
       if (matches.length !== 1 || !entry || entry.MetricUnits !== definition.unit || entry.Type !== 'HourlyEntities' || entry.Url !== 'https://servapibi.xm.com.co/hourly' || Number(entry.MaxDays) < 30 || !Number.isFinite(Number(entry.MaxDays))) return fail('La definición de la métrica XM cambió.');
       const receipt = await query(range), normalized = normalizeMarketSeries(kind, receipt.rawBody, range), normalizedBody = JSON.stringify(normalized);
-      const manifest = { status: 'validated', adapterVersion: '1.0.0', kind, metric: definition.metric, unit: definition.unit, requestedRange: range, retrievedAt: receipt.retrievedAt, catalogRetrievedAt: catalog.retrievedAt, catalogEntry: entry, rawSha256: hash(receipt.rawBody), catalogSha256: hash(catalog.rawBody), normalizedSha256: hash(normalizedBody), recordCount: normalized.records.length };
+      const manifest = { requestAttempts: { catalog: catalog.attempts, data: receipt.attempts }, status: 'validated', adapterVersion: '1.0.0', kind, metric: definition.metric, unit: definition.unit, requestedRange: range, retrievedAt: receipt.retrievedAt, catalogRetrievedAt: catalog.retrievedAt, catalogEntry: entry, rawSha256: hash(receipt.rawBody), catalogSha256: hash(catalog.rawBody), normalizedSha256: hash(normalizedBody), recordCount: normalized.records.length };
       return { context: normalized.records.map(r => r.value), rawSha256: manifest.rawSha256, normalizedSha256: manifest.normalizedSha256,
         async save(directory: string) {
           await mkdir(directory);

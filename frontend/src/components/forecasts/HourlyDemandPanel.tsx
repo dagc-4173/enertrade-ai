@@ -44,12 +44,13 @@ export function HourlyDemandPanel({ series = 'demand', initialModel = 'chronos2'
   const [ridgeAvailability, setRidgeAvailability] = useState<RidgeAvailability | null>(null), [ridgeResult, setRidgeResult] = useState<RidgeHourlyResult | null>(null)
   const [ridgeError, setRidgeError] = useState('')
   const [error, setError] = useState(''), [loading, setLoading] = useState(false)
+  const [catalogLoading,setCatalogLoading] = useState(initialModel !== 'ridge'), [catalogRevision,setCatalogRevision] = useState(0)
   const request = useRef<AbortController | null>(null)
   useEffect(() => {
     const controller = new AbortController()
-    if (!hideModelSelector || initialModel !== 'ridge') getHourlyModels(controller.signal, series).then(v => { if (!controller.signal.aborted) setModels(v) }).catch(e => { if (!controller.signal.aborted) setError(message(e)) })
+    if (!hideModelSelector || initialModel !== 'ridge') getHourlyModels(controller.signal, series).then(v => { if (!controller.signal.aborted) setModels(v) }).catch(e => { if (!controller.signal.aborted) setError(message(e)) }).finally(() => { if (!controller.signal.aborted) setCatalogLoading(false) })
     return () => { controller.abort(); request.current?.abort() }
-  }, [series, initialModel, hideModelSelector])
+  }, [series, initialModel, hideModelSelector, catalogRevision])
   useEffect(() => {
     if (series === 'supply' || (hideModelSelector && initialModel !== 'ridge')) return
     const controller = new AbortController()
@@ -76,9 +77,11 @@ export function HourlyDemandPanel({ series = 'demand', initialModel = 'chronos2'
       <label>Fecha objetivo{model === 'ridge' ? <select required value={targetDate} disabled={loading || !configured} onChange={e => { setTargetDate(e.target.value); setRidgeResult(null) }}><option value="">Selecciona una fecha elegible</option>{ridgeAvailability?.eligibleTargetDates.map(date => <option key={date} value={date}>{formatDateCO(date)}</option>)}</select> : <input type="date" required value={targetDate} disabled={loading} onChange={e => { setTargetDate(e.target.value); setResult(null) }} />}</label>
       <button type="submit" disabled={loading || !configured || !targetDate}>{loading ? 'Generando pronóstico…' : 'Generar pronóstico'}</button>
     </form>
+    {model !== 'ridge' && catalogLoading && <p role="status">Consultando catálogo de modelos…</p>}
+    {model !== 'ridge' && !catalogLoading && !configured && <button type="button" className="secondary-button" onClick={() => { setError('');setCatalogLoading(true);setCatalogRevision(value => value+1) }}>Reintentar catálogo</button>}
     {model !== 'ridge' && !configured && models.length > 0 && <p role="status">El modelo seleccionado no está disponible en este servidor.</p>}
     {model === 'ridge' && <p role="status">{ridgeError || (ridgeAvailability ? `Ridge admite h${ridgeAvailability.supportedHorizons.join(', h')} desde el último día completo publicado.${!ridgeAvailability.eligibleTargetDates.length ? ' No hay fechas futuras elegibles con el origen actual.' : ''}` : 'Verificando datos y horizontes Ridge…')}</p>}
-    {loading && <p role="status">La consulta puede tardar hasta dos minutos. Se verifica el contexto publicado antes de generar el resultado.</p>}
+    {loading && <p role="status">La consulta puede tardar varios minutos si XM requiere reintentos. Se verifica el contexto publicado antes de generar el resultado.</p>}
     {error && <p role="alert">{error}</p>}
     {!loading && !error && !ridgeResult && !result && <p className="forecast-state">Elige una fecha y genera el pronóstico. Aquí aparecerán la gráfica y sus resultados.</p>}
     {ridgeResult && <HourlyRidgeResult result={ridgeResult} />}
