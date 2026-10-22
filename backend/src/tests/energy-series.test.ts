@@ -21,3 +21,26 @@ describe('GET /energy-series', () => {
   test('rechaza autenticación, métrica, granularidad, rango y cobertura inválidos', async () => { expect((await request(appFor([source('Gene')], false), '/energy-series?metric=gene&from=2024-01-01&to=2024-01-01&granularity=hourly')).status).toBe(401); const app = appFor([source('Gene')]); for (const path of ['/energy-series?metric=other&from=2024-01-01&to=2024-01-01&granularity=hourly', '/energy-series?metric=demand&from=2024-01-01&to=2024-01-01&granularity=hourly', '/energy-series?metric=gene&from=2024-02-01&to=2024-01-01&granularity=hourly']) expect((await request(app, path)).status).toBe(400); expect((await request(app, '/energy-series?metric=gene&from=2024-01-01&to=2024-02-01&granularity=hourly')).status).toBe(413); expect(await request(app, '/energy-series?metric=gene&from=2025-01-01&to=2025-01-01&granularity=daily')).toMatchObject({ status: 404, body: { error: 'ENERGY_SERIES_UNAVAILABLE' } }); });
   test('protege el error inesperado del servicio', async () => { const app = express(); app.use('/energy-series', createEnergySeriesRouter({ read: async () => { throw Error('DATABASE_URL secret'); } } as any, (_req, _res, next) => next(), { error: () => undefined })); const response = await request(app, '/energy-series?metric=gene&from=2024-01-01&to=2024-01-01&granularity=hourly'); expect(response).toEqual({ status: 500, body: { error: 'ENERGY_SERIES_FAILED', message: 'No fue posible consultar las series históricas.' } }); });
 });
+describe('Cobertura parcial C18c', () => {
+  test('consulta hasta una fecha sin publicar sin descartar datos existentes', async () => {
+    const result = await service([source('Gene', '2024-01-01', 2)]).read({ metric: 'gene', from: '2024-01-01', to: '2024-01-03', granularity: 'hourly' });
+    expect(result.pointCount).toBe(48);
+    expect(result.returnedTo).toBe('2024-01-02');
+    expect(result.completeness).toEqual({ partial: true, missingDates: ['2024-01-03'], missingObservationCount: 24 });
+  });
+  test('combina fuentes y conserva huecos sin duplicar observaciones', async () => {
+    const old = source('Gene', '2024-01-01', 2);
+    const recent = { ...source('Gene', '2024-01-02', 1), id: 10 };
+    const end = { ...source('Gene', '2024-01-04', 1), id: 11 };
+    const result = await service([old, recent, end]).read({ metric: 'gene', from: '2024-01-01', to: '2024-01-04', granularity: 'hourly' });
+    expect(result.pointCount).toBe(72);
+    expect(result.completeness.missingDates).toEqual(['2024-01-03']);
+    expect(result.sources).toHaveLength(3);
+  });
+  test('expone cobertura y distingue ausencia de datos', async () => {
+    const response = await request(appFor([source('Gene')]), '/energy-series/coverage?metric=gene');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ metric: 'gene', availableFrom: '2024-01-01', availableUntil: '2024-02-09' });
+    expect(await service([]).coverage('price')).toEqual({ metric: 'price', availableFrom: null, availableUntil: null });
+  });
+});

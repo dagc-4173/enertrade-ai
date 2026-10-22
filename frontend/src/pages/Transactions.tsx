@@ -1,4 +1,4 @@
-import { attentionLabel, filterTransactions, transactionAttention, type AttentionFilter } from '../utils/transactionPresentation'
+import { attentionLabel, filterTransactions, matchesTransactionFilter, transactionAttention, type AttentionFilter } from '../utils/transactionPresentation'
 import {transactionNeedsPayment,transactionPaymentLabel} from '../utils/transactionPayment'
 import { SimulatedPaymentPanel } from '../components/SimulatedPaymentPanel'
 import { hourLabel } from '../utils/hourlyMarket'
@@ -15,8 +15,8 @@ import { formatCurrencyCOP, formatDeliveryDate, formatEnergyKWh, formatPriceCOPP
 import { canAccept, canCancel, canCounter, canEdit, canReject, hasRevisions } from '../utils/transactionActions'
 import './Transactions.css'
 
-const filters: Array<{ label: string; value: TransactionStatus | undefined }> = [
-  { label: 'Todas', value: undefined }, { label: 'Pendientes', value: 'PENDING_ACCEPTANCE' }, { label: 'Confirmadas', value: 'CONFIRMED' }, { label: 'Rechazadas', value: 'REJECTED' }, { label: 'Canceladas', value: 'CANCELLED' },
+const filters: Array<{ label: string; value: TransactionStatus | 'UNPAID' | 'PAID' | undefined }> = [
+  { label: 'Todas', value: undefined }, { label: 'Por pagar', value: 'UNPAID' }, { label: 'Pagadas', value: 'PAID' }, { label: 'Pendientes', value: 'PENDING_ACCEPTANCE' }, { label: 'Confirmadas', value: 'CONFIRMED' }, { label: 'Rechazadas', value: 'REJECTED' }, { label: 'Canceladas', value: 'CANCELLED' },
 ]
 const statusLabel: Record<TransactionStatus, string> = { PENDING_ACCEPTANCE: 'Pendiente', CONFIRMED: 'Confirmada', REJECTED: 'Rechazada', CANCELLED: 'Cancelada' }
 const tone = (status: TransactionStatus) => status === 'CONFIRMED' ? 'success' : status === 'PENDING_ACCEPTANCE' ? 'warning' : 'neutral'
@@ -27,7 +27,7 @@ function acceptanceMessage(item: EnergyTransaction) { if (item.status === 'CONFI
 function ownershipLabel(item: EnergyTransaction) { return hasRevisions(item) ? `Negociación con revisión ${item.latestRevisionSequence}` : item.proposalOwnership === 'CREATED_BY_ME' ? 'Propuesta creada por ti' : item.proposalOwnership === 'RECEIVED' ? 'Propuesta recibida' : 'Propuesta histórica' }
 
 export function Transactions() {
-  const [filter, setFilter] = useState<TransactionStatus | undefined>()
+  const [filter, setFilter] = useState<TransactionStatus | 'UNPAID' | 'PAID' | undefined>()
   const [expandedId,setExpandedId] = useState<string | null>(null)
   const [attention, setAttention] = useState<AttentionFilter>('ALL')
   const [deliveryDate, setDeliveryDate] = useState('')
@@ -120,7 +120,7 @@ export function Transactions() {
     <section className="panel transactions-intro"><SectionHeader eyebrow="Transacciones" title="Mis transacciones" description="Registro de intercambios energéticos simulados. Incluye pago simulado y comprobante. El simulador no mueve dinero real ni realiza liquidación financiera." />
       <div className="transaction-toolbar"><label>Fecha de entrega<select value={deliveryDate} onChange={event => setDeliveryDate(event.target.value)}><option value="">Todas las fechas</option>{[...new Set(items.map(item => item.deliveryDate))].sort().reverse().map(date => <option key={date} value={date}>{formatDeliveryDate(date)}</option>)}</select></label><button type="button" className="secondary-button" disabled={loading || busy !== null} onClick={refresh}>{loading ? 'Actualizando…' : 'Actualizar'}</button></div>
       <p className="transaction-filter-label">Por respuesta</p><div className="transaction-attention" role="group" aria-label="Quién debe responder">{attentionOptions.map(option => <button type="button" key={option.value} aria-pressed={attention === option.value} onClick={() => setAttention(option.value)}><strong>{loading ? '—' : datedItems.filter(item => option.value === 'ALL' || transactionAttention(item) === option.value).length}</strong><span>{option.label}</span></button>)}</div>
-      <p className="transaction-filter-label">Por estado</p><div className="transaction-filters" role="group" aria-label="Estado del acuerdo">{filters.map(item => <button key={item.label} type="button" aria-pressed={filter === item.value} className={filter === item.value ? 'primary-button' : 'secondary-button'} onClick={() => setFilter(item.value)}>{item.label} <span className="filter-count">{loading ? '—' : datedItems.filter(row => (attention === 'ALL' || transactionAttention(row) === attention) && (!item.value || row.status === item.value)).length}</span></button>)}</div>
+      <p className="transaction-filter-label">Por estado</p><div className="transaction-filters" role="group" aria-label="Estado del acuerdo">{filters.map(item => <button key={item.label} type="button" aria-pressed={filter === item.value} className={filter === item.value ? 'primary-button' : 'secondary-button'} onClick={() => setFilter(item.value)}>{item.label} <span className="filter-count">{loading ? '—' : datedItems.filter(row => (attention === 'ALL' || transactionAttention(row) === attention) && matchesTransactionFilter(row, item.value)).length}</span></button>)}</div>
     </section>
     {notice && <p className="transaction-notice" role="status">{notice}</p>}
     {error && <div className="panel" role="alert"><p className="marketplace-error">{error}</p><button className="secondary-button" type="button" onClick={refresh}>Reintentar</button></div>}

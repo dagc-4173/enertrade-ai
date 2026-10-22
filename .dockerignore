@@ -22,3 +22,12 @@ deployment/secrets
 **/*.log
 **/.agents
 **/.codex
+
+!docs/
+!docs/evidencias/
+!docs/evidencias/hu-04-multihorizon-v2/
+!docs/evidencias/hu-04-multihorizon-v2/results.json
+!docs/evidencias/hu-06-multihorizon-v3-semantic/
+!docs/evidencias/hu-06-multihorizon-v3-semantic/results.json
+!docs/evidencias/hu-06-demand-v5-frozen-models/
+!docs/evidencias/hu-06-demand-v5-frozen-models/h*.json

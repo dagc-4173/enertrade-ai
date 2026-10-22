@@ -1,6 +1,6 @@
 # EnerTrade AI: preparación de despliegue
 
-Estado: archivos preparados y servidor integrado probado de forma nativa. La imagen Docker NO se ha construido ni ejecutado porque Docker no está disponible en el equipo de trabajo. No hay despliegue público ni mediciones verificadas de recursos del contenedor. Correo sigue pendiente de configuración.
+Estado actualizado al 2026-10-22: imagen runtime-chronos construida y ejecutada localmente en Docker Desktop. Migraciones: el usuario verificó 22 migraciones sin pendientes. Contenedor healthy y /api/health con database=ok verificados. Checkpoints Chronos 2 y Bolt verificados en el arranque. El usuario informó funcionamiento de los modelos horarios para oferta, demanda y precio; esto no equivale a validación académica de precisión. Despliegue público, correo real y medición de inferencia pendientes.
 
 ## Arquitectura
 
@@ -53,7 +53,7 @@ XM_AUTO_SYNC_ENABLED empieza en false para no modificar datos durante la primera
 
 ## Chronos: dependencias y medición pendientes
 
-Las bases oficiales se fijaron por digest. npm usa package-lock con npm ci y Bun usa bun.lock con --frozen-lockfile. Python usa 3.12 porque NumPy 2.5.4 requiere al menos 3.12. Se fijaron las versiones principales observadas localmente, con Torch desde su índice CPU oficial. La resolución completa de dependencias Linux y la disponibilidad efectiva de la rueda CPU deben verificarse al construir; no se han probado aquí. La imagen guarda `python-environment.txt` con las versiones resueltas para revisar y cerrar el bloqueo completo de Python tras la primera construcción validada.
+Las bases oficiales se fijaron por digest. npm usa package-lock con npm ci y Bun usa bun.lock con --frozen-lockfile. Python usa 3.12 porque NumPy 2.5.4 requiere al menos 3.12. Se fijaron las versiones principales observadas localmente, con Torch desde su índice CPU oficial. La instalación de dependencias Linux y la rueda CPU se completaron en las construcciones Docker reportadas por el usuario. La resolución transitiva sigue sin estar fijada por hashes; no afirmar reproducibilidad completa. La imagen guarda `python-environment.txt` con las versiones resueltas para revisar y cerrar el bloqueo completo de Python tras la primera construcción validada.
 
 Para medir, preparar un JSON con 672 observaciones reales, como una lista o un objeto con campo context, y colocarlo temporalmente en el volumen de evidencias. No usar resultados de este benchmark como métricas de precisión.
 
@@ -63,10 +63,19 @@ docker compose --env-file .env.deploy exec app /opt/venv/bin/python -I -B /app/d
 docker stats --no-stream
 ```
 
-La herramienta informa tiempo y pico RSS del worker hijo en Linux; docker stats permite observar el conjunto. Repetir ambos modelos con los horizontes necesarios antes de elegir RAM/CPU y límites de peticiones del alojamiento. El worker tiene un límite de 120 segundos. No se ha medido este consumo ni se recomienda un plan concreto todavía.
+La herramienta informa tiempo y pico RSS del worker hijo en Linux; docker stats permite observar el conjunto. Repetir ambos modelos con los horizontes necesarios antes de elegir RAM/CPU y límites de peticiones del alojamiento. El worker tiene un límite de 120 segundos. Se observó el contenedor local healthy con 136 MiB y 0,48 % CPU el 2026-10-22, sin inferencia activa. Esta muestra puntual no mide el pico de Chronos ni permite elegir todavía un plan de alojamiento. Los archivos de ambos checkpoints suman 668821484 bytes. Medición bajo carga pendiente.
 
 ## Validación de aceptación pública pendiente
 
 Comprobar frontend, /api/health, login/logout, sesión tras recargar, restricciones de administrador, mercado/transacciones y los tres pronósticos Ridge. Probar ambos Chronos para oferta/demanda/precio, preservación de evidencias tras reinicio y actualización XM. Con remitente configurado, verificar correo recibido, enlace HTTPS válido y restablecimiento completado personalmente por el estudiante. El plan de alojamiento debe permitir SMTP 465/587 o requerirá adaptar el transporte a API HTTPS. El éxito de /api/health verifica PostgreSQL, no sustituye las pruebas de modelos ni de correo.
 
 No registrar credenciales, tokens de recuperación, cookies o datos personales en logs/capturas de entrega. Mantener manuales y resultados sincronizados con lo efectivamente desplegado.
+
+
+## Paso pendiente: alojamiento público
+
+La instalación local no publica el sistema en Internet. Antes de contratar o publicar, elegir entre demostración temporal desde el PC y servidor persistente. Para el sistema completo se necesitan ejecución Docker Linux, almacenamiento persistente para /app/data y modelos, salida HTTPS a XM y PostgreSQL, y HTTPS de entrada para la sesión. El correo puede seguir pendiente, con recuperación no disponible de forma explícita.
+
+No copiar .env.deploy ni credenciales a Git. Los checkpoints no se transfieren con el repositorio; deben llevarse al servidor por un canal controlado y verificar sus hashes. No sustituirlos por rutas de Windows en un servidor Linux. Preparar backup de PostgreSQL y del volumen antes de migraciones o cambios públicos.
+
+Para una sola instancia detrás de un proxy local configurado por el proyecto: definir NODE_ENV=production, PUBLIC_ORIGIN con la URL HTTPS real y TRUST_PROXY_HOPS según la topología comprobada; usar 1 únicamente si hay exactamente un proxy confiable. Mantener el puerto de aplicación limitado a loopback como en compose.yaml. El alojamiento, dominio o URL suministrada por proveedor, TLS, respaldo, consumo bajo inferencia y pruebas públicas deben verificarse antes de declarar desplegado el sistema.

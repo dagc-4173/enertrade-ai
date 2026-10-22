@@ -15,7 +15,7 @@ WORKDIR /app/backend
 COPY backend/package.json backend/bun.lock ./
 RUN bun install --frozen-lockfile
 COPY backend/ ./
-# Prisma exige URL en su configuración aun al generar, pero no conecta aquí.
+# Prisma exige URL en su configuraciÃƒÂ³n aun al generar, pero no conecta aquÃƒÂ­.
 RUN DATABASE_URL=postgresql://unused:unused@localhost:5432/unused bun --bun run prisma generate
 RUN bun run typecheck
 
@@ -26,8 +26,11 @@ RUN groupadd --gid 10001 enertrade && useradd --uid 10001 --gid enertrade --crea
 WORKDIR /app/backend
 COPY --from=backend-build --chown=10001:10001 /app/backend /app/backend
 COPY --from=frontend-build --chown=10001:10001 /build/frontend/dist /app/frontend-dist
+COPY --chown=10001:10001 docs/evidencias/hu-04-multihorizon-v2/results.json /app/docs/evidencias/hu-04-multihorizon-v2/results.json
+COPY --chown=10001:10001 docs/evidencias/hu-06-multihorizon-v3-semantic/results.json /app/docs/evidencias/hu-06-multihorizon-v3-semantic/results.json
+COPY --chown=10001:10001 docs/evidencias/hu-06-demand-v5-frozen-models/h*.json /app/docs/evidencias/hu-06-demand-v5-frozen-models/
 COPY --chown=10001:10001 deployment/ /app/deployment/
-RUN mkdir -p /app/data && chown 10001:10001 /app/data && chmod +x /app/deployment/entrypoint.sh
+RUN sed -i 's/\r$//' /app/deployment/entrypoint.sh && mkdir -p /app/data && chown 10001:10001 /app/data && chmod +x /app/deployment/entrypoint.sh
 ENV NODE_ENV=production PORT=8080 TZ=America/Bogota FRONTEND_DIST_DIR=/app/frontend-dist CHRONOS_EVIDENCE_DIR=/app/data/chronos-forecasts WEATHER_EVIDENCE_DIR=/app/data/weather-evidence CHRONOS_REQUIRED=false
 USER 10001:10001
 EXPOSE 8080

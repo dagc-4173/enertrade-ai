@@ -18,3 +18,21 @@ test('TX-VIEW-02: filtros combinados conservan fecha, estado y turno sin modific
  expect(rows).toHaveLength(2)
  expect(base.status).toBe('PENDING_ACCEPTANCE')
 })
+
+
+test('TX-VIEW-03: por pagar muestra solo acuerdos confirmados sin pago y respeta fecha', () => {
+ const unpaid = { ...base, id: 'unpaid', status: 'CONFIRMED' as const, paymentStatus: 'UNPAID' as const }
+ const rows = [unpaid, { ...unpaid, id: 'paid', paymentStatus: 'PAID' as const }, { ...unpaid, id: 'pending', paymentStatus: 'PENDING' as const }, { ...unpaid, id: 'cancelled', status: 'CANCELLED' as const }]
+ expect(filterTransactions(rows, 'UNPAID', 'ALL', '')).toEqual([unpaid])
+ expect(filterTransactions(rows, 'UNPAID', 'FINISHED', base.deliveryDate)).toEqual([unpaid])
+ expect(filterTransactions(rows, 'UNPAID', 'ALL', '2026-10-23')).toEqual([])
+})
+
+
+test('TX-VIEW-04: pagadas incluye solo acuerdos confirmados con pago aprobado y respeta fecha', () => {
+ const paid = { ...base, id: 'paid', status: 'CONFIRMED' as const, paymentStatus: 'PAID' as const }
+ const rows = [paid, { ...paid, id: 'unpaid', paymentStatus: 'UNPAID' as const }, { ...paid, id: 'pending', paymentStatus: 'PENDING' as const }, { ...paid, id: 'cancelled', status: 'CANCELLED' as const }]
+ expect(filterTransactions(rows, 'PAID', 'ALL', '')).toEqual([paid])
+ expect(filterTransactions(rows, 'PAID', 'FINISHED', base.deliveryDate)).toEqual([paid])
+ expect(filterTransactions(rows, 'PAID', 'ALL', '2026-10-23')).toEqual([])
+})

@@ -199,3 +199,38 @@
 .market-publication-grid h3 { margin: 8px 0; }
 .market-proposal-summary { margin-top: 20px; padding: 20px; background: var(--color-surface-alt); border: 1px solid var(--color-border); border-left: 3px solid var(--color-forest); border-radius: 6px; }
 .market-proposal-summary h3 { margin-top: 0; }
+
+/* Selectores de mercado alineados con Modelo de pronóstico. */
+.marketplace-date-filter, .hourly-market-controls label {
+  display: grid;
+  gap: 8px;
+  color: var(--color-forest-dark);
+  font-size: 13px;
+  font-weight: 650;
+}
+.marketplace-date-filter { width: 100%; max-width: 432px; }
+.marketplace-date-filter select, .hourly-market-controls select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  margin: 0;
+  padding: 12px 38px 12px 14px;
+  color: var(--color-text);
+  background: white;
+  border: 1px solid #b9cdbf;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 550;
+}
+.marketplace-date-filter select:focus-visible, .hourly-market-controls select:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 3px;
+}
+.marketplace-date-filter select:disabled, .hourly-market-controls select:disabled {
+  background: var(--color-surface-alt);
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+.hourly-market-controls > label { min-width: 0; }

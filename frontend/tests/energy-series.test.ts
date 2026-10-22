@@ -1,7 +1,7 @@
 import { afterEach, expect, spyOn, test } from 'bun:test'
 import process from 'node:process'
 import { ApiError } from '../src/services/apiClient'
-import { getEnergySeries } from '../src/services/energySeriesService'
+import { getEnergySeries, getLiveEnergySeries, parseEnergySeries } from '../src/services/energySeriesService'
 import { formatCurrencyCOP, formatDateCO, formatEnergyKWh, formatNumberCO, formatPercentCO, formatPriceCOPPerKWh } from '../src/utils/numberFormat'
 
 process.env.VITE_API_BASE_URL = 'http://enertrade.test'
@@ -35,4 +35,12 @@ test('centraliza formato visual es-CO sin alterar números de dominio', () => {
   expect(formatCurrencyCOP(1234.56).replace(/\u00a0/g, ' ')).toContain('1.234,56')
   expect(formatPercentCO(12.5)).toBe('12,5 %')
   expect(formatDateCO('2026-09-15')).toBe('15/09/2026')
+})
+
+test('consulta directa usa endpoint XM y admite ausencia de publicaciones sin IDs inventados', async () => {
+  const live = { ...base, pointCount: 0, points: [], returnedFrom: null, returnedTo: null, coverage: { availableFrom: null, availableUntil: null }, sourceDatasetId: null, consolidatedDatasetId: null, sources: [], freshness: { source: 'xm', checkedAt: '2026-10-22T12:00:00Z', message: 'Consultado en XM' } }
+  const fetch = respond(live)
+  expect((await getLiveEnergySeries(request)).freshness?.source).toBe('xm')
+  expect(fetch.mock.calls[0]?.[0]).toContain('/energy-series/live?')
+  expect(() => parseEnergySeries({ ...live, freshness: { ...live.freshness, source: 'inventado' } }, request)).toThrow(ApiError)
 })

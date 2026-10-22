@@ -1,0 +1,18 @@
+.history-table { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--color-border); }
+.history-table h3 { margin: 0 0 8px; }
+.history-table__description { color: var(--color-muted); font-size: 13px; }
+.history-table__scroll { max-width: 100%; overflow-x: auto; border: 1px solid var(--color-border); border-radius: 8px; }
+.history-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.history-table caption { text-align: left; padding: 12px 16px; color: var(--color-muted); background: var(--color-surface-alt); }
+.history-table th, .history-table td { padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+.history-table thead th { background: var(--color-surface-alt); color: var(--color-teal); }
+.history-table tbody th { font-weight: 500; }
+.history-table tbody tr:last-child > * { border-bottom: 0; }
+.history-table tbody tr:hover { background: var(--color-surface-alt); }
+.history-table .history-table__number { text-align: right; font-variant-numeric: tabular-nums; }
+.history-table__pagination { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
+.history-table__pagination p { font-size: 13px; color: var(--color-muted); margin: 0; }
+.history-table__pagination > div { display: flex; gap: 8px; }
+.history-table__pagination button { min-height: 40px; }
+.history-table__scroll:focus-visible { outline: 2px solid var(--color-teal); outline-offset: 3px; }
+@media (max-width: 600px) { .history-table th, .history-table td { padding: 10px 12px; } .history-table__pagination { align-items: flex-start; flex-direction: column; } }

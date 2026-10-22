@@ -9,7 +9,7 @@ export type EnergySeriesStore = { findMany(args: unknown): Promise<Source[]> };
 type Point = { date: string; period?: number; value: number };
 
 const sources: EnergySeriesStore = { findMany: args => prisma.xmConsolidatedDataset.findMany(args as never) as unknown as Promise<Source[]> };
-const definitions = {
+export const definitions = {
   gene: { xmMetric: 'Gene', unit: 'kWh', allowed: ['hourly', 'daily', 'monthly'], value: 'energia_kwh', period: 'hora_xm', daily: 'sum', monthly: 'sum' },
   demand: { xmMetric: 'DemaSIN', unit: 'kWh', allowed: ['daily', 'monthly'], value: 'demanda_kwh', period: null, daily: 'identity', monthly: 'sum' },
   price: { xmMetric: 'PrecBolsNaci', unit: 'COP/kWh', allowed: ['hourly', 'daily', 'monthly'], value: 'precio_cop_kwh', period: 'periodo', daily: 'mean', monthly: 'mean' },
@@ -23,14 +23,15 @@ const object = (value: unknown): value is Record<string, unknown> => value !== n
 const date = (value: Date) => value.toISOString().slice(0, 10);
 const days = (from: string, to: string) => (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000 + 1;
 
-function valid(input: unknown): input is SeriesInput {
+export function valid(input: unknown): input is SeriesInput {
   return object(input) && Object.keys(input).length === 4 && (input.metric === 'gene' || input.metric === 'demand' || input.metric === 'price') &&
     (input.granularity === 'hourly' || input.granularity === 'daily' || input.granularity === 'monthly') &&
     isDate(input.from) && isDate(input.to) && input.from <= input.to;
 }
 
-function limit(input: SeriesInput) {
+export function limit(input: SeriesInput) {
   const span = days(input.from, input.to);
+  if (span > 3660) throw new EnergySeriesError(413, 'ENERGY_SERIES_RANGE_TOO_LARGE', 'El rango máximo es de 3660 días.');
   if (input.granularity === 'hourly' && span > 31 || input.granularity === 'daily' && span > 366) throw new EnergySeriesError(413, 'ENERGY_SERIES_RANGE_TOO_LARGE', 'El rango solicitado supera el límite para esta granularidad.');
 }
 
@@ -47,7 +48,7 @@ function normalized(input: SeriesInput, content: unknown): Point[] {
   }).sort((left, right) => left.date.localeCompare(right.date) || (left.period ?? 0) - (right.period ?? 0));
 }
 
-function aggregate(points: ReturnType<typeof normalized>, granularity: Granularity, operation: 'sum' | 'mean' | 'identity') {
+export function aggregate(points: ReturnType<typeof normalized>, granularity: Granularity, operation: 'sum' | 'mean' | 'identity') {
   if (granularity === 'hourly' || operation === 'identity') return points;
   const grouped = new Map<string, { sum: number; count: number }>();
   for (const point of points) {
@@ -60,18 +61,42 @@ function aggregate(points: ReturnType<typeof normalized>, granularity: Granulari
 
 export function createEnergySeriesService(store: EnergySeriesStore = sources) {
   return {
+    async coverage(metric: unknown) {
+      if (metric !== 'gene' && metric !== 'demand' && metric !== 'price') throw new EnergySeriesError(400, 'INVALID_ENERGY_SERIES_QUERY', 'Métrica histórica inválida.');
+      const rows = await store.findMany({ where: { metric: definitions[metric].xmMetric }, select: { requestedFrom: true, requestedTo: true } });
+      return { metric, availableFrom: rows.length ? rows.map(row => date(row.requestedFrom)).sort()[0] : null, availableUntil: rows.length ? rows.map(row => date(row.requestedTo)).sort().at(-1) : null };
+    },
     async read(input: unknown) {
       if (!valid(input)) throw new EnergySeriesError(400, 'INVALID_ENERGY_SERIES_QUERY', 'Los parámetros de series históricas no son válidos.');
       const definition = definitions[input.metric];
       if (!(definition.allowed as readonly string[]).includes(input.granularity)) throw new EnergySeriesError(400, 'UNSUPPORTED_ENERGY_SERIES_GRANULARITY', 'La granularidad no aplica a esta métrica.');
       limit(input);
-      const candidates = await store.findMany({ where: { metric: definition.xmMetric, requestedFrom: { lte: new Date(`${input.from}T00:00:00Z`) }, requestedTo: { gte: new Date(`${input.to}T00:00:00Z`) } }, include: { energyDataset: { select: { content: true } } } });
-      const source = candidates.sort((left, right) => date(left.requestedFrom).localeCompare(date(right.requestedFrom)) || date(right.requestedTo).localeCompare(date(left.requestedTo)) || right.id - left.id)[0];
-      if (!source || date(source.requestedFrom) > input.from || date(source.requestedTo) < input.to) throw new EnergySeriesError(404, 'ENERGY_SERIES_UNAVAILABLE', 'No existe un corpus histórico consolidado que cubra el rango solicitado.');
-      const raw = normalized(input, source.energyDataset.content);
+      const candidates = (await store.findMany({ where: { metric: definition.xmMetric, requestedFrom: { lte: new Date(`${input.to}T00:00:00Z`) }, requestedTo: { gte: new Date(`${input.from}T00:00:00Z`) } }, include: { energyDataset: { select: { content: true } } } }))
+        .filter(row => row.metric === definition.xmMetric && date(row.requestedFrom) <= input.to && date(row.requestedTo) >= input.from)
+        .sort((left, right) => right.id - left.id);
+      const source = candidates[0];
+      if (!source) throw new EnergySeriesError(404, 'ENERGY_SERIES_UNAVAILABLE', 'No hay observaciones consolidadas para este intervalo. Consulta la cobertura disponible.');
+      // The newest consolidated version wins at each observed date/period; never sum duplicates.
+      const observations = new Map<string, Point>();
+      for (const candidate of candidates) for (const point of normalized(input, candidate.energyDataset.content)) {
+        const key = `${point.date}|${point.period ?? ''}`;
+        if (!observations.has(key)) observations.set(key, point);
+      }
+      const raw = [...observations.values()].sort((left, right) => left.date.localeCompare(right.date) || (left.period ?? 0) - (right.period ?? 0));
+      const expectedPerDay = definition.period === null ? 1 : 24;
+      const missingDates: string[] = [];
+      let missingObservationCount = 0;
+      const counts = new Map<string, number>();
+      for (const point of raw) counts.set(point.date, (counts.get(point.date) ?? 0) + 1);
+      for (let current = new Date(`${input.from}T00:00:00Z`); date(current) <= input.to; current.setUTCDate(current.getUTCDate() + 1)) {
+        const missing = expectedPerDay - (counts.get(date(current)) ?? 0);
+        if (missing > 0) { missingDates.push(date(current)); missingObservationCount += missing; }
+      }
       const points = aggregate(raw, input.granularity, input.granularity === 'daily' ? definition.daily : definition.monthly);
       return { metric: input.metric, unit: definition.unit, granularity: input.granularity, requestedFrom: input.from, requestedTo: input.to,
-        returnedFrom: raw[0]?.date ?? null, returnedTo: raw.at(-1)?.date ?? null, coverage: { availableFrom: date(source.requestedFrom), availableUntil: date(source.requestedTo) },
+        returnedFrom: raw[0]?.date ?? null, returnedTo: raw.at(-1)?.date ?? null, coverage: { availableFrom: candidates.map(row => date(row.requestedFrom)).sort()[0], availableUntil: candidates.map(row => date(row.requestedTo)).sort().at(-1)! },
+        completeness: { partial: missingObservationCount > 0, missingDates, missingObservationCount },
+        sources: candidates.map(row => ({ consolidatedDatasetId: row.id, sourceDatasetId: row.energyDatasetId, contentHash: row.contentHash })),
         pointCount: points.length, sourceDatasetId: source.energyDatasetId, consolidatedDatasetId: source.id, contentHash: source.contentHash, points };
     },
   };
