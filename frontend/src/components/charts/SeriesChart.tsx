@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
-import { formatNumberCO } from '../../utils/numberFormat'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import './SeriesChart.css'
+
+const axisNumber = new Intl.NumberFormat('es-CO', { notation: 'compact', maximumFractionDigits: 1 })
 
 export interface ChartPoint { key: string; label: string; value: number; detail: string }
 export interface ChartLine { id: string; label: string; color: string; dash?: string; points: ChartPoint[] }
@@ -10,11 +11,10 @@ export type ChartState =
   | { kind: 'error'; message: string }
   | { kind: 'success'; lines: ChartLine[] }
 
-const width = 720
 const height = 300
 const padding = { top: 24, right: 22, bottom: 44, left: 76 }
 
-function coordinates(lines: ChartLine[]) {
+function coordinates(lines: ChartLine[], width: number) {
   const points = lines.flatMap(line => line.points)
   const values = points.map(point => point.value)
   const minimum = Math.min(...values)
@@ -32,28 +32,39 @@ function StateMessage({ state }: { state: Exclude<ChartState, { kind: 'success' 
 }
 
 export function SeriesChart({ title, description, unit, state, footer }: { title: string; description: string; unit: string; state: ChartState; footer?: ReactNode }) {
+  const chart = useRef<HTMLElement>(null)
+  const [width, setWidth] = useState(720)
+  useEffect(() => {
+    if (!chart.current || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(entries => {
+      const measured = entries[0]?.contentRect.width
+      if (measured && measured > 0) setWidth(Math.max(280, Math.min(960, Math.round(measured))))
+    })
+    observer.observe(chart.current)
+    return () => observer.disconnect()
+  }, [])
   const headingId = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-title`
   const descriptionId = `${headingId}-description`
-  if (state.kind !== 'success') return <section className="series-chart" aria-labelledby={headingId}><div className="series-chart__heading"><div><h3 id={headingId}>{title}</h3><p id={descriptionId}>{description}</p></div><strong>{unit}</strong></div><StateMessage state={state} /></section>
+  if (state.kind !== 'success') return <section ref={chart} className="series-chart" aria-labelledby={headingId}><div className="series-chart__heading"><div><h3 id={headingId}>{title}</h3><p id={descriptionId}>{description}</p></div><strong>{unit}</strong></div><StateMessage state={state} /></section>
   const populated = state.lines.filter(line => line.points.length > 0)
-  if (populated.length === 0) return <section className="series-chart" aria-labelledby={headingId}><div className="series-chart__heading"><div><h3 id={headingId}>{title}</h3><p id={descriptionId}>{description}</p></div><strong>{unit}</strong></div><StateMessage state={{ kind: 'empty', message: 'No hay observaciones para graficar.' }} /></section>
-  const { keys, minimum, maximum, x, y } = coordinates(populated)
+  if (populated.length === 0) return <section ref={chart} className="series-chart" aria-labelledby={headingId}><div className="series-chart__heading"><div><h3 id={headingId}>{title}</h3><p id={descriptionId}>{description}</p></div><strong>{unit}</strong></div><StateMessage state={{ kind: 'empty', message: 'No hay observaciones para graficar.' }} /></section>
+  const { keys, minimum, maximum, x, y } = coordinates(populated, width)
   const labelIndexes = keys.length <= 6 ? keys.map((_, index) => index) : Array.from({ length: 6 }, (_, index) => Math.round(index * (keys.length - 1) / 5))
   const labels = [...new Set(labelIndexes)].map(index => keys[index]!).filter(Boolean)
-  return <section className="series-chart" aria-labelledby={headingId}>
+  return <section ref={chart} className="series-chart" aria-labelledby={headingId}>
     <div className="series-chart__heading"><div><h3 id={headingId}>{title}</h3><p id={descriptionId}>{description}</p></div><strong>{unit}</strong></div>
     <svg className="series-chart__canvas" viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby={`${headingId} ${descriptionId}`}>
       <line x1={padding.left} x2={width - padding.right} y1={padding.top} y2={padding.top} className="series-chart__grid" />
       <line x1={padding.left} x2={width - padding.right} y1={height - padding.bottom} y2={height - padding.bottom} className="series-chart__grid" />
-      <text x={padding.left - 10} y={padding.top + 4} textAnchor="end" className="series-chart__axis">{formatNumberCO(maximum)}</text>
-      <text x={padding.left - 10} y={height - padding.bottom + 4} textAnchor="end" className="series-chart__axis">{formatNumberCO(minimum)}</text>
+      <text x={padding.left - 10} y={padding.top + 4} textAnchor="end" className="series-chart__axis">{axisNumber.format(maximum)}</text>
+      <text x={padding.left - 10} y={height - padding.bottom + 4} textAnchor="end" className="series-chart__axis">{axisNumber.format(minimum)}</text>
       {labels.map(key => <text key={key} x={x(key)} y={height - 16} textAnchor="middle" className="series-chart__axis">{populated[0]?.points.find(point => point.key === key)?.label ?? key}</text>)}
       {populated.map(line => {
         const path = line.points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${x(point.key)} ${y(point.value)}`).join(' ')
         return <g key={line.id}><path d={path} fill="none" stroke={line.color} strokeWidth="2.5" strokeDasharray={line.dash} aria-hidden="true" />{line.points.map(point => <circle key={point.key} cx={x(point.key)} cy={y(point.value)} r="4" fill={line.color} tabIndex={0} aria-label={`${line.label}. ${point.detail}`}><title>{`${line.label}: ${point.detail}`}</title></circle>)}</g>
       })}
     </svg>
-    <ul className="series-chart__legend" aria-label="Leyenda">{populated.map(line => <li key={line.id}><span style={{ backgroundColor: line.color, borderStyle: line.dash ? 'dashed' : 'solid' }} />{line.label}</li>)}</ul>
+    <ul className="series-chart__legend" aria-label="Leyenda">{populated.map(line => <li key={line.id}><span style={{ borderTopColor: line.color, borderTopStyle: line.dash ? 'dashed' : 'solid' }} />{line.label}</li>)}</ul>
     {footer}
   </section>
 }

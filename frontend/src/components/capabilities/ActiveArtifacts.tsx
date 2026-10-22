@@ -97,7 +97,7 @@ export function ActiveArtifactsContent({ capabilities, state, onRetry }: {
         <th scope="col" role="columnheader">Runtime</th>
         <th scope="col" role="columnheader">Madurez y evidencia</th>
       </tr></thead>
-      <tbody role="rowgroup">{rows.map(row => <tr key={row.capability.capability} role="row">
+      <tbody role="rowgroup">{rows.map(row => <tr key={`${row.capability.capability}/${row.capability.id}`} role="row">
         <th scope="row" role="rowheader">
           <span className="artifact-mobile-label" aria-hidden="true">Capacidad / artefacto</span>
           <strong>{labels[row.capability.capability]}</strong>

@@ -116,3 +116,20 @@ test('matching parser rechaza cobertura ausente o fuera de rango', () => {
   delete (withoutCoverage as Partial<typeof withoutCoverage>).coveragePercent
   expect(() => parseMatching({ status: 'matched', ...baseMatching, demands: [withoutCoverage] })).toThrow(ApiError)
 })
+
+test('PATTERN-UI-SAVE: fallo de persistencia no se presenta como guardado', () => {
+ const html = renderToStaticMarkup(<PatternResults analysis={{ ...completed, persistence: { analysisId: completed.analysisId, persistence: 'failed' } }} />)
+ expect(html).toContain('Análisis calculado, pero no se pudo guardar')
+ expect(html).not.toContain('Análisis guardado correctamente')
+ expect(html).toContain('role="alert"')
+})
+test('PATTERN-UI-DETAIL: histórico permite representar valores y unidades sin nuevo análisis', () => {
+ const saved = { ...completed } as import('../src/types/patterns').PatternAnalysis & { persistence?: unknown }
+ delete saved.persistence
+ const html = renderToStaticMarkup(<PatternResults analysis={saved} />)
+ expect(html).toContain('Análisis guardado correctamente')
+ expect(html).toContain('Ver valores de recurrencia')
+ expect(html).toContain('Lunes')
+ expect(html).toContain('por observación ordenada')
+ expect(html).toContain('Mínimo')
+})

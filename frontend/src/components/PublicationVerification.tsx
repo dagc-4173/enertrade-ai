@@ -20,7 +20,8 @@ export function SimulationProfileEditor({ kind, onChanged }: {kind:VerificationK
   setBusy(true);setError('');setNotice('')
   try{const saved=await saveCapacityProfile(kind,rows as {hour:number;maxQuantityKwh:string}[]);setProfile(saved);onChanged?.();setNotice(`Perfil de simulación guardado, versión ${saved.version}.`)}catch(reason){setError(errorMessage(reason))}finally{setBusy(false)}
  }
- return <details className="simulation-profile"><summary>Perfil de simulación de {kind==='offer'?'oferta':'demanda'} · {profile?`versión ${profile.version}`:'sin configurar'}</summary>
+ return <details className="simulation-profile"><summary>Perfil de simulación de {kind==='offer'?'oferta':'demanda'} · {profile?`versión ${profile.version}`:error?'consulta no disponible':ready?'sin configurar':'consultando…'}</summary>
+  {!ready&&!error&&<p role="status">Consultando perfil de simulación…</p>}{error&&!ready&&<p role="alert">{error}</p>}
   <p>Define límites ficticios en kWh por hora para comprobar tus publicaciones. Aplican a cada día publicado. No acreditan disponibilidad física. Deja en blanco las horas sin referencia; cero indica capacidad simulada nula.</p>
   <div className="table-wrap"><table className="data-table"><thead><tr><th>Hora</th><th>Límite de capacidad (kWh)</th></tr></thead><tbody>{Array.from({length:24},(_,hour)=><tr key={hour}><td>{hourLabel(hour)}</td><td><LocalizedDecimalInput aria-label={`Límite simulado ${kind} ${hourLabel(hour)}`} mode="quantity" value={limits[hour]??''} onValueChange={value=>setLimits(current=>({...current,[hour]:value.displayValue}))} disabled={busy||!ready}/></td></tr>)}</tbody></table></div>
   <button type="button" className="secondary-button" disabled={busy||!ready} onClick={()=>{void save()}}>{busy?'Guardando…':'Guardar nueva versión del perfil'}</button>{error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}

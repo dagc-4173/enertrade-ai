@@ -36,8 +36,7 @@ function errorMessage(error: unknown) {
 function MetricsView({ metrics, result }: { metrics: ModelMetrics; result: ForecastResult | null }) {
   const e = metrics.evaluation
   const mismatch = result && 'modelId' in result && (result.modelId !== metrics.modelId || result.modelVersion !== metrics.modelVersion)
-  return <div className="forecast-metrics">
-    <h3>Métricas del modelo activo</h3>
+  return <details className="forecast-metrics"><summary>Métricas del modelo activo</summary>
     <p>{metrics.modelId} · versión {metrics.modelVersion}</p>
     {'modelStatus' in metrics && <p>Estado: <strong>Experimental</strong> · Validación académica: <strong>Pendiente</strong></p>}
     {mismatch && <p role="alert">Estas métricas corresponden a otra versión que el pronóstico mostrado.</p>}
@@ -53,7 +52,7 @@ function MetricsView({ metrics, result }: { metrics: ModelMetrics; result: Forec
       <div><dt>Fecha de entrenamiento</dt><dd>No registrada</dd></div>
       {'baselineReference' in metrics && <div><dt>Baseline de referencia</dt><dd>{metrics.baselineReference}</dd></div>}
     </dl>
-  </div>
+  </details>
 }
 
 function sourceArtifactsLabel(result: ForecastResult) {
@@ -73,7 +72,8 @@ export function ResultView({ result }: { result: ForecastResult }) {
   if (priceOrigin) priceOrigin.setUTCDate(priceOrigin.getUTCDate() - 1)
   return <div className="forecast-result">
     <p role="status">Resultado disponible para {formatDateCO(result.targetDate)}.</p>
-    <dl className="forecast-metadata forecast-result-metadata">
+    <ForecastHistoryChart key={historyChartKey(result)} result={result} />
+    <details><summary>Modelo, origen y datos utilizados</summary><dl className="forecast-metadata forecast-result-metadata">
       <div><dt>{price ? 'Regla determinista' : 'Modelo'}</dt><dd>{price ? result.rule.id : result.modelId}</dd></div>
       <div><dt>Versión</dt><dd>{price ? result.rule.version : result.modelVersion}</dd></div>
       <div><dt>Estado</dt><dd>{status === 'experimental' ? 'Experimental' : status}</dd></div>
@@ -83,8 +83,8 @@ export function ResultView({ result }: { result: ForecastResult }) {
       <div><dt>Última observación / origen</dt><dd>{'forecastOriginDate' in result ? formatDateCO(result.forecastOriginDate) : priceOrigin ? formatDateCO(priceOrigin.toISOString().slice(0, 10)) : 'No informado por el resultado'}</dd></div>
       <div><dt>Unidad</dt><dd>{result.unit}</dd></div>
       <div><dt>Horizonte</dt><dd>{result.forecastType === 'aggregate_demand_proxy' ? `${result.horizonDays} día${result.horizonDays === 1 ? '' : 's'}` : result.forecastType === 'generation_availability_proxy' ? `${result.horizonDays} día${result.horizonDays === 1 ? '' : 's'} · 24 periodos del día objetivo` : '1 día · 24 periodos'}</dd></div>
-    </dl>
-    {result.forecastType === 'aggregate_demand_proxy' ? <>
+    </dl></details>
+    <details><summary>{result.forecastType === 'aggregate_demand_proxy' ? 'Ver el total diario' : 'Ver los 24 periodos'}</summary>{result.forecastType === 'aggregate_demand_proxy' ? <>
       <div className="forecast-daily-result"><DataTable columns={[{ header: 'Día XM', render: (row: { date: string; value: number }) => formatDateCO(row.date) }, { header: 'Demanda estimada (kWh)', render: (row: { date: string; value: number }) => formatEnergyKWh(row.value) }]} rows={[{ date: result.targetDate, value: result.prediction.demanda_kwh }]} getRowKey={row => row.date} /></div>
       <p className="section-description">Demanda estimada del SIN. Nivel de confianza no definido.</p>
     </> : <DataTable columns={[
@@ -93,7 +93,7 @@ export function ResultView({ result }: { result: ForecastResult }) {
     ]} rows={result.forecastType === 'generation_availability_proxy'
       ? result.predictions.map(row => ({ period: row.hora_xm, value: row.energia_kwh }))
       : result.predictions.map(row => ({ period: row.periodo, value: row.precio_cop_kwh }))} getRowKey={row => String(row.period)} />}
-    <ForecastHistoryChart key={historyChartKey(result)} result={result} />
+    </details>
     {price && <div className="forecast-trace">
       <h3>Trazabilidad de esta estimación</h3>
       <dl className="forecast-metadata">
@@ -117,7 +117,7 @@ export type ForecastRunState =
 export function ForecastRunOutcome({ title, state }: { title: string; state: ForecastRunState }) {
   return <>
     {state.kind === 'loading' && <p className="forecast-state" role="status">Cargando... Consultando {title.toLowerCase()}.</p>}
-    {state.kind === 'error' && <p className="forecast-state" role="alert">Error de forecast: {state.message}</p>}
+    {state.kind === 'error' && <p className="forecast-state" role="alert">No pudimos generar el pronóstico: {state.message}</p>}
     {state.kind === 'idle' && <p className="forecast-state">Sin pronóstico solicitado.</p>}
     {state.kind === 'success' && <ResultView result={state.result} />}
   </>
@@ -246,11 +246,11 @@ export function ForecastPanel({ kind }: { kind: ForecastKind }) {
     <SectionHeader eyebrow={config.source} title={config.title} description={config.description}>
       <StatusBadge>{kind === 'price' ? 'Regla determinista · B1' : 'Modelo experimental · Ridge'}</StatusBadge>
     </SectionHeader>
-    <ForecastAvailabilityView state={availabilityState} />
+    <details open={availabilityState.kind !== 'success' || !availabilityState.availability.hasFutureForecastWindow}><summary>Disponibilidad y origen de los datos</summary><ForecastAvailabilityView state={availabilityState} /></details>
     <p className="section-description">{config.requiresPreparedDataset ? 'Elige un dataset preparado compatible y una fecha objetivo.' : 'Elige una fecha objetivo.'} Las solicitudes se realizan únicamente al pulsar Generar pronóstico.</p>
     <form onSubmit={submit}>
       <fieldset disabled={runState.kind === 'loading' || availabilityState.kind !== 'success' || !availabilityState.availability.hasFutureForecastWindow}>
-        <legend>Solicitud al backend</legend>
+        <legend>Configura tu pronóstico</legend>
         {config.requiresPreparedDataset && <PreparedDatasetSelect value={preparedId} onChange={value => { setPreparedId(value); clear() }} requirements={[profiles[kind as 'demand' | 'price']]} eligibleIds={availabilityState.kind === 'success' ? availabilityState.availability.eligiblePreparedDatasetIds : undefined} />}
         <ForecastTargetDateSelect dates={dates} value={targetDate} onChange={date => { setTargetDate(date); clear() }} />
       </fieldset>

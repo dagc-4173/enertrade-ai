@@ -27,7 +27,7 @@ export function PreparedDatasetSelectContent({ state, value, onChange, requireme
     </label>
     {state.kind === 'loading' && <p role="status">Cargando datasets preparados…</p>}
     {state.kind === 'error' && <p role="alert">{state.message}</p>}
-    {state.kind === 'success' && datasets.length === 0 && <p>Primero prepare un dataset compatible.</p>}
+    {state.kind === 'success' && datasets.length === 0 && <p>{eligibleIds?.length === 0 ? 'Ningún dataset preparado tiene los datos requeridos para una fecha futura elegible.' : 'Primero prepare un dataset compatible.'}</p>}
   </>
 }
 

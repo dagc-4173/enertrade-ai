@@ -136,9 +136,9 @@ test('indicators success expone total de ejecuciones, tasa de éxito y desglose 
     healthState={{ kind: 'loading' }} indicatorsState={{ kind: 'success', indicators }} capabilitiesState={{ kind: 'loading' }}
     onRetryHealth={noop} onRetryIndicators={noop} onRetryCapabilities={noop}
   />)
-  expect(html).toContain('Total de ejecuciones')
+  expect(html).toContain('Solicitudes registradas')
   expect(html).toContain(`>${formatNumberCO(8)}<`)
-  expect(html).toContain('Tasa de éxito')
+  expect(html).toContain('Ejecuciones completadas correctamente')
   expect(html).toContain(formatPercentCO(75))
   expect(html).toContain(`${formatNumberCO(6)} exitosas · ${formatNumberCO(1)} sin resultados · ${formatNumberCO(1)} fallidas.`)
   expect(html).toContain('Ejecuciones fallidas')
@@ -149,7 +149,7 @@ test('indicators con total de ejecuciones cero muestra No disponible sin inventa
     healthState={{ kind: 'loading' }} indicatorsState={{ kind: 'success', indicators: zeroExecutionsIndicators }} capabilitiesState={{ kind: 'loading' }}
     onRetryHealth={noop} onRetryIndicators={noop} onRetryCapabilities={noop}
   />)
-  expect(html).toContain('Tasa de éxito')
+  expect(html).toContain('Ejecuciones completadas correctamente')
   expect(html).toContain('No disponible')
   expect(html).not.toContain('0 %')
 })
@@ -162,7 +162,7 @@ test('un fallo de health no oculta los indicadores', () => {
   expect(html).toContain('No fue posible consultar el estado operativo.')
   expect(html).toContain('Reintentar estado operativo')
   expect(html).toContain('Pronósticos registrados')
-  expect(html).toContain('Total de ejecuciones')
+  expect(html).toContain('Solicitudes registradas')
 })
 
 test('un fallo de indicators no oculta health, capabilities ni la gestión de datos', () => {
@@ -184,7 +184,7 @@ test('un fallo de capabilities no hace desaparecer las métricas de indicadores'
     onRetryHealth={noop} onRetryIndicators={noop} onRetryCapabilities={noop}
   />)
   expect(html).toContain('Pronósticos registrados')
-  expect(html).toContain('Total de ejecuciones')
+  expect(html).toContain('Solicitudes registradas')
   expect(html).toContain('No fue posible cargar las capacidades activas.')
   expect(html).toContain('Reintentar capacidades')
   expect(html).not.toContain('Capacidades, runtime y evidencia')
@@ -196,9 +196,10 @@ test('Dashboard renders backend capability taxonomy on success', () => {
     healthState={{ kind: 'success', health: healthOk }} indicatorsState={{ kind: 'success', indicators }} capabilitiesState={{ kind: 'success', capabilities }}
     onRetryHealth={noop} onRetryIndicators={noop} onRetryCapabilities={noop}
   />)
-  expect(html).toContain('Modelo de ML')
-  expect(html).toContain('Regla determinista')
-  expect(html).toContain('Método determinista')
+  expect(html).toContain('capacidades funcionales')
+  expect(html).toContain('Activo significa disponible en el servicio')
+  expect(html).not.toContain('Capacidades, runtime y evidencia')
+  expect(html).toContain('Disponibilidad para pronosticar')
   expect(html).not.toMatch(/recomendación inteligente|mercado en vivo|412 COP/i)
 })
 
@@ -218,7 +219,7 @@ test('Dashboard no expone el texto interno de desarrollo del hero', () => {
     healthState={{ kind: 'loading' }} indicatorsState={{ kind: 'loading' }} capabilitiesState={{ kind: 'loading' }}
     onRetryHealth={noop} onRetryIndicators={noop} onRetryCapabilities={noop}
   />)
-  expect(html).toContain('Los indicadores mostrados corresponden a datos y ejecuciones registradas por EnerTrade AI.')
+  expect(html).toContain('Acumulado de registros disponibles. La finalización de una solicitud no acredita precisión predictiva ni validación académica.')
   expect(html).not.toContain('sin un contrato backend que las respalde')
   expect(html).not.toMatch(/validada académicamente|recomendación automática/i)
 })

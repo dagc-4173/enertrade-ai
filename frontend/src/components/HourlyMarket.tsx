@@ -32,10 +32,24 @@ export function HourlyMarket({ offers, demands, ownOffers, ownDemands, onRefresh
     setBusy(true); setError(''); setNotice('')
     try { const created = await createTransactionBatch(proposals); setTerms([]); setNotice(`${created.length} negociaciones horarias registradas.`); onRefresh() } catch (reason) { setError(errorMessage(reason)); onRefresh() } finally { setBusy(false) }
   }
-  return <section className="panel marketplace-section" aria-label="Mercado horario"><h2 ref={heading} tabIndex={-1}>Mercado por hora</h2>{initialSelection && <p role="status">Coincidencia preparada. Revisa cantidad y precio antes de enviar la propuesta.</p>}
-    <label>Consultar<select value={kind} disabled={busy} onChange={event => { setKind(event.target.value as 'offer' | 'demand'); setPublicationId(''); setOwnPublicationId(''); reset() }}><option value="offer">Ofertas externas</option><option value="demand">Demandas externas</option></select></label>
+  return <section className="panel marketplace-section" aria-label="Mercado horario" id="market-explore"><h2 ref={heading} tabIndex={-1}>Mercado por hora</h2>{initialSelection && <p role="status">Coincidencia preparada. Revisa cantidad y precio antes de enviar la propuesta.</p>}
+    <p>Selecciona una publicación externa y una propia del mismo día para revisar las horas compatibles.</p><div className="hourly-market-controls"><label>Consultar<select value={kind} disabled={busy} onChange={event => { setKind(event.target.value as 'offer' | 'demand'); setPublicationId(''); setOwnPublicationId(''); reset() }}><option value="offer">Ofertas externas</option><option value="demand">Demandas externas</option></select></label>
     <label>Publicación diaria<select value={publicationId} disabled={busy} onChange={event => { setPublicationId(event.target.value); setOwnPublicationId(''); reset() }}><option value="">Selecciona una publicación</option>{groups.map(row => <option key={row.publicationId} value={row.publicationId!}>{formatDeliveryDate(row.deliveryDate)} · Ref. {row.publicationId!.slice(0, 8)}</option>)}</select></label>
     <label>{kind === 'offer' ? 'Mi demanda' : 'Mi oferta'}<select value={ownPublicationId} disabled={busy} onChange={event => { setOwnPublicationId(event.target.value); reset() }}><option value="">Selecciona tu publicación del mismo día</option>{ownGroups.map(row => <option key={row.publicationId} value={row.publicationId!}>Ref. {row.publicationId!.slice(0, 8)}</option>)}</select></label>
+    </div>
+    {groups.length > 0 && !publicationId && <p className="marketplace-empty">Selecciona una publicación diaria para ver sus horas disponibles.</p>}
+    {rows.length > 0 && !ownGroups.length && <p className="marketplace-empty">No tienes una publicación contraria activa con saldo para ese día. Crea y verifica tu publicación en Mis ofertas o Mis demandas.</p>}
+    {groups.length > 0 && <div className="market-publication-grid" aria-label="Publicaciones externas disponibles">{groups.map(group => {
+      const slots = external.filter(row => row.publicationId === group.publicationId)
+      const prices = slots.map(row => Number('pricePerKwh' in row ? row.pricePerKwh : row.maxPricePerKwh))
+      return <article key={group.publicationId} data-selected={publicationId === group.publicationId}>
+        <p className="eyebrow">{kind === 'offer' ? 'Oferta externa' : 'Demanda externa'}</p><h3>{formatDeliveryDate(group.deliveryDate)}</h3>
+        <p>{slots.length} franjas · {formatEnergyKWh(slots.reduce((total,row) => total + Number(row.availableQuantityKwh),0))} disponibles</p>
+        <p>{formatCopPerKwh(Math.min(...prices))} — {formatCopPerKwh(Math.max(...prices))}</p>
+        <p className="marketplace-filter-help">Disponible para negociar · Ref. {group.publicationId!.slice(0,8)}</p>
+        <button type="button" className="secondary-button" aria-pressed={publicationId === group.publicationId} disabled={busy} onClick={() => { setPublicationId(group.publicationId!); setOwnPublicationId(''); reset() }}>{publicationId === group.publicationId ? 'Publicación seleccionada' : 'Ver horas disponibles'}</button>
+      </article>
+    })}</div>}
     <div className="table-wrap"><table className="data-table"><thead><tr><th>Seleccionar</th><th>Hora</th><th>Saldo externo</th><th>Precio externo</th><th>Mi saldo</th><th>Cantidad propuesta</th><th>Precio propuesto</th></tr></thead><tbody>{rows.map(row => {
       const mine = own.find(value => value.publicationId === ownPublicationId && value.hour === row.hour)
       const term = terms.find(value => value.externalId === row.id)
@@ -45,9 +59,9 @@ export function HourlyMarket({ offers, demands, ownOffers, ownDemands, onRefresh
     })}</tbody></table></div>
     {!groups.length && <p>No hay publicaciones horarias externas disponibles.</p>}
     {!selectionEligible && <p role="alert">La selección ya no está habilitada: verifica ambas publicaciones y selecciona de nuevo.</p>}
-    <p>{terms.length} horas seleccionadas. Cada hora tendrá una negociación independiente. La selección no reserva energía.</p>
+    <div className="market-proposal-summary" aria-label="Resumen de propuesta"><h3>Revisa tu propuesta</h3><p>Energía seleccionada: {formatEnergyKWh(terms.reduce((total,term) => total + (parseLocalizedDecimal(term.quantity, 'quantity').numberValue ?? 0),0))}</p><p>{terms.length} horas seleccionadas. Cada hora tendrá una negociación independiente. La selección no reserva energía.</p>
     <p>Total propuesto: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(terms.reduce((total, term) => total + (parseLocalizedDecimal(term.quantity, 'quantity').numberValue ?? 0) * (parseLocalizedDecimal(term.price, 'price').numberValue ?? 0), 0))}</p>
-    <button type="button" className="primary-button" disabled={busy || !terms.length || !selectionEligible} onClick={() => { void submit() }}>{busy ? 'Registrando…' : 'Proponer horas seleccionadas'}</button>
+    <button type="button" className="primary-button" disabled={busy || !terms.length || !selectionEligible} onClick={() => { void submit() }}>{busy ? 'Registrando…' : 'Proponer horas seleccionadas'}</button></div>
     {error && <p role="alert" className="marketplace-error">{error}</p>}{notice && <p role="status">{notice}</p>}{notice && onNavigate && <button type="button" className="secondary-button" onClick={onNavigate}>Ver mis transacciones</button>}
   </section>
 }

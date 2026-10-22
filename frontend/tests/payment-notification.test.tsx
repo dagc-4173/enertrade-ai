@@ -8,7 +8,7 @@ const fetchOriginal=globalThis.fetch
 afterEach(()=>{globalThis.fetch=fetchOriginal})
 test('NOTICE-UI-01: aviso identifica una o varias transacciones confirmadas por pagar y acceso a gestión',()=>{
  const single=renderToStaticMarkup(<PaymentNotice summary={{unpaidCount:1,pendingCount:0,totalCount:1,simulated:true}} onNavigate={()=>{throw new Error('No navegar al renderizar')}}/> )
- expect(single).toContain('Tienes una transacción por pagar');expect(single).toContain('Revisar pagos');expect(single).toContain('pago simulado')
+ expect(single).toContain('Tienes una transacción por pagar');expect(single).toContain('Ver pagos pendientes');expect(single).toContain('pago simulado')
  expect(renderToStaticMarkup(<PaymentNotice summary={{unpaidCount:2,pendingCount:0,totalCount:2,simulated:true}} onNavigate={()=>{}}/>)).toContain('2 transacciones por pagar')
 })
 test('NOTICE-UI-02: pendiente de resolución se distingue de nuevo pago y aprobación elimina aviso',()=>{

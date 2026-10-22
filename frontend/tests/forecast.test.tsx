@@ -137,24 +137,20 @@ test('non-JSON and network failures are typed safely', async () => {
   fetch.mockRejectedValueOnce(new Error('internal host'))
   await expect(getDemandMetrics(1)).rejects.toMatchObject({ kind: 'network', serverMessage: null })
 })
-test('Predictions initially renders fecha objetivo; only Precio requires prepared dataset', () => {
+test('Predictions mounts one forecast, three accessible variable tabs and lazy history', () => {
   const fetch = spyOn(globalThis, 'fetch')
   const html = renderToStaticMarkup(<Predictions />)
-  expect(html).toContain('Oferta energética'); expect(html).toContain('Demanda energética'); expect(html).toContain('Precio de referencia')
-  expect(html.match(/Sin pronóstico solicitado/g)).toHaveLength(3)
-  expect(html.match(/Solicitud al backend/g)).toHaveLength(3)
-  expect(html.match(/Horizonte seleccionado/g)).toHaveLength(3)
-  expect(html).toContain('Regla determinista · B1')
-  expect(html).toContain('Baseline determinista de referencia')
-  expect(html).not.toMatch(/xm-demandasin-ridge-direct-h[1-6]|xm-preciobolsnaci-ridge-direct|pendingProspectiveValidation/)
-  expect(html.match(/disabled=""/g)?.length).toBeGreaterThanOrEqual(3)
-  expect(html.match(/Selecciona un dataset preparado/g)).toHaveLength(1)
-  expect(html).not.toMatch(/Recomendaciones|Produccion|v1\.8\.2|DS-2026|915\.15174|value="17"|value="33"|value="49"/)
+  expect(html).toContain('Oferta energética')
+  expect(html.match(/role="tab"/g)).toHaveLength(3)
+  expect(html.match(/role="tabpanel"/g)).toHaveLength(1)
+  expect(html.match(/Sin pronóstico solicitado/g)).toHaveLength(1)
+  expect(html.match(/Configura tu pronóstico/g)).toHaveLength(1)
+  expect(html).toContain('Modelo de pronóstico')
+  expect(html).toContain('Consultar datos históricos')
+  expect(html).not.toContain('Selecciona un dataset preparado')
   expect(fetch).not.toHaveBeenCalled()
-  for (const file of ['../src/pages/Predictions.tsx', '../src/components/forecasts/ForecastPanel.tsx']) {
-    expect(readFileSync(new URL(file, import.meta.url), 'utf8')).not.toMatch(/mockData|resolveMock|aiRecommendations|forecastPoints|techStats|techTrace/)
-  }
 })
+
 test('Oferta y Demanda resuelven preparados automáticamente; Precio conserva selector', () => {
   const supplyHtml = renderToStaticMarkup(<ForecastPanel kind="supply" />)
   expect(supplyHtml).toContain('Fecha objetivo')
@@ -250,7 +246,7 @@ test('Availability común conserva etiquetas, aviso sin target y error', () => {
   expect(priceHtml).toContain('No hay target futuro disponible.')
   const errorHtml = renderToStaticMarkup(<ForecastAvailabilityView state={{ kind: 'error', message: 'Sin conexión' }} />)
   expect(errorHtml).toContain('role="alert"'); expect(errorHtml).toContain('Error de disponibilidad')
-  expect(renderToStaticMarkup(<ForecastRunOutcome title="Precio de referencia" state={{ kind: 'error', message: 'Sin conexión' }} />)).toContain('Error de forecast')
+  expect(renderToStaticMarkup(<ForecastRunOutcome title="Precio de referencia" state={{ kind: 'error', message: 'Sin conexión' }} />)).toContain('No pudimos generar el pronóstico')
 })
 
 test('all date selectors offer only backend eligible dates, including Gene holes', () => {

@@ -11,9 +11,9 @@ test('VERIFY-UI-02: histórico sin hora conserva estado desconocido y botón des
  const html=renderToStaticMarkup(<PublicationVerificationAction kind="offer" publication={{id:'o',quantityKwh:10,hour:null}} onChanged={()=>{}}/> )
  expect(html).toContain('Sin verificar');expect(html).toContain('disabled=""')
 })
-test('VERIFY-UI-03: perfil inicia sin configurar y no inventa límites',()=>{
+test('VERIFY-UI-03: perfil consulta estado antes de afirmar configuración y no inventa límites',()=>{
  const html=renderToStaticMarkup(<SimulationProfileEditor kind="offer"/> )
- expect(html).toContain('sin configurar');expect(html).toContain('No acreditan disponibilidad física');expect((html.match(/value=""/g)??[]).length).toBe(24)
+ expect(html).toContain('consultando…');expect(html).toContain('No acreditan disponibilidad física');expect((html.match(/value=""/g)??[]).length).toBe(24)
 })
 test('VERIFY-UI-04: parser rechaza orígenes y estados desconocidos',()=>{
  expect(isPublicationVerification(verification)).toBe(true)

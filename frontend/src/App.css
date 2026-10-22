@@ -720,3 +720,11 @@ main {
 
 .buyer-payment-notice { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 20px; border: 1px solid #d9bb68; border-radius: 12px; background: #fff8e5; color: #4d3d16; }
 .buyer-payment-notice p { margin: 6px 0 0; }
+
+/* Shared action hierarchy. */
+.primary-button,.secondary-button { min-height:42px;border-radius:7px;padding:10px 16px;font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:8px; }
+.secondary-button { color:var(--color-forest-dark);background:var(--color-surface);border:1px solid #c4d6ca; }
+.secondary-button:hover:not(:disabled) { background:var(--color-surface-alt);border-color:#8bad97; }
+.primary-button:focus-visible,.secondary-button:focus-visible { outline:2px solid var(--color-forest);outline-offset:3px; }
+.primary-button:disabled,.secondary-button:disabled { opacity:.55;cursor:not-allowed; }
+.buyer-payment-notice .secondary-button { color:var(--color-forest-dark);border-color:#c4ab5c;background:#fffdf4; }

@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { MetricCard } from '../components/cards/MetricCard'
 import { DatasetRegistration } from '../components/datasets/DatasetRegistration'
 import { ExternalDataSources } from '../components/external-data/ExternalDataSources'
-import { ActiveArtifacts } from '../components/capabilities/ActiveArtifacts'
+import { ArtifactDisclosure } from '../components/capabilities/ArtifactDisclosure'
+import { ForecastReadiness } from '../components/ForecastReadiness'
+import './Dashboard.css'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { getCapabilityVersions } from '../services/capabilityVersionsService'
 import { getHealth } from '../services/healthService'
@@ -63,11 +65,11 @@ function metrics(data: IndicatorsResponse): MetricCardData[] {
     { title: 'Estimaciones de precio', value: formatNumberCO(indicators.priceEstimates), helper: 'Ejecuciones de precio registradas.', tone: 'info' },
     { title: 'Sugerencias de matching', value: formatNumberCO(indicators.matchingSuggestions), helper: 'Coincidencias generadas por ejecuciones completadas.', tone: 'info' },
     { title: 'Patrones identificados', value: formatNumberCO(indicators.patternsIdentified), helper: 'Patrones en análisis completados o parciales.', tone: 'info' },
-    { title: 'Total de ejecuciones', value: formatNumberCO(executions.total), helper: 'Ejecuciones registradas por las capacidades del motor.', tone: 'neutral' },
-    { title: 'Tasa de éxito', value: successRateValue, helper: executionsHelper, tone: executions.total === 0 ? 'neutral' : executions.failed === 0 ? 'success' : 'warning' },
+    { title: 'Solicitudes registradas', value: formatNumberCO(executions.total), helper: 'Incluye consultas técnicas; no mide precisión predictiva.', tone: 'neutral' },
+    { title: 'Ejecuciones completadas correctamente', value: successRateValue, helper: executionsHelper, tone: executions.total === 0 ? 'neutral' : executions.failed === 0 ? 'success' : 'warning' },
     { title: 'Ejecuciones fallidas', value: formatNumberCO(executions.failed), helper: 'Fallos de capacidades registrados.', tone: executions.failed === 0 ? 'success' : 'warning' },
     { title: 'Tiempo de respuesta promedio', value: indicators.averageResponseTimeMs === null ? 'No disponible' : `${formatNumberCO(indicators.averageResponseTimeMs)} ms`, helper: indicators.averageResponseTimeMs === null ? 'No hay muestra de trazas.' : `Muestra: ${formatNumberCO(data.sample.traceCount)} trazas.`, tone: 'neutral' },
-    { title: 'Capacidades activas', value: `${formatNumberCO(indicators.capabilities.active)}/${formatNumberCO(indicators.capabilities.total)}`, helper: `${formatNumberCO(indicators.capabilities.byArtifactType.mlModel)} ML, ${formatNumberCO(indicators.capabilities.byArtifactType.deterministicRule)} regla, ${formatNumberCO(indicators.capabilities.byArtifactType.deterministicMethod)} método.`, tone: 'success' },
+    { title: 'Artefactos activos del catálogo', value: `${formatNumberCO(indicators.capabilities.active)}/${formatNumberCO(indicators.capabilities.total)}`, helper: `${formatNumberCO(indicators.capabilities.byArtifactType.mlModel)} ML, ${formatNumberCO(indicators.capabilities.byArtifactType.deterministicRule)} regla, ${formatNumberCO(indicators.capabilities.byArtifactType.deterministicMethod)} método.`, tone: 'success' },
   ]
 }
 
@@ -120,17 +122,17 @@ export function DashboardContent({ healthState, indicatorsState, capabilitiesSta
   onRetryCapabilities: () => void
 }) {
   return (
-    <div className="page-grid">
+    <div className="page-grid dashboard-workspace">
       <section className="hero-panel">
         <div className="hero-copy">
           <p className="eyebrow">Dashboard principal</p>
           <h2>Estado del motor energético</h2>
           <p>
-            Los indicadores mostrados corresponden a datos y ejecuciones registradas por EnerTrade AI.
+            Acumulado de registros disponibles. La finalización de una solicitud no acredita precisión predictiva ni validación académica.
           </p>
         </div>
         <div className="ai-panel">
-          <p>Estado operativo</p>
+          <p>Estado del servicio</p>
           <strong>{healthStatusLabel(healthState)}</strong>
           <div>
             <article><span>API</span><StatusBadge tone={healthTone(healthState)}>{apiAvailabilityLabel(healthState)}</StatusBadge></article>
@@ -141,19 +143,23 @@ export function DashboardContent({ healthState, indicatorsState, capabilitiesSta
         </div>
       </section>
 
-      <DatasetRegistration />
-      <ExternalDataSources />
+      <ForecastReadiness />
 
       {indicatorsState.kind === 'loading' && <p role="status">Cargando indicadores…</p>}
       {indicatorsState.kind === 'error' && <section className="panel" role="alert"><p>{indicatorsState.message}</p><button type="button" className="secondary-button" onClick={onRetryIndicators}>Reintentar indicadores</button></section>}
       {indicatorsState.kind === 'success' && <>
+        <section className="panel"><p>Los nuevos pronósticos horarios se contabilizan desde la incorporación de su trazabilidad. Las ejecuciones anteriores guardadas solo como evidencia local no están incluidas. El catálogo mostrado corresponde a Ridge, B1 y métodos deterministas; Chronos dispone de su catálogo independiente en Predicciones.</p></section>
         <section className="metric-grid">{metrics(indicatorsState.indicators).map(metric => <MetricCard key={metric.title} metric={metric} />)}</section>
         {indicatorsState.indicators.warnings.length > 0 && <section className="panel" aria-label="Advertencias de indicadores"><p>No hay registros funcionales suficientes para algunos indicadores.</p></section>}
       </>}
 
       {capabilitiesState.kind === 'loading' && <p role="status">Cargando capacidades activas…</p>}
       {capabilitiesState.kind === 'error' && <section className="panel" role="alert"><p>{capabilitiesState.message}</p><button type="button" className="secondary-button" onClick={onRetryCapabilities}>Reintentar capacidades</button></section>}
-      {capabilitiesState.kind === 'success' && <ActiveArtifacts capabilities={capabilitiesState.capabilities} />}
+      {capabilitiesState.kind === 'success' && <ArtifactDisclosure capabilities={capabilitiesState.capabilities} />}
+      <details className="panel dashboard-disclosure"><summary>Gestión de datos · registro manual y consulta XM</summary>
+        <DatasetRegistration />
+        <ExternalDataSources />
+      </details>
     </div>
   )
 }

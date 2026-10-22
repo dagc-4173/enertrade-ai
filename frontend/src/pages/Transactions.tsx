@@ -1,7 +1,8 @@
+import { attentionLabel, filterTransactions, transactionAttention, type AttentionFilter } from '../utils/transactionPresentation'
 import {transactionNeedsPayment,transactionPaymentLabel} from '../utils/transactionPayment'
 import { SimulatedPaymentPanel } from '../components/SimulatedPaymentPanel'
 import { hourLabel } from '../utils/hourlyMarket'
-import { useEffect, useEffectEvent, useState, type FormEvent } from 'react'
+import { Fragment, useEffect, useEffectEvent, useState, type FormEvent } from 'react'
 import { LocalizedDecimalInput } from '../components/forms/LocalizedDecimalInput'
 import { SectionHeader } from '../components/ui/SectionHeader'
 import { StatusBadge } from '../components/ui/StatusBadge'
@@ -27,6 +28,9 @@ function ownershipLabel(item: EnergyTransaction) { return hasRevisions(item) ? `
 
 export function Transactions() {
   const [filter, setFilter] = useState<TransactionStatus | undefined>()
+  const [expandedId,setExpandedId] = useState<string | null>(null)
+  const [attention, setAttention] = useState<AttentionFilter>('ALL')
+  const [deliveryDate, setDeliveryDate] = useState('')
   const [items, setItems] = useState<EnergyTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -43,7 +47,7 @@ export function Transactions() {
 
   async function refreshTransactions(signal?: AbortSignal) {
     try {
-      const loaded = await listMyTransactions(filter, signal)
+      const loaded = await listMyTransactions(undefined, signal)
       if (signal?.aborted) return
       setItems(loaded)
       setError('')
@@ -61,7 +65,7 @@ export function Transactions() {
       void refreshInitially(controller.signal).finally(() => { if (!controller.signal.aborted) setLoading(false) })
     }, 0)
     return () => { window.clearTimeout(task); controller.abort() }
-  }, [filter, refreshVersion])
+  }, [refreshVersion])
 
   useVisiblePolling(signal => refreshTransactions(signal), 5000, true)
   const refreshPaymentRows = useEffectEvent(() => { void refreshTransactions() })
@@ -106,31 +110,39 @@ export function Transactions() {
     try { setHistory(await listTransactionRevisions(id)); setHistoryId(id) } catch (reason) { setError(message(reason)) } finally { setBusy(null) }
   }
 
+  const datedItems = items.filter(item => !deliveryDate || item.deliveryDate === deliveryDate)
+  const visibleItems = filterTransactions(items, filter, attention, deliveryDate)
+  const attentionOptions: { value: AttentionFilter; label: string }[] = [
+    { value: 'ALL', label: 'Todas' }, { value: 'MINE', label: 'Requieren tu respuesta' },
+    { value: 'WAITING', label: 'Esperando contraparte' }, { value: 'FINISHED', label: 'Finalizadas' },
+  ]
   return <div className="page-grid transactions-page">
     <section className="panel transactions-intro"><SectionHeader eyebrow="Transacciones" title="Mis transacciones" description="Registro de intercambios energéticos simulados. Incluye pago simulado y comprobante. El simulador no mueve dinero real ni realiza liquidación financiera." />
-      <div className="transaction-filters">{filters.map(item => <button key={item.label} type="button" className={filter === item.value ? 'primary-button' : 'secondary-button'} onClick={() => { setLoading(true); setError(''); setFilter(item.value) }}>{item.label}</button>)}</div>
+      <div className="transaction-toolbar"><label>Fecha de entrega<select value={deliveryDate} onChange={event => setDeliveryDate(event.target.value)}><option value="">Todas las fechas</option>{[...new Set(items.map(item => item.deliveryDate))].sort().reverse().map(date => <option key={date} value={date}>{formatDeliveryDate(date)}</option>)}</select></label><button type="button" className="secondary-button" disabled={loading || busy !== null} onClick={refresh}>{loading ? 'Actualizando…' : 'Actualizar'}</button></div>
+      <p className="transaction-filter-label">Por respuesta</p><div className="transaction-attention" role="group" aria-label="Quién debe responder">{attentionOptions.map(option => <button type="button" key={option.value} aria-pressed={attention === option.value} onClick={() => setAttention(option.value)}><strong>{loading ? '—' : datedItems.filter(item => option.value === 'ALL' || transactionAttention(item) === option.value).length}</strong><span>{option.label}</span></button>)}</div>
+      <p className="transaction-filter-label">Por estado</p><div className="transaction-filters" role="group" aria-label="Estado del acuerdo">{filters.map(item => <button key={item.label} type="button" aria-pressed={filter === item.value} className={filter === item.value ? 'primary-button' : 'secondary-button'} onClick={() => setFilter(item.value)}>{item.label} <span className="filter-count">{loading ? '—' : datedItems.filter(row => (attention === 'ALL' || transactionAttention(row) === attention) && (!item.value || row.status === item.value)).length}</span></button>)}</div>
     </section>
     {notice && <p className="transaction-notice" role="status">{notice}</p>}
     {error && <div className="panel" role="alert"><p className="marketplace-error">{error}</p><button className="secondary-button" type="button" onClick={refresh}>Reintentar</button></div>}
     {loading && <p role="status">Cargando transacciones…</p>}
-    {!loading && !error && items.length === 0 && <section className="panel"><p className="marketplace-empty">No tienes transacciones todavía.</p></section>}
-    {!loading && !error && <div className="table-wrap"><table className="data-table"><thead><tr><th>Fecha</th><th>Hora</th><th>Rol</th><th>Cantidad</th><th>Total</th><th>Estado</th><th>Gestión</th></tr></thead><tbody>{items.map(item => <tr key={item.id} className={transactionNeedsPayment(item) ? 'transaction-unpaid' : undefined}><td>{formatDeliveryDate(item.deliveryDate)}</td><td>{hourLabel(item.hour)}</td><td>{roleLabel(item.role)}</td><td>{formatEnergyKWh(Number(item.quantityKwh))}</td><td>{formatCurrencyCOP(Number(item.totalAmountCop))}</td><td>{statusLabel[item.status]}{transactionPaymentLabel(item) && <span className="transaction-payment-label">{transactionPaymentLabel(item)}</span>}</td><td><details><summary>Ver negociación</summary><article className="transaction-item">
+    {!loading && !error && visibleItems.length === 0 && <section className="panel"><p className="marketplace-empty">No hay transacciones para esta selección. Prueba otra fecha o cambia los filtros.</p></section>}
+    {!loading && !error && <div className="table-wrap"><table className="data-table"><thead><tr><th>Fecha</th><th>Hora</th><th>Rol</th><th>Condiciones vigentes</th><th>Total</th><th>Acuerdo</th><th>Pago simulado</th><th>Gestión</th></tr></thead><tbody>{visibleItems.map(item => <Fragment key={item.id}><tr className={transactionNeedsPayment(item) ? 'transaction-unpaid' : undefined}><td>{formatDeliveryDate(item.deliveryDate)}</td><td>{hourLabel(item.hour)}</td><td>{roleLabel(item.role)}</td><td><div className="transaction-terms"><strong>{formatEnergyKWh(Number(item.quantityKwh))}</strong><span>{formatPriceCOPPerKWh(Number(item.pricePerKwh))}</span></div></td><td>{formatCurrencyCOP(Number(item.totalAmountCop))}</td><td><StatusBadge tone={tone(item.status)}>{statusLabel[item.status]}</StatusBadge><span className="transaction-attention-label" data-attention={transactionAttention(item)}>{attentionLabel(item)}</span></td><td><span className="transaction-payment-label">{transactionPaymentLabel(item) ?? (item.status === 'CONFIRMED' ? 'Sin información de pago' : 'No habilitado')}</span></td><td><button type="button" className="transaction-detail-toggle" aria-expanded={expandedId === item.id} aria-controls={`detail-${item.id}`} onClick={() => setExpandedId(current => current === item.id ? null : item.id)}>{expandedId === item.id ? 'Ocultar detalle' : transactionAttention(item) === 'MINE' ? 'Revisar y responder' : 'Ver negociación'}</button></td></tr>{expandedId === item.id && <tr className="transaction-detail-row"><td colSpan={8} id={`detail-${item.id}`}><article className="transaction-item">
       <div className="row-between"><strong>Referencia {item.id.slice(0, 8)} · {item.role === 'SELLER' ? 'Vendedor' : 'Comprador'}</strong><StatusBadge tone={tone(item.status)}>{statusLabel[item.status]}</StatusBadge></div>
       <p className="transaction-ownership">{ownershipLabel(item)}</p>
       {hasRevisions(item) ? <><h3>Término vigente</h3><p>Cantidad: {formatEnergyKWh(Number(item.quantityKwh))}</p><p>Precio: {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p><p>Total: {formatCurrencyCOP(Number(item.totalAmountCop))}</p><p>Propuesto por {roleLabel(item.latestRevisionProposedByRole!)}.</p></> : <p>{formatEnergyKWh(Number(item.quantityKwh))} a {formatPriceCOPPerKWh(Number(item.pricePerKwh))}</p>}
       <p>Entrega: {formatDeliveryDate(item.deliveryDate)} · {hourLabel(item.hour)}</p><p>Comprador: {item.buyerAcceptedAt ? 'Aceptado' : 'Pendiente'} · Vendedor: {item.sellerAcceptedAt ? 'Aceptado' : 'Pendiente'}</p><p>{acceptanceMessage(item)}</p>
       {editingId === item.id && <form className="transaction-edit-form" onSubmit={event => { void saveEdit(event, item.id) }}><label>Cantidad (kWh)<LocalizedDecimalInput mode="quantity" value={editQuantity} onValueChange={value => setEditQuantity(value.displayValue)} disabled={busy === item.id} required /></label><div className="marketplace-actions"><button type="submit" className="primary-button" disabled={busy === item.id}>Guardar cambios</button><button type="button" className="secondary-button" onClick={() => setEditingId(null)}>Cancelar edición</button></div></form>}
       {counterId === item.id && <form className="transaction-edit-form" onSubmit={event => { void saveCounter(event, item.id) }}><label>Cantidad (kWh)<LocalizedDecimalInput mode="quantity" value={counterQuantity} onValueChange={value => setCounterQuantity(value.displayValue)} disabled={busy === item.id} required /></label><label>Precio (COP/kWh)<LocalizedDecimalInput mode="price" value={counterPrice} onValueChange={value => setCounterPrice(value.displayValue)} disabled={busy === item.id} required /></label><div className="marketplace-actions"><button type="submit" className="primary-button" disabled={busy === item.id}>Enviar contrapropuesta</button><button type="button" className="secondary-button" onClick={() => setCounterId(null)}>Cancelar</button></div></form>}
-      {historyId === item.id && <ol className="transaction-history" aria-label="Historial de negociación">{history.map(entry => <li key={entry.sequence}><strong>#{entry.sequence} · {roleLabel(entry.proposedByRole)}</strong><span>{formatEnergyKWh(Number(entry.quantityKwh))} · {formatPriceCOPPerKWh(Number(entry.pricePerKwh))} · {formatCurrencyCOP(Number(entry.totalAmountCop))}</span><span>{new Date(entry.createdAt).toLocaleString('es-CO')}</span></li>)}</ol>}
+      {historyId === item.id && <ol className="transaction-history" aria-label="Historial de negociación">{history.map(entry => <li key={entry.sequence} className={entry.sequence === item.latestRevisionSequence ? 'transaction-current-revision' : undefined}>{entry.sequence === item.latestRevisionSequence && <span className="transaction-current-label">Condiciones vigentes</span>}<strong>#{entry.sequence} · {roleLabel(entry.proposedByRole)}</strong><span>{formatEnergyKWh(Number(entry.quantityKwh))} · {formatPriceCOPPerKWh(Number(entry.pricePerKwh))} · {formatCurrencyCOP(Number(entry.totalAmountCop))}</span><span>{new Date(entry.createdAt).toLocaleString('es-CO')}</span></li>)}</ol>}
       <div className="marketplace-actions">
         {hasRevisions(item) && <button type="button" className="secondary-button" onClick={() => { void showHistory(item.id) }} disabled={busy === item.id}>{historyId === item.id ? 'Ocultar historial' : 'Ver historial'}</button>}
         {canEdit(item) && <button type="button" className="secondary-button" onClick={() => { setEditingId(item.id); setEditQuantity(formatLocalizedDecimal(item.quantityKwh, 'quantity')) }}>Editar propuesta</button>}
-        {canCounter(item) && <button type="button" className="primary-button" onClick={() => { setCounterId(item.id); setCounterQuantity(formatLocalizedDecimal(item.quantityKwh, 'quantity')); setCounterPrice(formatLocalizedDecimal(item.pricePerKwh, 'price')) }}>Contraproponer</button>}
-        {canAccept(item) && <button type="button" className="primary-button" onClick={() => { void act(item.id, 'accept') }}>Aceptar</button>}
-        {canReject(item) && <button type="button" className="secondary-button" onClick={() => { void act(item.id, 'reject') }}>Rechazar</button>}
-        {canCancel(item) && <button type="button" className="secondary-button" onClick={() => { void act(item.id, 'cancel') }}>{hasRevisions(item) ? 'Cancelar negociación' : 'Cancelar propuesta'}</button>}
+        {canCounter(item) && <button type="button" disabled={busy !== null} className="secondary-button" onClick={() => { setCounterId(item.id); setCounterQuantity(formatLocalizedDecimal(item.quantityKwh, 'quantity')); setCounterPrice(formatLocalizedDecimal(item.pricePerKwh, 'price')) }}>Contraproponer</button>}
+        {canAccept(item) && <button type="button" className="primary-button" disabled={busy !== null} onClick={() => { void act(item.id, 'accept') }}>Aceptar</button>}
+        {canReject(item) && <button type="button" className="secondary-button transaction-destructive" disabled={busy !== null} onClick={() => { void act(item.id, 'reject') }}>Rechazar</button>}
+        {canCancel(item) && <button type="button" className="secondary-button transaction-destructive" disabled={busy !== null} onClick={() => { void act(item.id, 'cancel') }}>{hasRevisions(item) ? 'Cancelar negociación' : 'Cancelar propuesta'}</button>}
       </div>
       <SimulatedPaymentPanel transaction={item} />
-    </article></details></td></tr>)}</tbody></table></div>}
+    </article></td></tr>}</Fragment>)}</tbody></table></div>}
   </div>
 }
