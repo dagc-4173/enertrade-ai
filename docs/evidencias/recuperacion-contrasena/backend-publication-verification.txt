@@ -1,0 +1,19 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\publication-verification.test.ts:
+(pass) VERIFY-01: igualdad y fracciones se comparan exactamente
+(pass) VERIFY-02: no inventa capacidad para perfiles ausentes, horas sin límite o históricos
+(pass) VERIFY-03: límites declarados cero y decimales preservan origen simulado y versión
+(pass) VERIFY-04: rechaza perfiles ambiguos o ajenos
+(pass) VERIFY-04: rechaza perfiles ambiguos o ajenos
+(pass) VERIFY-04: rechaza perfiles ambiguos o ajenos
+(pass) VERIFY-04: rechaza perfiles ambiguos o ajenos
+(pass) VERIFY-04: rechaza perfiles ambiguos o ajenos
+(pass) VERIFY-04: rechaza perfiles ambiguos o ajenos
+(pass) VERIFY-04: rechaza perfiles ambiguos o ajenos
+(pass) VERIFY-04: rechaza perfiles ambiguos o ajenos
+
+ 11 pass
+ 0 fail
+ 16 expect() calls
+Ran 11 tests across 1 file. [53.00ms]

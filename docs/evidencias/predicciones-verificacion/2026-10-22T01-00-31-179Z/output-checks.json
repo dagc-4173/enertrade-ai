@@ -1,0 +1,44 @@
+[
+  {
+    "file": "demand-bolt.json",
+    "valid24AndOrder": true,
+    "unit": "kWh",
+    "origin": "2026-10-18",
+    "target": "2026-10-22"
+  },
+  {
+    "file": "demand-chronos2.json",
+    "valid24AndOrder": true,
+    "unit": "kWh",
+    "origin": "2026-10-18",
+    "target": "2026-10-22"
+  },
+  {
+    "file": "price-bolt.json",
+    "valid24AndOrder": true,
+    "unit": "COP/kWh",
+    "origin": "2026-10-18",
+    "target": "2026-10-22"
+  },
+  {
+    "file": "price-ridge.json",
+    "valid24AndOrder": true,
+    "unit": "COP/kWh",
+    "origin": "2026-10-18",
+    "target": "2026-10-22"
+  },
+  {
+    "file": "supply-bolt.json",
+    "valid24AndOrder": true,
+    "unit": "kWh",
+    "origin": "2026-10-18",
+    "target": "2026-10-22"
+  },
+  {
+    "file": "supply-chronos2.json",
+    "valid24AndOrder": true,
+    "unit": "kWh",
+    "origin": "2026-10-18",
+    "target": "2026-10-22"
+  }
+]

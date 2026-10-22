@@ -1,0 +1,9 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\energy-transaction.controller.test.ts:
+(pass) C21b HTTP: GET revisions devuelve únicamente el historial seguro del participante [16.00ms]
+
+ 1 pass
+ 0 fail
+ 8 expect() calls
+Ran 1 test across 1 file. [254.00ms]

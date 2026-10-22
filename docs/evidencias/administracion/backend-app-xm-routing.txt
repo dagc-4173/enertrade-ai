@@ -1,0 +1,10 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\app-xm-routing.test.ts:
+(pass) full app keeps public health and auth flow outside XM sync authentication [672.00ms]
+(pass) full app protects only XM availability and manual sync routes [15.00ms]
+
+ 2 pass
+ 0 fail
+ 8 expect() calls
+Ran 2 tests across 1 file. [1079.00ms]

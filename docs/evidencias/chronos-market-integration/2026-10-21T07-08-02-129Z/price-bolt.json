@@ -1,0 +1,179 @@
+{
+  "status": "available",
+  "model": "bolt",
+  "modelId": "amazon/chronos-bolt-small",
+  "modelVersion": "772f3d25d38aec6d914c8949dab4462e2d46f5d8",
+  "forecastType": "experimental_hourly_system_price",
+  "series": "price",
+  "source": "XM PrecBolsNaci/Sistema",
+  "target": "precio_cop_kwh",
+  "unit": "COP/kWh",
+  "targetDate": "2026-09-30",
+  "latestObservedDate": "2026-09-28",
+  "contextFrom": "2026-09-01",
+  "contextPeriods": 672,
+  "horizonDays": 2,
+  "generatedPeriods": 48,
+  "bridgePeriods": 24,
+  "generatedAt": "2026-09-29T08:00:00.000Z",
+  "experimental": true,
+  "academicValidation": "pending",
+  "confidenceStatus": "not_prospectively_calibrated",
+  "predictions": [
+    {
+      "periodo": 1,
+      "q10": 471.43817138671875,
+      "q50": 571.6027221679688,
+      "q90": 689.9676513671875
+    },
+    {
+      "periodo": 2,
+      "q10": 459.3563537597656,
+      "q50": 555.8381958007812,
+      "q90": 671.3372192382812
+    },
+    {
+      "periodo": 3,
+      "q10": 471.8339538574219,
+      "q50": 571.2660522460938,
+      "q90": 687.0242309570312
+    },
+    {
+      "periodo": 4,
+      "q10": 481.43548583984375,
+      "q50": 588.3892211914062,
+      "q90": 708.06689453125
+    },
+    {
+      "periodo": 5,
+      "q10": 485.93292236328125,
+      "q50": 601.2843627929688,
+      "q90": 729.6757202148438
+    },
+    {
+      "periodo": 6,
+      "q10": 490.1972961425781,
+      "q50": 611.118896484375,
+      "q90": 746.638916015625
+    },
+    {
+      "periodo": 7,
+      "q10": 490.3440856933594,
+      "q50": 611.1322021484375,
+      "q90": 753.7443237304688
+    },
+    {
+      "periodo": 8,
+      "q10": 470.5695495605469,
+      "q50": 589.244140625,
+      "q90": 728.3740234375
+    },
+    {
+      "periodo": 9,
+      "q10": 457.171875,
+      "q50": 574.5237426757812,
+      "q90": 718.3667602539062
+    },
+    {
+      "periodo": 10,
+      "q10": 458.4163818359375,
+      "q50": 575.1277465820312,
+      "q90": 720.7913818359375
+    },
+    {
+      "periodo": 11,
+      "q10": 466.69171142578125,
+      "q50": 585.5745849609375,
+      "q90": 731.4949340820312
+    },
+    {
+      "periodo": 12,
+      "q10": 474.5571594238281,
+      "q50": 603.3453369140625,
+      "q90": 762.0327758789062
+    },
+    {
+      "periodo": 13,
+      "q10": 476.0584716796875,
+      "q50": 610.3326416015625,
+      "q90": 780.7364501953125
+    },
+    {
+      "periodo": 14,
+      "q10": 491.5564880371094,
+      "q50": 632.7090454101562,
+      "q90": 811.6201782226562
+    },
+    {
+      "periodo": 15,
+      "q10": 532.5551147460938,
+      "q50": 692.3013305664062,
+      "q90": 883.8522338867188
+    },
+    {
+      "periodo": 16,
+      "q10": 573.642333984375,
+      "q50": 755.1052856445312,
+      "q90": 959.954833984375
+    },
+    {
+      "periodo": 17,
+      "q10": 609.4351806640625,
+      "q50": 813.1737060546875,
+      "q90": 1044.16650390625
+    },
+    {
+      "periodo": 18,
+      "q10": 640.6658935546875,
+      "q50": 887.7462768554688,
+      "q90": 1153.2335205078125
+    },
+    {
+      "periodo": 19,
+      "q10": 904.5325927734375,
+      "q50": 1306.73583984375,
+      "q90": 1626.682373046875
+    },
+    {
+      "periodo": 20,
+      "q10": 858.6970825195312,
+      "q50": 1218.2996826171875,
+      "q90": 1521.3504638671875
+    },
+    {
+      "periodo": 21,
+      "q10": 684.012939453125,
+      "q50": 947.3504028320312,
+      "q90": 1194.6907958984375
+    },
+    {
+      "periodo": 22,
+      "q10": 636.888916015625,
+      "q50": 855.928955078125,
+      "q90": 1058.7293701171875
+    },
+    {
+      "periodo": 23,
+      "q10": 573.9895629882812,
+      "q50": 750.7783203125,
+      "q90": 929.85400390625
+    },
+    {
+      "periodo": 24,
+      "q10": 512.3723754882812,
+      "q50": 655.762451171875,
+      "q90": 814.8004150390625
+    }
+  ],
+  "historicalMetrics": null,
+  "warnings": [
+    "Precio de bolsa nacional de referencia; no es una tarifa individual ni un precio de transacción garantizado.",
+    "Evaluación histórica específica pendiente; no se trasladan métricas de demanda a esta variable.",
+    "Cuantiles experimentales; no representan un intervalo prospectivamente calibrado.",
+    "El desempeño histórico de un día no acredita el desempeño con retraso de publicación."
+  ],
+  "trace": {
+    "executionId": "4eec369e-3722-447f-9287-b0011d292e16",
+    "persistence": "local_evidence"
+  }
+}

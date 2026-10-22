@@ -29,6 +29,8 @@ function requestUrl(path: string): string {
   if (typeof base !== 'string' || !base.trim()) {
     throw new ApiError('configuration', 'Falta configurar VITE_API_BASE_URL.')
   }
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) throw new ApiError('request', 'La ruta API debe comenzar con una sola barra.')
+  if (base.trim() === '/api') return `/api${path}`
   try {
     const url = new URL(base.trim())
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) {

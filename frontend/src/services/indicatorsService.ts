@@ -27,7 +27,7 @@ export function parseIndicators(value: unknown): IndicatorsResponse {
 }
 
 export async function getIndicators(signal?: AbortSignal) {
-  const response = await apiRequest<unknown>('/indicators', { signal })
+  const response = await apiRequest<unknown>('/indicators', { signal, credentials: 'include' })
   if (response.status !== 200) throw new ApiError('response', 'La API devolvió indicadores con estado inesperado.', response.status)
   return parseIndicators(response.data)
 }

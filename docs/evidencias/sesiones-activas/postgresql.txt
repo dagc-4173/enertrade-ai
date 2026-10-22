@@ -1,0 +1,20 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\admin-database.test.ts:
+(pass) ADM-DB-01: bloqueo atómico revoca sesiones, retira publicaciones y conserva acuerdos confirmados [4438.00ms]
+(pass) ADM-DB-02: degradaciones concurrentes conservan un administrador activo [2015.00ms]
+(pass) ADM-DB-03: fallo de auditoría revierte cambio y revocación de sesiones [2063.00ms]
+(pass) ADM-DB-04: el administrador no puede cambiar su propio acceso y las respuestas omiten secretos [2266.00ms]
+(pass) ADM-DB-05: HTTP consulta perfiles seguros, guarda permisos y expone auditoría [2500.00ms]
+(pass) REC-DB-01: token único cambia contraseña, conserva rol y revoca sesiones [2546.00ms]
+(pass) REC-DB-02: reemisión invalida anterior; vencidos/bloqueados no cambian contraseña [4782.00ms]
+(pass) REC-DB-03: login verificado antes del cambio no crea sesión después [1515.00ms]
+(pass) PWD-DB-01: cambio conserva rol, rota sesión sin ampliar plazo y revoca resto/enlaces [2578.00ms]
+(pass) PWD-DB-02: contraseña obsoleta o cuenta bloqueada no permite cambios [1719.00ms]
+(pass) SES-DB-01: lista propia excluye vencidas y oculta hashes; cierra ajena propia preservando actual [3328.00ms]
+(pass) SES-DB-02: cerrar otras conserva actual y no afecta otra cuenta; sesión revocada no gestiona accesos [2250.00ms]
+
+ 12 pass
+ 0 fail
+ 63 expect() calls
+Ran 12 tests across 1 file. [34.99s]

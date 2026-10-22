@@ -1,0 +1,494 @@
+{
+  "status": "prepared_experimental",
+  "protocol": {
+    "id": "xm-demareal-hourly-2023-2025",
+    "version": "1.0.0",
+    "range": {
+      "startDate": "2023-01-01",
+      "endDate": "2025-12-31"
+    },
+    "partitions": [
+      {
+        "id": "train",
+        "startDate": "2023-01-01",
+        "endDate": "2024-12-31",
+        "expectedRows": 17544
+      },
+      {
+        "id": "validation",
+        "startDate": "2025-01-01",
+        "endDate": "2025-06-30",
+        "expectedRows": 4344
+      },
+      {
+        "id": "test",
+        "startDate": "2025-07-01",
+        "endDate": "2025-12-31",
+        "expectedRows": 4416
+      }
+    ],
+    "target": "demanda_real_kwh",
+    "metric": "DemaReal",
+    "entity": "Sistema",
+    "unit": "kWh",
+    "expectedDays": 1096,
+    "expectedRows": 26304,
+    "windowDays": 30,
+    "temporalIdentity": "fecha_xm + periodo XM 1..24; sin timestamp inferido",
+    "evaluationScope": "retrospective; historical publication times and revisions not reconstructed",
+    "transformations": "sort only; no imputation, scaling, clipping, rounding or feature fitting"
+  },
+  "corpusSha256": "e52819f935bb22c6d01cfd4546b23c192d6848ecd748c352d2c2e355881f4fa6",
+  "encoding": "UTF-8 without BOM; LF; final newline",
+  "rowCount": 26304,
+  "completeDays": 1096,
+  "quality": {
+    "missingPeriods": 0,
+    "duplicatePeriods": 0,
+    "nonfiniteValues": 0,
+    "negativeValues": 0
+  },
+  "partitions": [
+    {
+      "id": "train",
+      "startDate": "2023-01-01",
+      "endDate": "2024-12-31",
+      "expectedRows": 17544,
+      "rowCount": 17544,
+      "completeDays": 731
+    },
+    {
+      "id": "validation",
+      "startDate": "2025-01-01",
+      "endDate": "2025-06-30",
+      "expectedRows": 4344,
+      "rowCount": 4344,
+      "completeDays": 181
+    },
+    {
+      "id": "test",
+      "startDate": "2025-07-01",
+      "endDate": "2025-12-31",
+      "expectedRows": 4416,
+      "rowCount": 4416,
+      "completeDays": 184
+    }
+  ],
+  "sources": [
+    {
+      "windowId": "2023-01-01_2023-01-30",
+      "startDate": "2023-01-01",
+      "endDate": "2023-01-30",
+      "retrievedAt": "2026-10-21T05:54:43.180Z",
+      "catalogRetrievedAt": "2026-10-21T05:54:42.365Z",
+      "rawSha256": "ce806ab60ba9e1146a67d88595c5c505319ed1856d26fcb5844bb02870bdf07c",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "63215d493213b075a298c495236748b154689e1621bf8c15ef9eda4d5395af88",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-01-31_2023-03-01",
+      "startDate": "2023-01-31",
+      "endDate": "2023-03-01",
+      "retrievedAt": "2026-10-21T05:54:46.681Z",
+      "catalogRetrievedAt": "2026-10-21T05:54:45.264Z",
+      "rawSha256": "eb98a526cad462eb658824ae4241d36abe93fdefed95fe5d1d02390e116f8864",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "cc43ee3b2aa9462285fd54b8b9e19def2fdddfa403f64b2c91f2618fe87ed61e",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-03-02_2023-03-31",
+      "startDate": "2023-03-02",
+      "endDate": "2023-03-31",
+      "retrievedAt": "2026-10-21T05:54:48.810Z",
+      "catalogRetrievedAt": "2026-10-21T05:54:47.744Z",
+      "rawSha256": "08de58a2a558439745a456f4b8d56cfb0dc325759588d9362fd2c227f40de322",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "d716e154af8af2185aa74f269edd3200aea2e03a1e6bd8121f49b2db02cab1eb",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-04-01_2023-04-30",
+      "startDate": "2023-04-01",
+      "endDate": "2023-04-30",
+      "retrievedAt": "2026-10-21T05:54:54.615Z",
+      "catalogRetrievedAt": "2026-10-21T05:54:51.414Z",
+      "rawSha256": "d92fe7c9ce527ae99dd3a3fe0da0f74d306060603d19b1cad7d5bacb0216e84d",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "569b5625295954bbcf70ea05ca815c2cb2d33840df99e4b3339962331857af2c",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-05-01_2023-05-30",
+      "startDate": "2023-05-01",
+      "endDate": "2023-05-30",
+      "retrievedAt": "2026-10-21T05:54:57.164Z",
+      "catalogRetrievedAt": "2026-10-21T05:54:55.566Z",
+      "rawSha256": "ed18d6b8f8cb247a4286d5d9072ea3801ebd2c04b84682882a4967caaf4870bc",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "f427d3cfb9dc34c1c698e06e3849cb2fff45831f28f000f20b3e40fa05eb98d5",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-05-31_2023-06-29",
+      "startDate": "2023-05-31",
+      "endDate": "2023-06-29",
+      "retrievedAt": "2026-10-21T05:55:01.426Z",
+      "catalogRetrievedAt": "2026-10-21T05:54:58.040Z",
+      "rawSha256": "d4a160125e15a76c3c987d0bc0d03555c2988661b755d308c2ca806a27ae7b6a",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "2dbb8cb5da82a08bba84c48b98e78096c995dc21f2aa2595cbef6045effae98c",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-06-30_2023-07-29",
+      "startDate": "2023-06-30",
+      "endDate": "2023-07-29",
+      "retrievedAt": "2026-10-21T05:55:06.033Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:03.220Z",
+      "rawSha256": "b00d07d41f1e5ca0dce298deeb42149b25344f9d83c1f2135d5090b1af86f458",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "a44025694a65c2bb6b132c281ee91a5edf7bca1c69789186bcaddda9fce25ccd",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-07-30_2023-08-28",
+      "startDate": "2023-07-30",
+      "endDate": "2023-08-28",
+      "retrievedAt": "2026-10-21T05:55:08.798Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:06.910Z",
+      "rawSha256": "7d6e9ce72e8e6e1167a9994915d944a621bee91ff023ead6598e3de509f0e4ce",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "089b3232a8d0277e008fa939470baa8ad23fe4f612abe480b9098464ac92cd33",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-08-29_2023-09-27",
+      "startDate": "2023-08-29",
+      "endDate": "2023-09-27",
+      "retrievedAt": "2026-10-21T05:55:11.782Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:10.136Z",
+      "rawSha256": "8083704f99ff92f6b3ed5ec68ea1cffaa71c5bb885e85e62d3bd80066b5aaca0",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "e78be07957463c4c1b6596f9fb60f076d3e01dedb95e401930ec48110d5a0ec9",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-09-28_2023-10-27",
+      "startDate": "2023-09-28",
+      "endDate": "2023-10-27",
+      "retrievedAt": "2026-10-21T05:55:15.775Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:12.995Z",
+      "rawSha256": "864422e6563292cb90d8e2b46d91d4eebfff7d53d00d0f2116909d94d9e6c2c5",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "d75c0bbcf4fff135bcb6098fc2e3b1eaf6c120fe645e1072b0df881814aec61a",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-10-28_2023-11-26",
+      "startDate": "2023-10-28",
+      "endDate": "2023-11-26",
+      "retrievedAt": "2026-10-21T05:55:19.670Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:17.382Z",
+      "rawSha256": "fef2f554191b171b7cd1bf65d63e72e233e9b86d4780230a6e7c11793600630c",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "d9cb6e369d53972a3664a6fcd716b0ef700df5e4f394573e8f007841a9f7d4db",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-11-27_2023-12-26",
+      "startDate": "2023-11-27",
+      "endDate": "2023-12-26",
+      "retrievedAt": "2026-10-21T05:55:22.914Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:20.563Z",
+      "rawSha256": "5ae03502158758d8baa09b1388d4eac75181addcf22e5a85de52ed46024c71b9",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "c0b49e561cb21e4c351464b2c6908a4791cf541c661a119c3abf20e10e662686",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2023-12-27_2024-01-25",
+      "startDate": "2023-12-27",
+      "endDate": "2024-01-25",
+      "retrievedAt": "2026-10-21T05:55:26.354Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:24.203Z",
+      "rawSha256": "08157748227d79e35a7f0390c63b1c647a1c652bd15db3003d52f0c3c2b909e0",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "1cecc459c3f50b0adcf1e4f3067052fd1314c9e04fa255d897a656831461d165",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-01-26_2024-02-24",
+      "startDate": "2024-01-26",
+      "endDate": "2024-02-24",
+      "retrievedAt": "2026-10-21T05:55:29.454Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:27.535Z",
+      "rawSha256": "dbcb7c3d6076a454ea9c940c1d547aed65b9544bc2326434be2107e6b7e999b5",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "cd241b7ae422cf794c3ef10ee7af40989349cca180f2a91489549f8d5e0c30dd",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-02-25_2024-03-25",
+      "startDate": "2024-02-25",
+      "endDate": "2024-03-25",
+      "retrievedAt": "2026-10-21T05:55:32.640Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:30.909Z",
+      "rawSha256": "83a32d0cb697febcee2bb6cf30a318c58f53d28cc414aec1ab4c899d68c58178",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "87a0398e0748d62660d5e4f8af30c61aaf1937ed48d7d20bf699c10e0c8b1f59",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-03-26_2024-04-24",
+      "startDate": "2024-03-26",
+      "endDate": "2024-04-24",
+      "retrievedAt": "2026-10-21T05:55:36.311Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:33.979Z",
+      "rawSha256": "86fe9343604dc7dc164c4fc670bd9491203050f649ef3aa34a90811f1efd7dfe",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "63bde8712e633762d2048b31e471f71b2ae0925b3bb0ab6a31c24cb17d606821",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-04-25_2024-05-24",
+      "startDate": "2024-04-25",
+      "endDate": "2024-05-24",
+      "retrievedAt": "2026-10-21T05:55:38.762Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:37.221Z",
+      "rawSha256": "0e51b0bde6797dcd334151be4be5afd2e293489945c7557c0cf3b782dafa2d90",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "0b97a540672ce45f5f1908e2e526e08c82109163ba116f13fd9f131b5f67e260",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-05-25_2024-06-23",
+      "startDate": "2024-05-25",
+      "endDate": "2024-06-23",
+      "retrievedAt": "2026-10-21T05:55:41.575Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:39.880Z",
+      "rawSha256": "2f37a61a69790a6e3cd78b5831b0623cf07a218e368d4474e2f5f9b4181039f9",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "f7216db1be2d292d47403ebaf91655fe57274e4a7acf54967a41b71e23bc4d4d",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-06-24_2024-07-23",
+      "startDate": "2024-06-24",
+      "endDate": "2024-07-23",
+      "retrievedAt": "2026-10-21T05:55:44.871Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:43.036Z",
+      "rawSha256": "37404ea65b1fd208ea7ebb0d03390bd440e81b8a814fb39e39c2cc573a71e362",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "b210cf3780308efdbf797e420b54ddecf2809b557ecf98eaf2191256c0450c94",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-07-24_2024-08-22",
+      "startDate": "2024-07-24",
+      "endDate": "2024-08-22",
+      "retrievedAt": "2026-10-21T05:55:47.912Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:45.776Z",
+      "rawSha256": "677e40ef3059772285f628732e397036325cb4d15996e91d18dce641ac83dca4",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "76e0aaaee6ef709e8e447e07f349137c6a7a5bc9e8cae68926ea8e1479baa1a9",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-08-23_2024-09-21",
+      "startDate": "2024-08-23",
+      "endDate": "2024-09-21",
+      "retrievedAt": "2026-10-21T05:55:51.576Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:48.791Z",
+      "rawSha256": "67ef7a460d53eb28234633597a2d9a2590bb5cc1d01b4cf7b562cfb1009392e3",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "f2385b3ff450f4245f0aa635a45d3501c1ca8a16ab8485514df45297391e2681",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-09-22_2024-10-21",
+      "startDate": "2024-09-22",
+      "endDate": "2024-10-21",
+      "retrievedAt": "2026-10-21T05:55:55.177Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:53.025Z",
+      "rawSha256": "19a8124ecd811d1ceac3942c38671c40e21a6d1780ab97cae69dc5afb97d8865",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "aea3a7785c53b0baef7ca21457c09f3adf64b062bc268d736861f29f35068ea7",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-10-22_2024-11-20",
+      "startDate": "2024-10-22",
+      "endDate": "2024-11-20",
+      "retrievedAt": "2026-10-21T05:55:58.342Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:56.111Z",
+      "rawSha256": "d6cb8d2087a1980ea0487962c79c60a98385db63a5e80c332704bb2549b16f0d",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "4fa68def18d2c90cdd4c677acfff7dde54848515da5ba96c88b1dec581fb8eab",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-11-21_2024-12-20",
+      "startDate": "2024-11-21",
+      "endDate": "2024-12-20",
+      "retrievedAt": "2026-10-21T05:56:01.516Z",
+      "catalogRetrievedAt": "2026-10-21T05:55:59.839Z",
+      "rawSha256": "6a2b865938981a9d85f1c92c0c6caa0ff9cb309545c1e0931850ee20a7a955c7",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "4e90903fe1cc1c47111425d0d4eec15a952f6f3b5ede5a16df6eb471ffe4ce8c",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2024-12-21_2025-01-19",
+      "startDate": "2024-12-21",
+      "endDate": "2025-01-19",
+      "retrievedAt": "2026-10-21T05:56:04.000Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:02.398Z",
+      "rawSha256": "98f1d669f27ff9430d2b780f50a9ee501cb3b6220f4604b8a1d6c6215e0e423b",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "f37712c9b12587d46434942b4675f8195b44468ca7bd35f43905a4d589dd56dc",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-01-20_2025-02-18",
+      "startDate": "2025-01-20",
+      "endDate": "2025-02-18",
+      "retrievedAt": "2026-10-21T05:56:07.153Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:04.899Z",
+      "rawSha256": "cd58c75e4cd4573cf1ca8b7c71031ada31bcdabcc026b76e59cdd66be111f54a",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "7595f392f9f06bf65a3646e55ee3a7ec32102e37b07ce26911c46400ceb2e398",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-02-19_2025-03-20",
+      "startDate": "2025-02-19",
+      "endDate": "2025-03-20",
+      "retrievedAt": "2026-10-21T05:56:09.976Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:08.166Z",
+      "rawSha256": "04896d49a1fcf23813b07443a0cf6fccf99cc3b82aafa8d9a4520ba800a080af",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "67c9ada7cbd5ecc5a81c44d9a2decc4b347a7ca07131196ca219ab0ce6fbbc3e",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-03-21_2025-04-19",
+      "startDate": "2025-03-21",
+      "endDate": "2025-04-19",
+      "retrievedAt": "2026-10-21T05:56:12.811Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:11.006Z",
+      "rawSha256": "9e070e99857ba609d683f3d972d6351110ea5c1ae9b67091e40df4b07dd5a10f",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "94e5e586f123947c5d19b71f906cf4d5d2c172052dd3b81315743c7fd609e6dd",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-04-20_2025-05-19",
+      "startDate": "2025-04-20",
+      "endDate": "2025-05-19",
+      "retrievedAt": "2026-10-21T05:56:15.640Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:14.501Z",
+      "rawSha256": "89a8a27d7412044e40f5d58ce6b3d2c975fa72e94ac6661860b005100a3c1283",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "5a8dc0dafe4ecb823a3f61ac4ea1eb5c24af08e91d8d77bc28e3725e55b3637b",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-05-20_2025-06-18",
+      "startDate": "2025-05-20",
+      "endDate": "2025-06-18",
+      "retrievedAt": "2026-10-21T05:56:18.327Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:17.176Z",
+      "rawSha256": "4a3506002f1a5825a57b646d49cac1438aaaad48561992e9f0cb22a816cbf91f",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "7e42be1df54c5096df64d2909cb8bd4b95b2ba3ca38fde09f27a415b3b1577d1",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-06-19_2025-07-18",
+      "startDate": "2025-06-19",
+      "endDate": "2025-07-18",
+      "retrievedAt": "2026-10-21T05:56:21.684Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:19.995Z",
+      "rawSha256": "97e28e65628fea99ef597ba0a41c9db929fb7dbc0ea875b343864069250f1058",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "dec3bb9141647869bb4c455096496cc27f6246a0479938e906b431898329ac29",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-07-19_2025-08-17",
+      "startDate": "2025-07-19",
+      "endDate": "2025-08-17",
+      "retrievedAt": "2026-10-21T05:56:24.484Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:22.818Z",
+      "rawSha256": "3f44b48ba8aeaec862d871019f1788842c9a011a3ed9b5a2b2f6743923c68ecc",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "8e88f209a556a198cc805b7e21a1323b1b2d52a91570db0c4c0c6ce0d2b71bc9",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-08-18_2025-09-16",
+      "startDate": "2025-08-18",
+      "endDate": "2025-09-16",
+      "retrievedAt": "2026-10-21T05:56:27.203Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:25.545Z",
+      "rawSha256": "26b270c6b643d5066850fac7136e06654cd9dd94635b959c529f0c9cf8a81f09",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "77a57af46d5577bc0fb8a875a65ab3eee65211b9e60f6a77b44e78a3cc186e38",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-09-17_2025-10-16",
+      "startDate": "2025-09-17",
+      "endDate": "2025-10-16",
+      "retrievedAt": "2026-10-21T05:56:31.596Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:29.307Z",
+      "rawSha256": "b87cd940ab3815bf880dc0d358a174b60510f76484f73a77aa9e8185e6cd8f49",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "72a5bba6486bc4208674a88bc9925a6269cd26c550e48937e406cbdc5905f8c5",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-10-17_2025-11-15",
+      "startDate": "2025-10-17",
+      "endDate": "2025-11-15",
+      "retrievedAt": "2026-10-21T05:56:34.598Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:32.462Z",
+      "rawSha256": "b53b6b776852af309c49ebc80e2d0fba528c13583f87ce8a09e2016aa240ffd9",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "46b31e9f88028e2d18e6a424fb83a7d56357f19d705dac83ae358f75dbae8091",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-11-16_2025-12-15",
+      "startDate": "2025-11-16",
+      "endDate": "2025-12-15",
+      "retrievedAt": "2026-10-21T05:56:38.161Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:36.032Z",
+      "rawSha256": "31baca14419e71551f01b24e4d8b1648fe7f3f86f3bdab32c4539fcc5a961078",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "17b6e9c3b262db684034d005ffb9ef8e9100c6263d28fc14d4d008ac4c3e23fb",
+      "recordCount": 720
+    },
+    {
+      "windowId": "2025-12-16_2025-12-31",
+      "startDate": "2025-12-16",
+      "endDate": "2025-12-31",
+      "retrievedAt": "2026-10-21T05:56:39.320Z",
+      "catalogRetrievedAt": "2026-10-21T05:56:39.035Z",
+      "rawSha256": "c0e1e9cc961e729d2063dfbd354433e96c2ac6889734d6866f8cc463dbe58a9b",
+      "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+      "normalizedSha256": "3f2b6780f89ba450ab990349bad236569c5e24cce19da44bde0e623bba245559",
+      "recordCount": 384
+    }
+  ],
+  "catalogDescription": "Demanda de usuarios regulados y no regulados que hacen parte del Sistema Interconectado Nacional (no incluye Alumbrado Público)",
+  "limitations": [
+    "DemaReal excludes public lighting and is not DemaSIN.",
+    "Only structural quality and provenance verified; no claim of historical publication availability or model performance.",
+    "Targets in validation/test are for scoring only; no fitting or tuning on final test.",
+    "Public access does not establish universal redistribution permission; keep raw snapshots local pending license verification.",
+    "No timestamps, weather alignment, Prisma PreparedDataset or trained model created."
+  ]
+}

@@ -1,0 +1,11 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\admin-database.test.ts:
+(pass) SES-DB-01: lista propia excluye vencidas y oculta hashes; cierra ajena propia preservando actual [3969.00ms]
+(pass) SES-DB-02: cerrar otras conserva actual y no afecta otra cuenta; sesión revocada no gestiona accesos [1922.00ms]
+
+ 2 pass
+ 10 filtered out
+ 0 fail
+ 13 expect() calls
+Ran 2 tests across 1 file. [8.78s]

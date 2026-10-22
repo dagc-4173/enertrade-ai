@@ -1,0 +1,69 @@
+{
+  "status": "passed",
+  "testId": "CHM-REAL-WORKER-01",
+  "executedAt": "2026-10-21T07:08:44.767Z",
+  "clock": "2026-09-29T08:00:00.000Z",
+  "mode": "historical integration replay; XM-shaped fixtures reconstructed from actual historical corpus, not original raw responses",
+  "authentication": "substituted; not a real session test",
+  "databaseAccess": false,
+  "liveXm": false,
+  "python": "real local inference, both checkpoints hash-verified by worker",
+  "metricsComputed": false,
+  "corpusPath": "D:\\Proyectos\\docs\\evidencias\\hu-08-price-multihorizon-v3-exogenous\\corpus\\xm-price-gene-demand-2024-01-01_2026-09-28.csv",
+  "corpusSha256": "6a809594044cf8f608cf2e52bfbec6d1bb0ebe7268414c4ad1f6da8d9aceae6e",
+  "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+  "results": [
+    {
+      "series": "supply",
+      "model": "chronos2",
+      "status": "passed",
+      "httpStatus": 200,
+      "unit": "kWh",
+      "rows": 24,
+      "origin": "2026-09-28",
+      "targetDate": "2026-09-30",
+      "horizonDays": 2,
+      "executionId": "0d57204b-ee84-41fa-8b97-c737cda2fe66",
+      "seconds": 11.2280126
+    },
+    {
+      "series": "supply",
+      "model": "bolt",
+      "status": "passed",
+      "httpStatus": 200,
+      "unit": "kWh",
+      "rows": 24,
+      "origin": "2026-09-28",
+      "targetDate": "2026-09-30",
+      "horizonDays": 2,
+      "executionId": "30aa95dc-cf47-460d-b47a-922d4b4bc255",
+      "seconds": 10.2449109
+    },
+    {
+      "series": "price",
+      "model": "chronos2",
+      "status": "passed",
+      "httpStatus": 200,
+      "unit": "COP/kWh",
+      "rows": 24,
+      "origin": "2026-09-28",
+      "targetDate": "2026-09-30",
+      "horizonDays": 2,
+      "executionId": "56ce3a89-4895-4f0e-a7aa-4f897f5e6189",
+      "seconds": 10.969282000000003
+    },
+    {
+      "series": "price",
+      "model": "bolt",
+      "status": "passed",
+      "httpStatus": 200,
+      "unit": "COP/kWh",
+      "rows": 24,
+      "origin": "2026-09-28",
+      "targetDate": "2026-09-30",
+      "horizonDays": 2,
+      "executionId": "4eec369e-3722-447f-9287-b0011d292e16",
+      "seconds": 10.144214500000002
+    }
+  ]
+}

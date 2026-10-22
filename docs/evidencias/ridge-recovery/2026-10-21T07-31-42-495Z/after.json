@@ -1,0 +1,97 @@
+[
+  {
+    "series": "Gene",
+    "currentDate": "2026-10-21",
+    "latestObservationDate": "2026-10-17",
+    "latestReceivedDate": "2026-10-17",
+    "latestIndividuallyUsableDate": "2026-10-17",
+    "semanticExcludedDates": [],
+    "modelMaxHorizonDays": 7,
+    "productMaxHorizonDays": 7,
+    "candidateFutureTargetDates": [
+      "2026-10-22",
+      "2026-10-23",
+      "2026-10-24",
+      "2026-10-25",
+      "2026-10-26",
+      "2026-10-27",
+      "2026-10-28"
+    ],
+    "availabilityReason": "AVAILABLE",
+    "eligibleFutureTargetDates": [
+      "2026-10-22",
+      "2026-10-23",
+      "2026-10-24"
+    ],
+    "nextForecastDate": "2026-10-22",
+    "supportedHorizonDays": 7,
+    "modelMinTargetDate": "2026-10-18",
+    "modelMaxTargetDate": "2026-10-24",
+    "effectiveFutureMinDate": "2026-10-22",
+    "effectiveFutureMaxDate": "2026-10-24",
+    "hasFutureForecastWindow": true,
+    "dataFreshnessDays": 4
+  },
+  {
+    "series": "DemaSIN",
+    "currentDate": "2026-10-21",
+    "latestObservationDate": "2026-10-17",
+    "latestReceivedDate": "2026-10-18",
+    "latestIndividuallyUsableDate": "2026-10-17",
+    "semanticExcludedDates": [
+      "2026-09-16",
+      "2026-09-28",
+      "2026-09-29",
+      "2026-10-04",
+      "2026-10-18"
+    ],
+    "modelMaxHorizonDays": 6,
+    "productMaxHorizonDays": 7,
+    "candidateFutureTargetDates": [
+      "2026-10-22",
+      "2026-10-23",
+      "2026-10-24",
+      "2026-10-25",
+      "2026-10-26",
+      "2026-10-27"
+    ],
+    "availabilityReason": "AVAILABLE",
+    "eligibleFutureTargetDates": [
+      "2026-10-22"
+    ],
+    "nextForecastDate": "2026-10-22",
+    "supportedHorizonDays": 6,
+    "supportedHorizonMinDays": 1,
+    "supportedHorizonMaxDays": 6,
+    "modelMinTargetDate": "2026-10-17",
+    "modelMaxTargetDate": "2026-10-22",
+    "effectiveFutureMinDate": "2026-10-22",
+    "effectiveFutureMaxDate": "2026-10-22",
+    "hasFutureForecastWindow": true,
+    "dataFreshnessDays": 4
+  },
+  {
+    "series": "PrecBolsNaci",
+    "currentDate": "2026-10-21",
+    "latestObservationDate": "2026-10-17",
+    "latestReceivedDate": "2026-10-17",
+    "latestIndividuallyUsableDate": "2026-10-17",
+    "semanticExcludedDates": [],
+    "modelMaxHorizonDays": 1,
+    "productMaxHorizonDays": 7,
+    "candidateFutureTargetDates": [
+      "2026-10-22"
+    ],
+    "availabilityReason": "SOURCE_DATA_STALE",
+    "eligiblePreparedDatasetIds": [],
+    "eligibleFutureTargetDates": [],
+    "nextForecastDate": "2026-10-18",
+    "supportedHorizonDays": 1,
+    "modelMinTargetDate": "2026-10-18",
+    "modelMaxTargetDate": "2026-10-18",
+    "effectiveFutureMinDate": null,
+    "effectiveFutureMaxDate": null,
+    "hasFutureForecastWindow": false,
+    "dataFreshnessDays": 4
+  }
+]

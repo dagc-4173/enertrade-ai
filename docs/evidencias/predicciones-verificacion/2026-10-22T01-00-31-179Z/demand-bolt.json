@@ -1,0 +1,192 @@
+{
+  "status": "available",
+  "model": "bolt",
+  "modelId": "amazon/chronos-bolt-small",
+  "modelVersion": "772f3d25d38aec6d914c8949dab4462e2d46f5d8",
+  "forecastType": "experimental_hourly_system_demand",
+  "series": "demand",
+  "source": "XM DemaReal/Sistema",
+  "target": "demanda_real_kwh",
+  "unit": "kWh",
+  "targetDate": "2026-10-22",
+  "latestObservedDate": "2026-10-18",
+  "contextFrom": "2026-09-21",
+  "contextPeriods": 672,
+  "horizonDays": 4,
+  "generatedPeriods": 96,
+  "bridgePeriods": 72,
+  "generatedAt": "2026-10-22T01:01:20.624Z",
+  "experimental": true,
+  "academicValidation": "pending",
+  "confidenceStatus": "not_prospectively_calibrated",
+  "predictions": [
+    {
+      "periodo": 1,
+      "q10": 1550621.5,
+      "q50": 2228473,
+      "q90": 5615348
+    },
+    {
+      "periodo": 2,
+      "q10": 1532005,
+      "q50": 2182507.5,
+      "q90": 5293338
+    },
+    {
+      "periodo": 3,
+      "q10": 1474934,
+      "q50": 2110494.5,
+      "q90": 5055053.5
+    },
+    {
+      "periodo": 4,
+      "q10": 1470257,
+      "q50": 2096710,
+      "q90": 4934083.5
+    },
+    {
+      "periodo": 5,
+      "q10": 1492537,
+      "q50": 2129524.5,
+      "q90": 4998832.5
+    },
+    {
+      "periodo": 6,
+      "q10": 1534181,
+      "q50": 2192030,
+      "q90": 5165671.5
+    },
+    {
+      "periodo": 7,
+      "q10": 1554129.5,
+      "q50": 2185323.5,
+      "q90": 5382483.5
+    },
+    {
+      "periodo": 8,
+      "q10": 1634269,
+      "q50": 2297992,
+      "q90": 5696075.5
+    },
+    {
+      "periodo": 9,
+      "q10": 1678709.5,
+      "q50": 2424439.5,
+      "q90": 6026651.5
+    },
+    {
+      "periodo": 10,
+      "q10": 1737403,
+      "q50": 2547485.5,
+      "q90": 6368233.5
+    },
+    {
+      "periodo": 11,
+      "q10": 1780166.5,
+      "q50": 2625574.5,
+      "q90": 6628548.5
+    },
+    {
+      "periodo": 12,
+      "q10": 1827426,
+      "q50": 2713223,
+      "q90": 6809067
+    },
+    {
+      "periodo": 13,
+      "q10": 1809276,
+      "q50": 2735734,
+      "q90": 6909510.5
+    },
+    {
+      "periodo": 14,
+      "q10": 1826960,
+      "q50": 2750086.5,
+      "q90": 6995817
+    },
+    {
+      "periodo": 15,
+      "q10": 1830227.5,
+      "q50": 2749644.5,
+      "q90": 7047651.5
+    },
+    {
+      "periodo": 16,
+      "q10": 1830325,
+      "q50": 2760945,
+      "q90": 6968944
+    },
+    {
+      "periodo": 17,
+      "q10": 1803652.5,
+      "q50": 2744423.5,
+      "q90": 6844819
+    },
+    {
+      "periodo": 18,
+      "q10": 1840497,
+      "q50": 2776897.5,
+      "q90": 6894621.5
+    },
+    {
+      "periodo": 19,
+      "q10": 1883239,
+      "q50": 2827657.5,
+      "q90": 7060484.5
+    },
+    {
+      "periodo": 20,
+      "q10": 1903912.5,
+      "q50": 2871638.5,
+      "q90": 7084235.5
+    },
+    {
+      "periodo": 21,
+      "q10": 1860469.5,
+      "q50": 2756355.5,
+      "q90": 6856770.5
+    },
+    {
+      "periodo": 22,
+      "q10": 1798701.5,
+      "q50": 2650626.5,
+      "q90": 6486058.5
+    },
+    {
+      "periodo": 23,
+      "q10": 1715517,
+      "q50": 2549794.5,
+      "q90": 6029410
+    },
+    {
+      "periodo": 24,
+      "q10": 1671975,
+      "q50": 2451609.5,
+      "q90": 5562191.5
+    }
+  ],
+  "historicalMetrics": {
+    "range": {
+      "start": "2025-07-01",
+      "end": "2025-12-31"
+    },
+    "n": 4416,
+    "MAE": 176027.09240715578,
+    "RMSE": 277917.8994572446,
+    "WAPE_percent": 1.8226232052109073,
+    "bias": 26536.14436820652,
+    "coverageQ10Q90": 0.855072463768116,
+    "evaluationType": "shared_retrospective_comparison",
+    "corpusSha256": "e52819f935bb22c6d01cfd4546b23c192d6848ecd748c352d2c2e355881f4fa6"
+  },
+  "warnings": [
+    "Demanda agregada; excluye alumbrado público. No equivale a DemaSIN ni a consumo individual.",
+    "Cuantiles experimentales; no representan un intervalo prospectivamente calibrado.",
+    "El horizonte supera los 64 periodos nativos de Bolt y utiliza extensión autoregresiva experimental.",
+    "El desempeño histórico de un día no acredita el desempeño con retraso de publicación."
+  ],
+  "trace": {
+    "executionId": "1b573aa2-85e1-4b83-959c-661f0a92d1d8",
+    "persistence": "local_evidence"
+  }
+}

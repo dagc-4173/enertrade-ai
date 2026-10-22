@@ -1,0 +1,9 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\hourly-publication.controller.test.ts:
+(pass) HOUR-API-01: consulta de fechas, rechazo de fechas inválidas y creación bajo usuario de sesión [31.00ms]
+
+ 1 pass
+ 0 fail
+ 5 expect() calls
+Ran 1 test across 1 file. [277.00ms]

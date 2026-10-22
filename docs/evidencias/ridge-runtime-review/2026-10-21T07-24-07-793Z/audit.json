@@ -1,0 +1,1382 @@
+{
+  "executedAt": "2026-10-21T07:24:07.795Z",
+  "mode": "read-only DB and direct runtime service calls; no HTTP/session test; no sync/training/scoring",
+  "models": {
+    "supply": [
+      {
+        "id": "xm-gene-ridge-direct-h1-v2",
+        "alpha": 0.01,
+        "features": 17,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-gene-ridge-direct-h1-v2",
+          "modelVersion": "1.0.0-experimental",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "forecastType": "generation_availability_proxy",
+          "target": "energia_kwh",
+          "unit": "kWh",
+          "horizonPeriods": 24,
+          "horizonDays": 1,
+          "baselineReference": "B_ORIGIN_6",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "sourceRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            }
+          },
+          "evaluation": {
+            "type": "external_temporal_holdout",
+            "range": {
+              "start": "2026-06-01",
+              "end": "2026-09-20"
+            },
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "evaluable": 2688,
+            "unavailable": 0,
+            "MAE": {
+              "value": 317529.62256266427,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 425603.01565330534,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": 186583.59460526257,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.068901611827109,
+              "unit": "percent"
+            }
+          }
+        }
+      },
+      {
+        "id": "xm-gene-ridge-direct-h2-v2",
+        "alpha": 0.01,
+        "features": 17,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-gene-ridge-direct-h2-v2",
+          "modelVersion": "1.0.0-experimental",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "forecastType": "generation_availability_proxy",
+          "target": "energia_kwh",
+          "unit": "kWh",
+          "horizonPeriods": 24,
+          "horizonDays": 2,
+          "baselineReference": "B_ORIGIN_6",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "sourceRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            }
+          },
+          "evaluation": {
+            "type": "external_temporal_holdout",
+            "range": {
+              "start": "2026-06-01",
+              "end": "2026-09-20"
+            },
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "evaluable": 2688,
+            "unavailable": 0,
+            "MAE": {
+              "value": 393014.6178899329,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 497871.4302164245,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -54029.03767651819,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.798458816471533,
+              "unit": "percent"
+            }
+          }
+        }
+      },
+      {
+        "id": "xm-gene-ridge-direct-h3-v2",
+        "alpha": 10,
+        "features": 17,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-gene-ridge-direct-h3-v2",
+          "modelVersion": "1.0.0-experimental",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "forecastType": "generation_availability_proxy",
+          "target": "energia_kwh",
+          "unit": "kWh",
+          "horizonPeriods": 24,
+          "horizonDays": 3,
+          "baselineReference": "B_ORIGIN_6",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "sourceRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            }
+          },
+          "evaluation": {
+            "type": "external_temporal_holdout",
+            "range": {
+              "start": "2026-06-01",
+              "end": "2026-09-20"
+            },
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "evaluable": 2688,
+            "unavailable": 0,
+            "MAE": {
+              "value": 358650.3608163322,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 466465.5267537522,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -12415.021516244815,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.466330673367021,
+              "unit": "percent"
+            }
+          }
+        }
+      },
+      {
+        "id": "xm-gene-ridge-direct-h4-v2",
+        "alpha": 100,
+        "features": 17,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-gene-ridge-direct-h4-v2",
+          "modelVersion": "1.0.0-experimental",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "forecastType": "generation_availability_proxy",
+          "target": "energia_kwh",
+          "unit": "kWh",
+          "horizonPeriods": 24,
+          "horizonDays": 4,
+          "baselineReference": "B_HISTORICAL_MEAN",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "sourceRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            }
+          },
+          "evaluation": {
+            "type": "external_temporal_holdout",
+            "range": {
+              "start": "2026-06-01",
+              "end": "2026-09-20"
+            },
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "evaluable": 2688,
+            "unavailable": 0,
+            "MAE": {
+              "value": 397364.3301133903,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 508512.61972915486,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -26984.172972768258,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.8404984811359473,
+              "unit": "percent"
+            }
+          }
+        }
+      },
+      {
+        "id": "xm-gene-ridge-direct-h5-v2",
+        "alpha": 0.01,
+        "features": 17,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-gene-ridge-direct-h5-v2",
+          "modelVersion": "1.0.0-experimental",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "forecastType": "generation_availability_proxy",
+          "target": "energia_kwh",
+          "unit": "kWh",
+          "horizonPeriods": 24,
+          "horizonDays": 5,
+          "baselineReference": "B_ORIGIN_0",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "sourceRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            }
+          },
+          "evaluation": {
+            "type": "external_temporal_holdout",
+            "range": {
+              "start": "2026-06-01",
+              "end": "2026-09-20"
+            },
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "evaluable": 2688,
+            "unavailable": 0,
+            "MAE": {
+              "value": 361748.34691630164,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 483634.616843417,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -155974.21978601572,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.4962724925235555,
+              "unit": "percent"
+            }
+          }
+        }
+      },
+      {
+        "id": "xm-gene-ridge-direct-h6-v2",
+        "alpha": 0.01,
+        "features": 17,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-gene-ridge-direct-h6-v2",
+          "modelVersion": "1.0.0-experimental",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "forecastType": "generation_availability_proxy",
+          "target": "energia_kwh",
+          "unit": "kWh",
+          "horizonPeriods": 24,
+          "horizonDays": 6,
+          "baselineReference": "B_ORIGIN_0",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "sourceRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            }
+          },
+          "evaluation": {
+            "type": "external_temporal_holdout",
+            "range": {
+              "start": "2026-06-01",
+              "end": "2026-09-20"
+            },
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "evaluable": 2688,
+            "unavailable": 0,
+            "MAE": {
+              "value": 379281.6199996855,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 497831.75616236986,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -217212.30043978238,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.6657303515791555,
+              "unit": "percent"
+            }
+          }
+        }
+      },
+      {
+        "id": "xm-gene-ridge-direct-h7-v2",
+        "alpha": 100,
+        "features": 17,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-gene-ridge-direct-h7-v2",
+          "modelVersion": "1.0.0-experimental",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "forecastType": "generation_availability_proxy",
+          "target": "energia_kwh",
+          "unit": "kWh",
+          "horizonPeriods": 24,
+          "horizonDays": 7,
+          "baselineReference": "B_ORIGIN_0",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "sourceRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-10-01",
+              "end": "2026-03-31"
+            }
+          },
+          "evaluation": {
+            "type": "external_temporal_holdout",
+            "range": {
+              "start": "2026-06-01",
+              "end": "2026-09-20"
+            },
+            "snapshotSha256": "e7ffe35f5091e7733b06d2acea3d62ef1fe79a7f7730102fbaac3b0ccf44cb8b",
+            "evaluable": 2688,
+            "unavailable": 0,
+            "MAE": {
+              "value": 317901.449278597,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 429805.5011347342,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -153893.43660107133,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.07249529105186,
+              "unit": "percent"
+            }
+          }
+        }
+      }
+    ],
+    "demand": [
+      {
+        "id": "xm-demandasin-ridge-direct-h1-v5",
+        "alpha": 0.01,
+        "features": 16,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-demandasin-ridge-direct-h1-v5",
+          "modelVersion": "hu06-demand-v5-c-primary@1.0.0",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "modelState": "pendingProspectiveValidation",
+          "forecastType": "aggregate_demand_proxy",
+          "target": "demanda_kwh",
+          "unit": "kWh",
+          "horizonDays": 1,
+          "evaluationType": "validation_technical",
+          "baselineReference": "B_ORIGIN_MINUS_6",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "sourceRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            }
+          },
+          "validationRange": {
+            "start": "2026-04-01",
+            "end": "2026-05-31"
+          },
+          "evaluation": {
+            "type": "validation_technical",
+            "range": {
+              "start": "2026-04-01",
+              "end": "2026-05-31"
+            },
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "evaluable": 61,
+            "unavailable": 0,
+            "MAE": {
+              "value": 5527027.698139597,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 7393115.929918154,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -1865169.4480646898,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 2.2655005761904046,
+              "unit": "percent"
+            },
+            "maxAbsoluteError": {
+              "value": 27509267.94878775,
+              "unit": "kWh"
+            }
+          },
+          "scope": {
+            "aggregation": "SIN",
+            "personalized": false,
+            "zonalFallback": false,
+            "confidenceStatus": "not_defined"
+          }
+        }
+      },
+      {
+        "id": "xm-demandasin-ridge-direct-h2-v5",
+        "alpha": 10,
+        "features": 16,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-demandasin-ridge-direct-h2-v5",
+          "modelVersion": "hu06-demand-v5-c-primary@1.0.0",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "modelState": "pendingProspectiveValidation",
+          "forecastType": "aggregate_demand_proxy",
+          "target": "demanda_kwh",
+          "unit": "kWh",
+          "horizonDays": 2,
+          "evaluationType": "validation_technical",
+          "baselineReference": "B_ORIGIN_MINUS_6",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "sourceRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            }
+          },
+          "validationRange": {
+            "start": "2026-04-01",
+            "end": "2026-05-31"
+          },
+          "evaluation": {
+            "type": "validation_technical",
+            "range": {
+              "start": "2026-04-01",
+              "end": "2026-05-31"
+            },
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "evaluable": 61,
+            "unavailable": 0,
+            "MAE": {
+              "value": 9469101.496998005,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 11344837.169186613,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -3270392.4460657695,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.8813366006244645,
+              "unit": "percent"
+            },
+            "maxAbsoluteError": {
+              "value": 32166091.75196767,
+              "unit": "kWh"
+            }
+          },
+          "scope": {
+            "aggregation": "SIN",
+            "personalized": false,
+            "zonalFallback": false,
+            "confidenceStatus": "not_defined"
+          }
+        }
+      },
+      {
+        "id": "xm-demandasin-ridge-direct-h3-v5",
+        "alpha": 10,
+        "features": 16,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-demandasin-ridge-direct-h3-v5",
+          "modelVersion": "hu06-demand-v5-c-primary@1.0.0",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "modelState": "pendingProspectiveValidation",
+          "forecastType": "aggregate_demand_proxy",
+          "target": "demanda_kwh",
+          "unit": "kWh",
+          "horizonDays": 3,
+          "evaluationType": "validation_technical",
+          "baselineReference": "B_ORIGIN_MINUS_6",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "sourceRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            }
+          },
+          "validationRange": {
+            "start": "2026-04-01",
+            "end": "2026-05-31"
+          },
+          "evaluation": {
+            "type": "validation_technical",
+            "range": {
+              "start": "2026-04-01",
+              "end": "2026-05-31"
+            },
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "evaluable": 61,
+            "unavailable": 0,
+            "MAE": {
+              "value": 9236738.510833733,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 11681424.484960701,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -3449637.7292601895,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.786092192998703,
+              "unit": "percent"
+            },
+            "maxAbsoluteError": {
+              "value": 38362117.6827372,
+              "unit": "kWh"
+            }
+          },
+          "scope": {
+            "aggregation": "SIN",
+            "personalized": false,
+            "zonalFallback": false,
+            "confidenceStatus": "not_defined"
+          }
+        }
+      },
+      {
+        "id": "xm-demandasin-ridge-direct-h4-v5",
+        "alpha": 10,
+        "features": 16,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-demandasin-ridge-direct-h4-v5",
+          "modelVersion": "hu06-demand-v5-c-primary@1.0.0",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "modelState": "pendingProspectiveValidation",
+          "forecastType": "aggregate_demand_proxy",
+          "target": "demanda_kwh",
+          "unit": "kWh",
+          "horizonDays": 4,
+          "evaluationType": "validation_technical",
+          "baselineReference": "B_TRAIN_TARGET_WEEKDAY_MEAN",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "sourceRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            }
+          },
+          "validationRange": {
+            "start": "2026-04-01",
+            "end": "2026-05-31"
+          },
+          "evaluation": {
+            "type": "validation_technical",
+            "range": {
+              "start": "2026-04-01",
+              "end": "2026-05-31"
+            },
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "evaluable": 61,
+            "unavailable": 0,
+            "MAE": {
+              "value": 9422714.952274777,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 11973293.462778423,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -3748843.43303276,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.8623229915858617,
+              "unit": "percent"
+            },
+            "maxAbsoluteError": {
+              "value": 40266474.86204785,
+              "unit": "kWh"
+            }
+          },
+          "scope": {
+            "aggregation": "SIN",
+            "personalized": false,
+            "zonalFallback": false,
+            "confidenceStatus": "not_defined"
+          }
+        }
+      },
+      {
+        "id": "xm-demandasin-ridge-direct-h5-v5",
+        "alpha": 10,
+        "features": 16,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-demandasin-ridge-direct-h5-v5",
+          "modelVersion": "hu06-demand-v5-c-primary@1.0.0",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "modelState": "pendingProspectiveValidation",
+          "forecastType": "aggregate_demand_proxy",
+          "target": "demanda_kwh",
+          "unit": "kWh",
+          "horizonDays": 5,
+          "evaluationType": "validation_technical",
+          "baselineReference": "B_ORIGIN",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "sourceRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            }
+          },
+          "validationRange": {
+            "start": "2026-04-01",
+            "end": "2026-05-31"
+          },
+          "evaluation": {
+            "type": "validation_technical",
+            "range": {
+              "start": "2026-04-01",
+              "end": "2026-05-31"
+            },
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "evaluable": 61,
+            "unavailable": 0,
+            "MAE": {
+              "value": 8971708.09226497,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 12228055.522562005,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -4420006.652479791,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.6774575707807577,
+              "unit": "percent"
+            },
+            "maxAbsoluteError": {
+              "value": 40054227.410256475,
+              "unit": "kWh"
+            }
+          },
+          "scope": {
+            "aggregation": "SIN",
+            "personalized": false,
+            "zonalFallback": false,
+            "confidenceStatus": "not_defined"
+          }
+        }
+      },
+      {
+        "id": "xm-demandasin-ridge-direct-h6-v5",
+        "alpha": 10,
+        "features": 16,
+        "metrics": {
+          "status": "available",
+          "modelId": "xm-demandasin-ridge-direct-h6-v5",
+          "modelVersion": "hu06-demand-v5-c-primary@1.0.0",
+          "active": true,
+          "modelStatus": "experimental",
+          "academicValidation": "pending",
+          "modelState": "pendingProspectiveValidation",
+          "forecastType": "aggregate_demand_proxy",
+          "target": "demanda_kwh",
+          "unit": "kWh",
+          "horizonDays": 6,
+          "evaluationType": "validation_technical",
+          "baselineReference": "B_ORIGIN",
+          "training": {
+            "trainedAt": null,
+            "trainedAtStatus": "not_recorded",
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "sourceRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            },
+            "effectiveRange": {
+              "start": "2024-02-04",
+              "end": "2026-03-31"
+            }
+          },
+          "validationRange": {
+            "start": "2026-04-01",
+            "end": "2026-05-31"
+          },
+          "evaluation": {
+            "type": "validation_technical",
+            "range": {
+              "start": "2026-04-01",
+              "end": "2026-05-31"
+            },
+            "snapshotSha256": "18fd5aad3fe12eaa5290dba9ea551ccaef1a2baf4f41febf0c0354f0252c1735",
+            "evaluable": 61,
+            "unavailable": 0,
+            "MAE": {
+              "value": 9422470.019051164,
+              "unit": "kWh"
+            },
+            "RMSE": {
+              "value": 12269945.004817799,
+              "unit": "kWh"
+            },
+            "bias": {
+              "value": -4786865.858527186,
+              "unit": "kWh"
+            },
+            "percentageError": {
+              "metric": "WAPE",
+              "value": 3.8622225947017625,
+              "unit": "percent"
+            },
+            "maxAbsoluteError": {
+              "value": 39808634.54270437,
+              "unit": "kWh"
+            }
+          },
+          "scope": {
+            "aggregation": "SIN",
+            "personalized": false,
+            "zonalFallback": false,
+            "confidenceStatus": "not_defined"
+          }
+        }
+      }
+    ],
+    "price": {
+      "active": "B1",
+      "ridgeRuntime": false
+    }
+  },
+  "availability": [
+    {
+      "series": "Gene",
+      "currentDate": "2026-10-21",
+      "latestObservationDate": "2026-10-03",
+      "latestReceivedDate": "2026-10-03",
+      "latestIndividuallyUsableDate": "2026-10-03",
+      "semanticExcludedDates": [],
+      "modelMaxHorizonDays": 7,
+      "productMaxHorizonDays": 7,
+      "candidateFutureTargetDates": [
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26",
+        "2026-10-27",
+        "2026-10-28"
+      ],
+      "availabilityReason": "SOURCE_DATA_STALE",
+      "eligibleFutureTargetDates": [],
+      "nextForecastDate": "2026-10-04",
+      "supportedHorizonDays": 7,
+      "modelMinTargetDate": "2026-10-04",
+      "modelMaxTargetDate": "2026-10-10",
+      "effectiveFutureMinDate": null,
+      "effectiveFutureMaxDate": null,
+      "hasFutureForecastWindow": false,
+      "dataFreshnessDays": 18
+    },
+    {
+      "series": "DemaSIN",
+      "currentDate": "2026-10-21",
+      "latestObservationDate": "2026-10-03",
+      "latestReceivedDate": "2026-10-04",
+      "latestIndividuallyUsableDate": "2026-10-03",
+      "semanticExcludedDates": [
+        "2026-09-16",
+        "2026-09-28",
+        "2026-09-29",
+        "2026-10-04"
+      ],
+      "modelMaxHorizonDays": 6,
+      "productMaxHorizonDays": 7,
+      "candidateFutureTargetDates": [
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26",
+        "2026-10-27"
+      ],
+      "availabilityReason": "SOURCE_DATA_STALE",
+      "eligibleFutureTargetDates": [],
+      "nextForecastDate": "2026-10-22",
+      "supportedHorizonDays": 6,
+      "supportedHorizonMinDays": 1,
+      "supportedHorizonMaxDays": 6,
+      "modelMinTargetDate": "2026-10-04",
+      "modelMaxTargetDate": "2026-10-09",
+      "effectiveFutureMinDate": null,
+      "effectiveFutureMaxDate": null,
+      "hasFutureForecastWindow": false,
+      "dataFreshnessDays": 18
+    },
+    {
+      "series": "PrecBolsNaci",
+      "currentDate": "2026-10-21",
+      "latestObservationDate": "2026-10-05",
+      "latestReceivedDate": "2026-10-05",
+      "latestIndividuallyUsableDate": "2026-10-05",
+      "semanticExcludedDates": [],
+      "modelMaxHorizonDays": 1,
+      "productMaxHorizonDays": 7,
+      "candidateFutureTargetDates": [
+        "2026-10-22"
+      ],
+      "availabilityReason": "SOURCE_DATA_STALE",
+      "eligiblePreparedDatasetIds": [],
+      "eligibleFutureTargetDates": [],
+      "nextForecastDate": "2026-10-06",
+      "supportedHorizonDays": 1,
+      "modelMinTargetDate": "2026-10-06",
+      "modelMaxTargetDate": "2026-10-06",
+      "effectiveFutureMinDate": null,
+      "effectiveFutureMaxDate": null,
+      "hasFutureForecastWindow": false,
+      "dataFreshnessDays": 16
+    }
+  ],
+  "currentRuntime": [
+    {
+      "series": "Gene",
+      "status": "not_available",
+      "reason": "SOURCE_DATA_STALE"
+    },
+    {
+      "series": "DemaSIN",
+      "status": "not_available",
+      "reason": "SOURCE_DATA_STALE"
+    },
+    {
+      "series": "PrecBolsNaci",
+      "status": "not_available",
+      "reason": "SOURCE_DATA_STALE"
+    }
+  ],
+  "historicalSmoke": [
+    {
+      "series": "Gene",
+      "status": "passed",
+      "historicalOnly": true,
+      "response": {
+        "status": "available",
+        "sourceArtifacts": [
+          {
+            "preparedDatasetId": 55,
+            "sourceDatasetId": 118
+          },
+          {
+            "preparedDatasetId": 68,
+            "sourceDatasetId": 198
+          },
+          {
+            "preparedDatasetId": 69,
+            "sourceDatasetId": 200
+          },
+          {
+            "preparedDatasetId": 72,
+            "sourceDatasetId": 206
+          },
+          {
+            "preparedDatasetId": 74,
+            "sourceDatasetId": 210
+          }
+        ],
+        "forecastType": "generation_availability_proxy",
+        "target": "energia_kwh",
+        "unit": "kWh",
+        "horizonPeriods": 24,
+        "forecastOriginDate": "2026-10-03",
+        "targetDate": "2026-10-04",
+        "horizonDays": 1,
+        "modelId": "xm-gene-ridge-direct-h1-v2",
+        "modelVersion": "1.0.0-experimental",
+        "modelStatus": "experimental",
+        "academicValidation": "pending",
+        "predictions": [
+          {
+            "hora_xm": 1,
+            "energia_kwh": 8953011.43426839
+          },
+          {
+            "hora_xm": 2,
+            "energia_kwh": 8661415.70451534
+          },
+          {
+            "hora_xm": 3,
+            "energia_kwh": 8392126.327941785
+          },
+          {
+            "hora_xm": 4,
+            "energia_kwh": 8189557.037873579
+          },
+          {
+            "hora_xm": 5,
+            "energia_kwh": 8124945.712089467
+          },
+          {
+            "hora_xm": 6,
+            "energia_kwh": 8075591.101558113
+          },
+          {
+            "hora_xm": 7,
+            "energia_kwh": 7876863.446410743
+          },
+          {
+            "hora_xm": 8,
+            "energia_kwh": 8068480.539967129
+          },
+          {
+            "hora_xm": 9,
+            "energia_kwh": 8364889.8320390275
+          },
+          {
+            "hora_xm": 10,
+            "energia_kwh": 8590671.56551194
+          },
+          {
+            "hora_xm": 11,
+            "energia_kwh": 8857416.379529657
+          },
+          {
+            "hora_xm": 12,
+            "energia_kwh": 9150632.493741838
+          },
+          {
+            "hora_xm": 13,
+            "energia_kwh": 9327226.99754427
+          },
+          {
+            "hora_xm": 14,
+            "energia_kwh": 9504482.69552183
+          },
+          {
+            "hora_xm": 15,
+            "energia_kwh": 9677422.204064237
+          },
+          {
+            "hora_xm": 16,
+            "energia_kwh": 9767747.355437214
+          },
+          {
+            "hora_xm": 17,
+            "energia_kwh": 9791464.13669398
+          },
+          {
+            "hora_xm": 18,
+            "energia_kwh": 9934955.43111325
+          },
+          {
+            "hora_xm": 19,
+            "energia_kwh": 10530017.09723961
+          },
+          {
+            "hora_xm": 20,
+            "energia_kwh": 10618468.425620213
+          },
+          {
+            "hora_xm": 21,
+            "energia_kwh": 10491064.41882486
+          },
+          {
+            "hora_xm": 22,
+            "energia_kwh": 10192512.896577636
+          },
+          {
+            "hora_xm": 23,
+            "energia_kwh": 9768130.038026344
+          },
+          {
+            "hora_xm": 24,
+            "energia_kwh": 9239419.589879518
+          }
+        ]
+      }
+    },
+    {
+      "series": "PrecBolsNaci",
+      "status": "passed",
+      "historicalOnly": true,
+      "response": {
+        "status": "available",
+        "preparedDatasetId": 77,
+        "sourceDatasetId": 216,
+        "forecastType": "market_reference_price",
+        "target": "precio_cop_kwh",
+        "unit": "COP/kWh",
+        "granularity": "hourly",
+        "horizonDays": 1,
+        "rule": {
+          "id": "xm-preciobolsnaci-b1",
+          "version": "1.0.0",
+          "type": "deterministic_baseline",
+          "description": "same period previous day"
+        },
+        "targetDate": "2026-10-06",
+        "predictions": [
+          {
+            "periodo": 1,
+            "precio_cop_kwh": 412.91844
+          },
+          {
+            "periodo": 2,
+            "precio_cop_kwh": 450.38544
+          },
+          {
+            "periodo": 3,
+            "precio_cop_kwh": 450.48544
+          },
+          {
+            "periodo": 4,
+            "precio_cop_kwh": 450.48544
+          },
+          {
+            "periodo": 5,
+            "precio_cop_kwh": 450.48544
+          },
+          {
+            "periodo": 6,
+            "precio_cop_kwh": 504.50644
+          },
+          {
+            "periodo": 7,
+            "precio_cop_kwh": 584.88544
+          },
+          {
+            "periodo": 8,
+            "precio_cop_kwh": 450.48544
+          },
+          {
+            "periodo": 9,
+            "precio_cop_kwh": 450.48544
+          },
+          {
+            "periodo": 10,
+            "precio_cop_kwh": 450.48544
+          },
+          {
+            "periodo": 11,
+            "precio_cop_kwh": 450.48544
+          },
+          {
+            "periodo": 12,
+            "precio_cop_kwh": 584.88544
+          },
+          {
+            "periodo": 13,
+            "precio_cop_kwh": 584.88544
+          },
+          {
+            "periodo": 14,
+            "precio_cop_kwh": 624.88544
+          },
+          {
+            "periodo": 15,
+            "precio_cop_kwh": 624.88544
+          },
+          {
+            "periodo": 16,
+            "precio_cop_kwh": 644.11644
+          },
+          {
+            "periodo": 17,
+            "precio_cop_kwh": 728.00244
+          },
+          {
+            "periodo": 18,
+            "precio_cop_kwh": 1088.62044
+          },
+          {
+            "periodo": 19,
+            "precio_cop_kwh": 1906.81044
+          },
+          {
+            "periodo": 20,
+            "precio_cop_kwh": 882.96344
+          },
+          {
+            "periodo": 21,
+            "precio_cop_kwh": 882.96344
+          },
+          {
+            "periodo": 22,
+            "precio_cop_kwh": 728.00244
+          },
+          {
+            "periodo": 23,
+            "precio_cop_kwh": 644.11644
+          },
+          {
+            "periodo": 24,
+            "precio_cop_kwh": 624.88544
+          }
+        ],
+        "factors": {
+          "used": [
+            "previous_day_same_period_price"
+          ],
+          "omitted": [
+            "commercial_supply",
+            "commercial_demand",
+            "generation_forecast",
+            "demand_forecast"
+          ]
+        },
+        "scope": {
+          "referencePrice": true,
+          "personalized": false,
+          "financialSettlement": false,
+          "commercialNegotiation": false
+        }
+      }
+    },
+    {
+      "series": "DemaSIN",
+      "status": "passed",
+      "historicalOnly": true,
+      "clock": "2026-10-06T17:00:00Z",
+      "response": {
+        "status": "available",
+        "forecastType": "aggregate_demand_proxy",
+        "target": "demanda_kwh",
+        "unit": "kWh",
+        "modelId": "xm-demandasin-ridge-direct-h4-v5",
+        "modelVersion": "hu06-demand-v5-c-primary@1.0.0",
+        "modelStatus": "experimental",
+        "academicValidation": "pending",
+        "modelState": "pendingProspectiveValidation",
+        "forecastOriginDate": "2026-10-03",
+        "targetDate": "2026-10-07",
+        "horizonDays": 4,
+        "sourceArtifacts": [
+          {
+            "preparedDatasetId": 56,
+            "sourceDatasetId": 152
+          },
+          {
+            "preparedDatasetId": 70,
+            "sourceDatasetId": 202
+          },
+          {
+            "preparedDatasetId": 75,
+            "sourceDatasetId": 212
+          }
+        ],
+        "prediction": {
+          "demanda_kwh": 246432097.01925486
+        },
+        "confidence": null,
+        "confidenceStatus": "not_defined",
+        "featureSourceDates": [
+          "2026-09-03",
+          "2026-09-04",
+          "2026-09-05",
+          "2026-09-06",
+          "2026-09-07",
+          "2026-09-08",
+          "2026-09-09",
+          "2026-09-10",
+          "2026-09-11",
+          "2026-09-12",
+          "2026-09-13",
+          "2026-09-14",
+          "2026-09-15",
+          "2026-09-17",
+          "2026-09-18",
+          "2026-09-19",
+          "2026-09-20",
+          "2026-09-21",
+          "2026-09-22",
+          "2026-09-23",
+          "2026-09-24",
+          "2026-09-25",
+          "2026-09-26",
+          "2026-09-27",
+          "2026-09-30",
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-03"
+        ],
+        "actualSourceDates": [
+          "2026-09-03",
+          "2026-09-04",
+          "2026-09-05",
+          "2026-09-06",
+          "2026-09-07",
+          "2026-09-08",
+          "2026-09-09",
+          "2026-09-10",
+          "2026-09-11",
+          "2026-09-12",
+          "2026-09-13",
+          "2026-09-14",
+          "2026-09-15",
+          "2026-09-17",
+          "2026-09-18",
+          "2026-09-19",
+          "2026-09-20",
+          "2026-09-21",
+          "2026-09-22",
+          "2026-09-23",
+          "2026-09-24",
+          "2026-09-25",
+          "2026-09-26",
+          "2026-09-27",
+          "2026-09-30",
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-03"
+        ],
+        "oldestDate": "2026-09-03",
+        "newestDate": "2026-10-03",
+        "count": 28,
+        "calendarSpanDays": 31
+      }
+    }
+  ],
+  "futureRequests": [
+    {
+      "series": "Gene",
+      "targetDate": "2026-10-22",
+      "outcome": "rejected",
+      "status": 422,
+      "code": "FORECAST_HORIZON_NOT_SUPPORTED"
+    },
+    {
+      "series": "DemaSIN",
+      "targetDate": "2026-10-22",
+      "outcome": "rejected",
+      "status": 422,
+      "code": "FORECAST_HORIZON_NOT_SUPPORTED"
+    },
+    {
+      "series": "PrecBolsNaci",
+      "targetDate": "2026-10-22",
+      "outcome": "rejected",
+      "status": 422,
+      "code": "FORECAST_DATA_INSUFFICIENT"
+    }
+  ]
+}

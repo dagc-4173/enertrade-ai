@@ -3,7 +3,7 @@ import { expect, test } from 'bun:test';
 import { createHourlyPublicationRouter } from '@/controllers/hourly-publication.controller';
 test('HOUR-API-01: consulta de fechas, rechazo de fechas inválidas y creación bajo usuario de sesión', async () => {
  const stored: any[] = [];
- const database = { $transaction: async (action: any) => action({ energyPublication: { upsert: async (args: any) => ({ id: 'parent', ...args.create }) }, energyOffer: { createMany: async (args: any) => { stored.push(...args.data); } } }) };
+ const database = { $transaction: async (action: any) => action({ $queryRaw: async () => [{status: 'ACTIVE'}], energyPublication: { upsert: async (args: any) => ({ id: 'parent', ...args.create }) }, energyOffer: { createMany: async (args: any) => { stored.push(...args.data); } } }) };
  const app = express();
  const auth = (req: any, _res: any, next: any) => { req.authUser = { id: 'session-user' }; next(); };
  app.use('/publications', createHourlyPublicationRouter(database as any, auth, () => new Date('2026-10-06T15:00:00Z')));

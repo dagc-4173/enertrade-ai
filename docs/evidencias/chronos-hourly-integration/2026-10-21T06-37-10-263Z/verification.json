@@ -1,0 +1,35 @@
+{
+  "status": "passed",
+  "testId": "CHRONOS-HTTP-REAL-01",
+  "executedAt": "2026-10-21T06:37:32.455Z",
+  "authentication": "substituted middleware; not a real session test",
+  "databaseAccess": false,
+  "xm": "offline replay of previously acquired actual XM snapshots; no live provider validation",
+  "python": "real local inference",
+  "models": [
+    {
+      "model": "chronos2",
+      "status": "passed",
+      "httpStatus": 200,
+      "targetDate": "2026-10-22",
+      "horizonDays": 5,
+      "generatedPeriods": 120,
+      "bridgePeriods": 96,
+      "rows": 24,
+      "executionId": "05ea2a07-8319-4d8a-a695-ca273781c50b",
+      "seconds": 11.482794899999998
+    },
+    {
+      "model": "bolt",
+      "status": "passed",
+      "httpStatus": 200,
+      "targetDate": "2026-10-22",
+      "horizonDays": 5,
+      "generatedPeriods": 120,
+      "bridgePeriods": 96,
+      "rows": 24,
+      "executionId": "a2fe0592-8695-47c9-ac6e-933be86e436a",
+      "seconds": 10.666180200000001
+    }
+  ]
+}

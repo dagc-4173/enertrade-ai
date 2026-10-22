@@ -1,0 +1,41 @@
+{
+  "status": "validated",
+  "adapterVersion": "1.0.0",
+  "normalizerVersion": "1.0.0",
+  "requestedRange": {
+    "startDate": "2024-09-22",
+    "endDate": "2024-10-21"
+  },
+  "catalogRetrievedAt": "2026-10-21T05:55:53.025Z",
+  "retrievedAt": "2026-10-21T05:55:55.177Z",
+  "rawSha256": "19a8124ecd811d1ceac3942c38671c40e21a6d1780ab97cae69dc5afb97d8865",
+  "catalogSha256": "b294d9a4d776e4afcec2e1c0c043e1ce9ff3989ce21498828c80276805ed034d",
+  "normalizedSha256": "aea3a7785c53b0baef7ca21457c09f3adf64b062bc268d736861f29f35068ea7",
+  "catalogEntry": {
+    "MetricId": "DemaReal",
+    "MetricName": "Demanda Real por Sistema",
+    "Entity": "Sistema",
+    "MaxDays": 31,
+    "Type": "HourlyEntities",
+    "Url": "https://servapibi.xm.com.co/hourly",
+    "Filter": "No aplica",
+    "MetricUnits": "kWh",
+    "MetricDescription": "Demanda de usuarios regulados y no regulados que hacen parte del Sistema Interconectado Nacional (no incluye Alumbrado Público)"
+  },
+  "quality": {
+    "rulesetId": "xm_demareal_hourly_capture",
+    "rulesetVersion": "1.0.0",
+    "completeDays": 30,
+    "recordCount": 720,
+    "missingPeriods": 0,
+    "duplicatePeriods": 0,
+    "negativeValues": 0
+  },
+  "limitations": [
+    "No equivale a DemaSIN; excluye alumbrado público.",
+    "No se reconstruyen revisiones ni disponibilidad histórica al origen.",
+    "Periodos XM preservados; no se infiere zona horaria ni timestamp.",
+    "Sin preparación Prisma, entrenamiento, inferencia ni validación académica.",
+    "Acceso público no acredita licencia universal de redistribución."
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "testId": "DR-REAL-01",
+  "hu": [
+    "HU-01",
+    "HU-02"
+  ],
+  "status": "passed",
+  "verifiedAt": "2026-10-21T05:49:49.440Z",
+  "method": "Offline replay of saved raw response and catalog; hash and quality verification through production capture module.",
+  "networkDuringVerification": false,
+  "databaseAccess": false,
+  "recordCount": 24,
+  "metric": "DemaReal",
+  "entity": "Sistema",
+  "rawSha256": "a4e4820b11ac5d627cf05c4af04665773fe823d7b1473a910b2bf2a735afa6c3",
+  "normalizedSha256": "583396a2b37b1883ac9ac2ab53e64cd95ea8602e6b4c4a9bcdff3ff5d628b33f",
+  "originalAcquiredAt": "2026-10-21T05:46:33.415Z",
+  "conclusion": "One historical day acquired and replayed successfully; not evidence of full 2023-2025 coverage or forecasting quality."
+}

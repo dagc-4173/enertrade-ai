@@ -1,0 +1,71 @@
+{
+  "root": "D:\\Proyectos\\docs\\evidencias\\predicciones-verificacion\\2026-10-22T01-00-31-179Z",
+  "authentication": "service invocation, no browser session substitution or HTTP auth test",
+  "prospectiveValidation": false,
+  "checks": [
+    {
+      "series": "price",
+      "model": "ridge",
+      "targetDate": "2026-10-22",
+      "status": "passed",
+      "rows": 24,
+      "seconds": 2.246
+    },
+    {
+      "series": "price",
+      "model": "bolt",
+      "targetDate": "2026-10-22",
+      "status": "passed",
+      "rows": 24,
+      "seconds": 17.1
+    },
+    {
+      "series": "price",
+      "model": "chronos2",
+      "targetDate": "2026-10-22",
+      "status": "failed",
+      "code": "EXTERNAL_TIMEOUT",
+      "message": "XM no respondió a tiempo.",
+      "seconds": 15.01
+    },
+    {
+      "series": "demand",
+      "model": "bolt",
+      "targetDate": "2026-10-22",
+      "status": "passed",
+      "rows": 24,
+      "seconds": 15.091
+    },
+    {
+      "series": "demand",
+      "model": "chronos2",
+      "targetDate": "2026-10-22",
+      "status": "passed",
+      "rows": 24,
+      "seconds": 24.677
+    },
+    {
+      "series": "supply",
+      "model": "bolt",
+      "targetDate": "2026-10-22",
+      "status": "passed",
+      "rows": 24,
+      "seconds": 12.929
+    },
+    {
+      "series": "supply",
+      "model": "chronos2",
+      "targetDate": "2026-10-22",
+      "status": "passed",
+      "rows": 24,
+      "seconds": 14.492
+    }
+  ],
+  "retry": {
+    "series": "price",
+    "model": "chronos2",
+    "status": "failed",
+    "code": "EXTERNAL_TIMEOUT",
+    "seconds": 15.029
+  }
+}

@@ -1,0 +1,56 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\energy-transaction.test.ts:
+(pass) Confirmacion: capacidad bajo la misma frontera transaccional > CAP-A: pendientes importados 7+7 sobre 10 tienen un solo ganador
+(pass) Confirmacion: capacidad bajo la misma frontera transaccional > CAP-B/E: confirmado 3 mas pendiente 7 confirma hasta 10 sin contar su reserva dos veces
+(pass) Confirmacion: capacidad bajo la misma frontera transaccional > CAP-C: 3+7.01 rechaza por la capacidad limitante {"offer":"10","demand":"20","code":"OFFER_CONFIRMATION_CAPACITY_EXCEEDED"}
+(pass) Confirmacion: capacidad bajo la misma frontera transaccional > CAP-C: 3+7.01 rechaza por la capacidad limitante {"offer":"20","demand":"10","code":"DEMAND_CONFIRMATION_CAPACITY_EXCEEDED"}
+(pass) Confirmacion: capacidad bajo la misma frontera transaccional > CAP-D: un retry tras P2034 relee el ganador y revalida antes de cualquier write [15.00ms]
+(pass) Confirmacion: capacidad bajo la misma frontera transaccional > CAP-F: limite Decimal(20,2) conserva centesima 0.01
+(pass) Confirmacion: capacidad bajo la misma frontera transaccional > CAP-F: limite Decimal(20,2) conserva centesima 0.02
+(pass) C20a simulated energy transactions > TX-01: crea propuesta cross-user con precio de oferta, total exacto y DTO privado
+(pass) C20a simulated energy transactions > TX-02: rechaza misma persona
+(pass) C20a simulated energy transactions > TX-02: rechaza oferta inexistente
+(pass) C20a simulated energy transactions > TX-02: rechaza demanda inexistente
+(pass) C20a simulated energy transactions > TX-02: rechaza fecha distinta
+(pass) C20a simulated energy transactions > TX-02: rechaza cantidad cero
+(pass) C20a simulated energy transactions > TX-02: rechaza cantidad negativa
+(pass) C20a simulated energy transactions > TX-02: rechaza cantidad supera oferta
+(pass) C20a simulated energy transactions > TX-02: rechaza cantidad supera demanda
+(pass) C20a simulated energy transactions > TX-02: rechaza usuario ajeno
+(pass) C20a simulated energy transactions > TX-03: la aceptación de la contraparte confirma una propuesta autoaceptada por su creador
+(pass) C20a simulated energy transactions > TX-04: tercero no puede aceptar y REJECTED/CANCELLED liberan reserva [16.00ms]
+(pass) C20a simulated energy transactions > TX-05: no permite reject ni cancel después de CONFIRMED
+(pass) C20a simulated energy transactions > TX-06: propuesta parcial confirmada deja cinco kWh disponibles en la oferta
+(pass) C20a simulated energy transactions > TX-07: dos propuestas concurrentes de 8000 sobre saldo 10000 no duplican reserva
+(pass) C20a simulated energy transactions > TX-08: mine y detalle sólo muestran transacciones de participantes
+(pass) C20f gestión de propuestas transaccionales > TXF-01: creador edita propuesta pendiente y recalcula total sin exponer su ID
+(pass) C20f gestión de propuestas transaccionales > TXF-02: receptor y tercero no pueden editar; payload sólo acepta cantidad válida
+(pass) C20f gestión de propuestas transaccionales > TXF-03: otras reservas cuentan, pero la propuesta editada no se duplica
+(pass) C20f gestión de propuestas transaccionales > TXF-04: reducir cantidad libera reserva para una propuesta nueva
+(pass) C20f gestión de propuestas transaccionales > TXF-05: editar pendiente invalida aceptaciones y cancelar sigue disponible hasta confirmar
+(pass) C20f gestión de propuestas transaccionales > TXF-05b: edit, accept, reject y cancel devuelven DTO participante sin IDs internos
+(pass) C20f gestión de propuestas transaccionales > TXF-06: creador cancela, receptor rechaza y roles inversos se rechazan
+(pass) C20f gestión de propuestas transaccionales > TXF-07: confirmada y legacy no admiten gestión de creador
+(pass) C21a saldos parciales acumulativos > C21a-01: confirmadas parciales mantienen publicaciones ACTIVE y una reserva pendiente no las cumple
+(pass) C21a saldos parciales acumulativos > C21a-02: cancelación y rechazo liberan reserva sin modificar cantidad publicada
+(pass) C21a saldos parciales acumulativos > C21a-03: una demanda acumula proveedores y una oferta acumula demandantes con cantidades desiguales
+(pass) C21a saldos parciales acumulativos > C21a-04: una oferta cubre varias demandas sin exceder su saldo acumulado
+(pass) C21a.2 publicaciones vencidas > C21a.2-01: una publicación ACTIVE con fecha anterior se vence antes de crear propuesta
+(pass) C21a.2 publicaciones vencidas > C21a.2-02: la fecha de negocio de hoy no vence una publicación
+(pass) C21b negociación de precio y cantidad > C21b-01: exige precio explícito y permite negociar fuera del rango automático
+(pass) C21b negociación de precio y cantidad > C21b-02: contrapropuestas alternan, reinician aceptación y preservan historial privado
+(pass) C21b negociación de precio y cantidad > C21b-03: negociación 50.000 conserva publicaciones, snapshot, saldos y aceptación del último término [15.00ms]
+(pass) C21b negociación de precio y cantidad > C21b-04: ajuste de reserva, cancelación y rechazo preservan revisiones
+(pass) Negociación horaria > BATCH-MEMORY-01: lote in-memory conserva hour/batchId sin llamar Prisma global
+(pass) Negociación horaria > BATCH-MEMORY-02: fallo de segunda hora revierte transacciones, revisiones y reservas
+(pass) Negociación horaria > BATCH-MEMORY-03: repositorio sin frontera atomica falla sin fallback
+(pass) Negociación horaria > BATCH-ISOLATED-01: no crea ni cancela acuerdos fuera de ambos propietarios fixture
+(pass) Negociación horaria > HOUR-TX-01: rechaza horas distintas e histórico contra horario
+(pass) Negociación horaria > HOUR-TX-02: reserva parcial conserva hora; al cierre no acepta ni contrapropone
+(pass) GATE-UNIT: repositorio sin aprobación o aprobación negativa bloquea propuestas
+
+ 48 pass
+ 0 fail
+ 167 expect() calls
+Ran 48 tests across 1 file. [180.00ms]

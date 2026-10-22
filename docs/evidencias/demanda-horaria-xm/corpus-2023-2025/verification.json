@@ -1,0 +1,41 @@
+{
+  "testId": "CORPUS-REAL-01",
+  "status": "passed",
+  "verifiedAt": "2026-10-21T05:56:47.9396565Z",
+  "networkDuringVerification": false,
+  "databaseAccess": false,
+  "summary": {
+    "status": "verified",
+    "root": "D:\\Proyectos\\docs\\evidencias\\demanda-horaria-xm\\corpus-2023-2025",
+    "rows": 26304,
+    "days": 1096,
+    "corpusSha256": "e52819f935bb22c6d01cfd4546b23c192d6848ecd748c352d2c2e355881f4fa6",
+    "partitions": [
+      {
+        "id": "train",
+        "startDate": "2023-01-01",
+        "endDate": "2024-12-31",
+        "expectedRows": 17544,
+        "rowCount": 17544,
+        "completeDays": 731
+      },
+      {
+        "id": "validation",
+        "startDate": "2025-01-01",
+        "endDate": "2025-06-30",
+        "expectedRows": 4344,
+        "rowCount": 4344,
+        "completeDays": 181
+      },
+      {
+        "id": "test",
+        "startDate": "2025-07-01",
+        "endDate": "2025-12-31",
+        "expectedRows": 4416,
+        "rowCount": 4416,
+        "completeDays": 184
+      }
+    ]
+  },
+  "limitations": "Retrospective structural quality; no model training or historical availability reconstruction."
+}

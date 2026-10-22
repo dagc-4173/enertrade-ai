@@ -6,8 +6,11 @@ import express, { type ErrorRequestHandler } from 'express'
 import { createSimulatedPaymentRouter } from '@/controllers/simulated-payment.controller';
 import { createSimulatedPaymentService } from '@/services/simulated-payment.service';
 import { router as publicationVerificationRouter } from '@/controllers/publication-verification.controller';
-import { requireAuth } from '@/middlewares/auth.middleware';
+import { requireAuth, type AuthLookup } from '@/middlewares/auth.middleware';
 import { router as hourlyPublicationRouter } from '@/controllers/hourly-publication.controller';
+import {router as sessionManagementRouter} from '@/controllers/session-management.controller';
+import {router as changePasswordRouter} from '@/controllers/change-password.controller';
+import {router as passwordRecoveryRouter} from '@/controllers/password-recovery.controller';
 import {router as authRouter} from "@/controllers/auth.controller";
 import {router as datasetRouter} from "@/controllers/dataset.controller";
 import { validateDatasetRequest } from '@/controllers/dataset-validation.controller';
@@ -29,6 +32,8 @@ import { router as energySeriesRouter } from '@/controllers/energy-series.contro
 import { router as xmDailySyncRouter } from '@/controllers/xm-daily-sync.controller';
 import { requestIdMiddleware } from '@/middlewares/request-id.middleware';
 import { createAiQueryTraceMiddleware } from '@/middlewares/ai-query-trace.middleware';
+import { router as adminRouter } from '@/controllers/admin.controller';
+import { requireAdmin, adminOrigin } from '@/middlewares/admin.middleware';
 import { prisma } from '@/lib/prisma';
 import { createTracedMatchingService, matchingTrace } from '@/services/matching-trace.service';
 import { expireActivePublications, type PublicationExpirationScope } from '@/services/publication-expiration.service';
@@ -36,7 +41,7 @@ import { createAvailableMatchingReadRepository, createMarketService } from '@/se
 import { createOfferService } from '@/services/offer.service';
 import { createDemandService } from '@/services/demand.service';
 import { createEnergyTransactionService } from '@/services/energy-transaction.service';
-export function createApp(options: { expirationScope?: PublicationExpirationScope } = {}) {
+export function createApp(options: { expirationScope?: PublicationExpirationScope; administrativeAuth?: AuthLookup } = {}) {
 const app = express()
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim()
 
@@ -67,6 +72,11 @@ app.use((req, res, next) => {
     }
     next()
 })
+
+app.use(['/datasets', '/indicators', '/capabilities/versions', '/admin'], ...requireAdmin(options.administrativeAuth), adminOrigin)
+app.post('/external-data/import', ...requireAdmin(options.administrativeAuth), adminOrigin)
+app.get('/patterns', ...requireAdmin(options.administrativeAuth))
+app.use('/admin', adminRouter)
 
 app.post('/datasets/:id/validate', validateDatasetRequest)
 app.post('/datasets/:id/prepare', prepareDatasetRequest)
@@ -121,6 +131,9 @@ app.use('/prepared-datasets', preparedDatasetCatalogRouter)
 app.use('/energy-series', energySeriesRouter)
 app.use('/', xmDailySyncRouter)
 app.use('/patterns', patternsRouter)
+app.use('/auth', (req,res,next)=>{if(['/forgot-password','/reset-password'].includes(req.path.replace(/\/$/,'')))return passwordRecoveryRouter(req,res,next);next();})
+app.use('/auth', (req,res,next)=>{if(req.path.replace(/\/$/,'')==='/change-password')return changePasswordRouter(req,res,next);next();})
+app.use('/auth/sessions', sessionManagementRouter)
 app.use('/auth', authRouter)
 app.use('/health', healthRouter)
 

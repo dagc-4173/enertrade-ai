@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { authStore } from '../auth/authStore'
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react'
 import { DataTable, type DataTableColumn } from '../components/tables/DataTable'
 import { SectionHeader } from '../components/ui/SectionHeader'
 import { StatusBadge } from '../components/ui/StatusBadge'
@@ -44,6 +45,8 @@ export function PatternResults({ analysis }: { analysis: PatternAnalysisResponse
 }
 
 export function Patterns() {
+ const { user } = useSyncExternalStore(authStore.subscribe,authStore.getSnapshot,authStore.getSnapshot)
+ const isAdmin = user?.role === 'ADMIN'
  const [preparedId,setPreparedId] = useState(''), [filters,setFilters] = useState<PatternFilters>({})
  const [history,setHistory] = useState<PatternAnalysis[]>([]), [historyState,setHistoryState] = useState<'loading'|'success'|'error'>('loading')
  const [analysisError,setAnalysisError] = useState(''), [historyError,setHistoryError] = useState('')
@@ -51,11 +54,11 @@ export function Patterns() {
  const resultRef = useRef<HTMLDivElement>(null)
  const invalidRange = Boolean(filters.from && filters.to && filters.from > filters.to)
  useEffect(() => {
-   if (invalidRange) return
+   if (invalidRange || !isAdmin) return
    const controller = new AbortController()
    getPatterns(filters,controller.signal).then(value => { if (!controller.signal.aborted) { setHistory(value);setHistoryError('');setHistoryState('success') } }).catch(reason => { if (!controller.signal.aborted) { setHistoryError(errorMessage(reason));setHistoryState('error') } })
    return () => controller.abort()
- },[filters,refresh,invalidRange])
+ },[filters,refresh,invalidRange,isAdmin])
  function changeFilters(next: PatternFilters) { setHistoryState('loading');setHistoryError('');setFilters(next) }
  async function submit(event: FormEvent<HTMLFormElement>) {
    event.preventDefault()
@@ -77,8 +80,8 @@ export function Patterns() {
  <form className="marketplace-form pattern-form" onSubmit={submit} aria-busy={analyzing}><PreparedDatasetSelect value={preparedId} onChange={setPreparedId} requirements={patternRequirements} /><button type="submit" className="primary-button" disabled={analyzing || !preparedId}>{analyzing ? 'Analizando…' : 'Analizar patrones'}</button></form><p>Elige un dataset XM compatible. Ejecutar el análisis intentará guardar su resultado; abrir un análisis del histórico solo consulta los datos existentes.</p></section>
  {analysisError && <section className="panel" role="alert">{analysisError}</section>}
  <div ref={resultRef} tabIndex={-1} className="pattern-result-anchor">{result && <PatternResults analysis={result} />}</div>
- <section className="panel"><SectionHeader eyebrow="Histórico" title="Análisis registrados" description="Los filtros de fecha buscan análisis cuyo período de datos se cruza con el intervalo elegido; no filtran la fecha de ejecución." />
+ {isAdmin && <section className="panel"><SectionHeader eyebrow="Histórico" title="Análisis registrados" description="Los filtros de fecha buscan análisis cuyo período de datos se cruza con el intervalo elegido; no filtran la fecha de ejecución." />
  <div className="pattern-filters"><label>Desde<input type="date" value={filters.from ?? ''} onChange={event => changeFilters({...filters,from:event.target.value || undefined})} /></label><label>Hasta<input type="date" value={filters.to ?? ''} onChange={event => changeFilters({...filters,to:event.target.value || undefined})} /></label><label>Tipo de datos<select value={filters.dataType ?? ''} onChange={event => changeFilters({...filters,dataType:(event.target.value || undefined) as PatternDataType | undefined})}><option value="">Todos los tipos</option><option value="generacion">Generación</option><option value="demanda">Demanda</option><option value="precios">Precios</option></select></label><label>Variable<select value={filters.variable ?? ''} onChange={event => changeFilters({...filters,variable:(event.target.value || undefined) as PatternVariable | undefined})}><option value="">Todas las variables</option><option value="energia_kwh">Generación (kWh)</option><option value="demanda_kwh">Demanda (kWh)</option><option value="precio_cop_kwh">Precio (COP/kWh)</option></select></label><button type="button" className="secondary-button" onClick={() => { changeFilters({});setRefresh(value => value+1) }}>Limpiar filtros</button></div>
  {invalidRange ? <p role="alert" className="pattern-warning">Desde debe ser anterior o igual a Hasta.</p> : <>{historyState === 'loading' && <p role="status">Cargando análisis registrados…</p>}{historyState === 'error' && <div role="alert"><p>{historyError}</p><button type="button" className="secondary-button" onClick={() => { setHistoryState('loading');setRefresh(value => value+1) }}>Reintentar histórico</button></div>}{historyState === 'success' && (history.length === 0 ? <p>No hay análisis registrados para estos filtros.</p> : <DataTable columns={columns} rows={history} getRowKey={row => row.analysisId} />)}</>}
- </section></div>
+ </section>}</div>
 }

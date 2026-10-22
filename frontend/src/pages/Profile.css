@@ -21,3 +21,14 @@
  .profile-overview { align-items:flex-start;flex-direction:column; }
  .profile-identity { gap:12px; }
 }
+
+.profile-password-form {display:grid;gap:16px;max-width:520px;margin-top:20px;}
+.profile-password-form label {display:grid;gap:8px;font-weight:600;}
+.profile-password-form input {width:100%;min-width:0;box-sizing:border-box;font:inherit;padding:12px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-surface);color:var(--color-text);}
+.profile-password-form small {color:var(--color-muted);}
+.profile-password-form button {justify-self:start;}
+
+.profile-security-disclosure>summary {font-size:16px;}
+.profile-security .table-wrap {overflow-x:auto;margin:18px 0;}
+.profile-session-confirm {margin-top:18px;padding:16px;border:1px solid var(--color-border);border-radius:8px;}
+.profile-session-confirm button {margin:0 12px 8px 0;}

@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "model": "chronos2",
+  "series": "price",
+  "rows": 24,
+  "target": "2026-10-22",
+  "origin": "2026-10-18",
+  "unit": "COP/kWh",
+  "seconds": 14.124,
+  "executionId": "e82876a2-5d5a-4fe7-a724-3b5a71dd8cf5"
+}

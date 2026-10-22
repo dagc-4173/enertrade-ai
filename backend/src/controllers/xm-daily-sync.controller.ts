@@ -14,7 +14,6 @@ function metric(body: unknown): XmSyncMetric | undefined {
   throw new XmDailySyncError(400, 'INVALID_XM_SYNC_REQUEST', 'La solicitud de sincronización XM no es válida.');
 }
 
-// The current authentication model has no roles; requireAuth is the narrowest existing access control.
 // Mounted at app root ('/'), so auth is applied per-route (never via router.use) to avoid shadowing unrelated paths.
 export function createXmDailySyncRouter(service: SyncService = xmDailySyncService, auth = requireAuth(), logger: SafeLogger = safeLogger) {
   const router = Router();

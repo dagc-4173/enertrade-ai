@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { authStore } from '../auth/authStore'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { MetricCard } from '../components/cards/MetricCard'
-import { DatasetRegistration } from '../components/datasets/DatasetRegistration'
-import { ExternalDataSources } from '../components/external-data/ExternalDataSources'
 import { ArtifactDisclosure } from '../components/capabilities/ArtifactDisclosure'
 import { ForecastReadiness } from '../components/ForecastReadiness'
 import './Dashboard.css'
@@ -74,6 +73,8 @@ function metrics(data: IndicatorsResponse): MetricCardData[] {
 }
 
 export function Dashboard() {
+  const { user } = useSyncExternalStore(authStore.subscribe, authStore.getSnapshot, authStore.getSnapshot)
+  const isAdmin = user?.role === 'ADMIN'
   const [healthState, setHealthState] = useState<HealthState>({ kind: 'loading' })
   const [healthRetry, setHealthRetry] = useState(0)
   const [indicatorsState, setIndicatorsState] = useState<IndicatorsState>({ kind: 'loading' })
@@ -91,21 +92,23 @@ export function Dashboard() {
 
   useEffect(() => {
     const controller = new AbortController()
+    if (!isAdmin) return
     getIndicators(controller.signal)
       .then(indicators => { if (!controller.signal.aborted) setIndicatorsState({ kind: 'success', indicators }) })
       .catch(error => { if (!controller.signal.aborted) setIndicatorsState({ kind: 'error', message: errorMessage(error, 'No fue posible cargar los indicadores.') }) })
     return () => controller.abort()
-  }, [indicatorsRetry])
+  }, [indicatorsRetry, isAdmin])
 
   useEffect(() => {
     const controller = new AbortController()
+    if (!isAdmin) return
     getCapabilityVersions(controller.signal)
       .then(capabilities => { if (!controller.signal.aborted) setCapabilitiesState({ kind: 'success', capabilities }) })
       .catch(error => { if (!controller.signal.aborted) setCapabilitiesState({ kind: 'error', message: errorMessage(error, 'No fue posible cargar las capacidades activas.') }) })
     return () => controller.abort()
-  }, [capabilitiesRetry])
+  }, [capabilitiesRetry, isAdmin])
 
-  return <DashboardContent
+  return <DashboardContent isAdmin={isAdmin}
     healthState={healthState} indicatorsState={indicatorsState} capabilitiesState={capabilitiesState}
     onRetryHealth={() => { setHealthState({ kind: 'loading' }); setHealthRetry(value => value + 1) }}
     onRetryIndicators={() => { setIndicatorsState({ kind: 'loading' }); setIndicatorsRetry(value => value + 1) }}
@@ -113,7 +116,8 @@ export function Dashboard() {
   />
 }
 
-export function DashboardContent({ healthState, indicatorsState, capabilitiesState, onRetryHealth, onRetryIndicators, onRetryCapabilities }: {
+export function DashboardContent({ isAdmin = true, healthState, indicatorsState, capabilitiesState, onRetryHealth, onRetryIndicators, onRetryCapabilities }: {
+  isAdmin?: boolean
   healthState: HealthState
   indicatorsState: IndicatorsState
   capabilitiesState: CapabilitiesState
@@ -145,6 +149,7 @@ export function DashboardContent({ healthState, indicatorsState, capabilitiesSta
 
       <ForecastReadiness />
 
+      {isAdmin && <>
       {indicatorsState.kind === 'loading' && <p role="status">Cargando indicadores…</p>}
       {indicatorsState.kind === 'error' && <section className="panel" role="alert"><p>{indicatorsState.message}</p><button type="button" className="secondary-button" onClick={onRetryIndicators}>Reintentar indicadores</button></section>}
       {indicatorsState.kind === 'success' && <>
@@ -156,10 +161,8 @@ export function DashboardContent({ healthState, indicatorsState, capabilitiesSta
       {capabilitiesState.kind === 'loading' && <p role="status">Cargando capacidades activas…</p>}
       {capabilitiesState.kind === 'error' && <section className="panel" role="alert"><p>{capabilitiesState.message}</p><button type="button" className="secondary-button" onClick={onRetryCapabilities}>Reintentar capacidades</button></section>}
       {capabilitiesState.kind === 'success' && <ArtifactDisclosure capabilities={capabilitiesState.capabilities} />}
-      <details className="panel dashboard-disclosure"><summary>Gestión de datos · registro manual y consulta XM</summary>
-        <DatasetRegistration />
-        <ExternalDataSources />
-      </details>
+      <p>El registro y preparación de datasets se encuentran en Administración.</p>
+      </>}
     </div>
   )
 }

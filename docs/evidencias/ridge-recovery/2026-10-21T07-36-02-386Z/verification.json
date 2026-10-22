@@ -1,0 +1,148 @@
+{
+  "status": "passed",
+  "executedAt": "2026-10-21T07:36:14.164Z",
+  "mode": "isolated HTTP routers with real Prisma services; not an authentication/browser test; no sync/training/scoring",
+  "catalogCount": 16,
+  "activeCapabilityArtifacts": 16,
+  "historicalArtifacts": 2,
+  "matchedMetricArtifacts": 14,
+  "forecasts": [
+    {
+      "kind": "supply",
+      "targetDate": "2026-10-22",
+      "httpStatus": 200,
+      "modelId": "xm-gene-ridge-direct-h5-v2",
+      "modelVersion": "1.0.0-experimental",
+      "origin": "2026-10-17",
+      "horizonDays": 5,
+      "rows": 24
+    },
+    {
+      "kind": "supply",
+      "targetDate": "2026-10-23",
+      "httpStatus": 200,
+      "modelId": "xm-gene-ridge-direct-h6-v2",
+      "modelVersion": "1.0.0-experimental",
+      "origin": "2026-10-17",
+      "horizonDays": 6,
+      "rows": 24
+    },
+    {
+      "kind": "supply",
+      "targetDate": "2026-10-24",
+      "httpStatus": 200,
+      "modelId": "xm-gene-ridge-direct-h7-v2",
+      "modelVersion": "1.0.0-experimental",
+      "origin": "2026-10-17",
+      "horizonDays": 7,
+      "rows": 24
+    },
+    {
+      "kind": "demand",
+      "targetDate": "2026-10-22",
+      "httpStatus": 200,
+      "modelId": "xm-demandasin-ridge-direct-h6-v5",
+      "modelVersion": "hu06-demand-v5-c-primary@1.0.0",
+      "origin": "2026-10-16",
+      "horizonDays": 6,
+      "rows": 1
+    }
+  ],
+  "availability": [
+    {
+      "series": "Gene",
+      "currentDate": "2026-10-21",
+      "latestObservationDate": "2026-10-17",
+      "latestReceivedDate": "2026-10-17",
+      "latestIndividuallyUsableDate": "2026-10-17",
+      "semanticExcludedDates": [],
+      "modelMaxHorizonDays": 7,
+      "productMaxHorizonDays": 7,
+      "candidateFutureTargetDates": [
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26",
+        "2026-10-27",
+        "2026-10-28"
+      ],
+      "availabilityReason": "AVAILABLE",
+      "eligibleFutureTargetDates": [
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24"
+      ],
+      "nextForecastDate": "2026-10-22",
+      "supportedHorizonDays": 7,
+      "modelMinTargetDate": "2026-10-18",
+      "modelMaxTargetDate": "2026-10-24",
+      "effectiveFutureMinDate": "2026-10-22",
+      "effectiveFutureMaxDate": "2026-10-24",
+      "hasFutureForecastWindow": true,
+      "dataFreshnessDays": 4
+    },
+    {
+      "series": "DemaSIN",
+      "currentDate": "2026-10-21",
+      "latestObservationDate": "2026-10-17",
+      "latestReceivedDate": "2026-10-18",
+      "latestIndividuallyUsableDate": "2026-10-17",
+      "semanticExcludedDates": [
+        "2026-09-16",
+        "2026-09-28",
+        "2026-09-29",
+        "2026-10-04",
+        "2026-10-18"
+      ],
+      "modelMaxHorizonDays": 6,
+      "productMaxHorizonDays": 7,
+      "candidateFutureTargetDates": [
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26",
+        "2026-10-27"
+      ],
+      "availabilityReason": "AVAILABLE",
+      "eligibleFutureTargetDates": [
+        "2026-10-22"
+      ],
+      "nextForecastDate": "2026-10-22",
+      "supportedHorizonDays": 6,
+      "supportedHorizonMinDays": 1,
+      "supportedHorizonMaxDays": 6,
+      "modelMinTargetDate": "2026-10-17",
+      "modelMaxTargetDate": "2026-10-22",
+      "effectiveFutureMinDate": "2026-10-22",
+      "effectiveFutureMaxDate": "2026-10-22",
+      "hasFutureForecastWindow": true,
+      "dataFreshnessDays": 4
+    },
+    {
+      "series": "PrecBolsNaci",
+      "currentDate": "2026-10-21",
+      "latestObservationDate": "2026-10-17",
+      "latestReceivedDate": "2026-10-17",
+      "latestIndividuallyUsableDate": "2026-10-17",
+      "semanticExcludedDates": [],
+      "modelMaxHorizonDays": 1,
+      "productMaxHorizonDays": 7,
+      "candidateFutureTargetDates": [
+        "2026-10-22"
+      ],
+      "availabilityReason": "SOURCE_DATA_STALE",
+      "eligiblePreparedDatasetIds": [],
+      "eligibleFutureTargetDates": [],
+      "nextForecastDate": "2026-10-18",
+      "supportedHorizonDays": 1,
+      "modelMinTargetDate": "2026-10-18",
+      "modelMaxTargetDate": "2026-10-18",
+      "effectiveFutureMinDate": null,
+      "effectiveFutureMaxDate": null,
+      "hasFutureForecastWindow": false,
+      "dataFreshnessDays": 4
+    }
+  ]
+}

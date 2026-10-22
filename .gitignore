@@ -40,3 +40,9 @@ docs/gestion/*.docx
 docs/gestion/*.pdf
 # Evidencia local de inferencia Chronos (no contiene pesos en Git)
 backend/data/chronos-forecasts/
+
+# Despliegue: credenciales y snapshots locales, nunca versionar.
+.env.deploy
+.env.deploy.*
+deployment/models/
+deployment/secrets/

@@ -1,0 +1,10 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\market-balance.test.ts:
+(pass) mercado expone saldo derivado y omite publicaciones ACTIVE sin saldo disponible [16.00ms]
+(pass) refrescar mercado vence publicaciones previas y no las expone
+
+ 2 pass
+ 0 fail
+ 6 expect() calls
+Ran 2 tests across 1 file. [151.00ms]

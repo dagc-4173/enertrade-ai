@@ -1,0 +1,122 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\dataset.test.ts:
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-01: dataset válido -> 201 y una escritura [16.00ms]
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-02: opcional ausente/null/vacío/espacios -> pendientes
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-03: cero y false no son pendientes [15.00ms]
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-04: estructuras inválidas y JSON mal formado sin escritura
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-05: Content-Type incorrecto o ausente -> 415
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-06: campos ausentes, tipo desconocido y duplicados
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-07: fallo Prisma -> 500 sin detalles sensibles
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-08: contenido íntegro y defaults delegados a PostgreSQL [16.00ms]
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-09: seis tipos admitidos y JSON con charset
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-10: no se impone límite de 100 KiB
+(pass) HU-01: registro HTTP con persistencia sustituida > HU01-11: /auth rechaza datos inválidos sin registrar datasets
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-01: aprobado
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-02: zona faltante
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-03: zona tipo incorrecto
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-04: críticos vacíos; ausencia estructural es 409 [16.00ms]
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-05: tipos críticos
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-06: cero y negativos
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-07: fechas, offsets y fracciones admitidas
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-08: fechas inválidas sin corrección
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-09: identidad por instante y primer índice
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-10: misma energía, instantes distintos y sin ordenar
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-11: error y warning conservados
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-12: inexistente
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-13: tipo no aplicable
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-14: declaración incompatible
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-15: corrupción estructural
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-16: resultado previo intacto
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-17: fallos técnicos controlados
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-18: carrera, ganador y conflicto (simulados)
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-19: escritura atómica y contenido intacto
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-20: sin body y solicitudes inválidas [15.00ms]
+(pass) HU-02: HTTP y concurrencia con Prisma sustituido > HU02-21: count cero, desaparición o estado inesperado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-01: selección, envelope y persistencia atómica sin cambiar contenido
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-02: contrato simulado tiene prioridad aun con columnas XM
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 2024-04-01 -> aprobado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 2024-02-29 -> aprobado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 2000-02-29 -> aprobado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 2023-02-29 -> rechazado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 1900-02-29 -> rechazado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 2024-04-31 -> rechazado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 2024-13-01 -> rechazado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 2024-01-00 -> rechazado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 0000-01-01 -> rechazado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 2024-4-01 -> rechazado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario 2024-04-01T00:00:00Z -> rechazado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-03: calendario  2024-04-01 -> rechazado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-04: periodo 0
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-04: periodo 1
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-04: periodo 24
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-04: periodo 25
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-04: periodo 1.5
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-04: periodo "1"
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-04: periodo true
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-05: energía finita %s aceptada sin transformación
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-05: energía finita %s aceptada sin transformación
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-05: energía finita %s aceptada sin transformación
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-06: tipo incompatible energia_kwh="12.5"
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-06: tipo incompatible energia_kwh=false
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-06: tipo incompatible fecha_xm=20240401
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-07: críticos vacíos y ausencias estructurales mantienen su distinción [16.00ms]
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-08: identidad por pareja, referencia al primer duplicado
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-09: no exigir zona, días completos ni orden; ignorar contexto extra
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-10: columnas incompatibles o tipo ajeno -> 422 sin escritura
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-11: vacío y números no finitos almacenados -> 409 sin escritura
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-12: aprobado por HU-02 selecciona preparación XM
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-13: validación completada no se sobrescribe
+(pass) HU-02 XM Gene: HTTP con Prisma sustituido > XM-14: errores de persistencia seguros
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-01: contrato exacto, 24 periodos, valores e índices intactos
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-02: orden original y columnas extra sin copiar a preparados
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-03: estado recibido bloqueado
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-03: estado rechazado bloqueado
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-04: informes incompatibles no seleccionan por source ni columnas
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-05: conteo inconsistente
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-06: estructuras y valores corruptos
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-07: columnas incompatibles [16.00ms]
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-08: duplicados pese a informe aprobado
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-09: idempotencia secuencial por perfil/version
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-10: concurrencia y P2002 capturado recuperan ganador
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-11: P2002 ajeno y otros errores conservan fallo seguro
+(pass) HU-03 XM: preparación HTTP con Prisma sustituido > XMP-12: P2002 esperado sin ganador
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-01: aprobado, contratos y defaults
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-02: zona missing
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-03: zona null
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-04: zona empty
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-05: zona blank
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-06: zona type_mismatch
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-07: zona exacta
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-08: fecha canónica
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-09: fecha canónica
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-10: fecha canónica
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-11: columnas adicionales
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-12: orden original e índices
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-13: energía cero y negativa intacta
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-14: recibido bloqueado
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-15: rechazado bloqueado
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-16: inexistente
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-17: tipo o declaración no aplicable
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-18: informe inconsistente
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-19: contenido inconsistente [15.00ms]
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-20: IDs inválidos
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-21: body rechazado sin parsear
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-22: sin Content-Type permitido
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-23: reutilización sin transformar
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-24: original inmutable
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-25: sin features
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-26: metadatos no duplicados
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-27: carrera simulada con unicidad
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-28: unicidad ajena o sin identificar no se oculta
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-29: años UTC extendidos conservan instante
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-30: fallos de lectura y ganador ausente
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-31: unicidad identificada por driver adapter
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-32: P2002 capturado recupera el ganador sin modificarlo
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-33: variantes no observadas o restricción ajena fallan cerradas
+(pass) HU-03: preparación HTTP con Prisma sustituido > HU03-34: P2002 capturado sin ganador conserva fallo seguro
+
+ 114 pass
+ 0 fail
+ 510 expect() calls
+Ran 114 tests across 1 file. [507.00ms]

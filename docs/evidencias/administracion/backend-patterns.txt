@@ -1,0 +1,19 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\patterns.test.ts:
+(pass) HU12/HU13 análisis y consulta de patrones > PATTERN-09 y PATTERN-10: POST persiste método y snapshot igual a respuesta técnica [31.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > persistencia fallida conserva el resultado técnico sin filtrar error interno [31.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > POST rechaza body inválido object vacío [31.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > POST rechaza body inválido null [32.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > POST rechaza body inválido array [31.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > POST rechaza body inválido id cero [31.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > POST rechaza body inválido campo extra [47.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > dataset inexistente e incompatible devuelven errores funcionales [47.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > PATTERN-Q-01 a Q-05/Q-08: GET filtra intersección, tipo, variable y orden [125.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > PATTERN-Q-07 y Q-09: GET valida filtros y no expone campos internos [78.00ms]
+(pass) HU12/HU13 análisis y consulta de patrones > PATTERN-Q-06: requiere autenticación [31.00ms]
+
+ 11 pass
+ 0 fail
+ 21 expect() calls
+Ran 11 tests across 1 file. [757.00ms]

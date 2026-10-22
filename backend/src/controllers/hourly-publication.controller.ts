@@ -12,6 +12,8 @@ router.post('/', express.json({ limit: '64kb' }), async (req, res, next) => {
   try {
     const input = validateHourlyPublication(req.body, now());
     const publications = await database.$transaction(async tx => {
+      const accounts = await tx.$queryRaw<Array<{status: string}>>`SELECT "status" FROM "User" WHERE "id" = ${req.authUser!.id}::uuid FOR UPDATE`;
+      if (accounts[0]?.status !== 'ACTIVE') throw new EnergyMarketInputError('ACCOUNT_BLOCKED', 'La cuenta no está activa.');
       const rows = [];
       for (const day of input.days) {
         const deliveryDate = new Date(`${day.deliveryDate}T00:00:00Z`);

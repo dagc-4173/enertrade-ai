@@ -256,7 +256,33 @@ model MatchingExecution {
   @@index([executionStatus])
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+model AdminAudit {
+  id String @id @default(uuid()) @db.Uuid
+  actorId String @db.Uuid
+  targetId String @db.Uuid
+  action String
+  reason String
+  before Json
+  after Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  actor User @relation("AdminAuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+  target User @relation("AdminAuditTarget", fields: [targetId], references: [id], onDelete: Restrict)
+  @@index([createdAt, id])
+  @@index([targetId])
+}
 model User {
+  role UserRole @default(USER)
+  status UserStatus @default(ACTIVE)
+  adminActions AdminAudit[] @relation("AdminAuditActor")
+  adminChanges AdminAudit[] @relation("AdminAuditTarget")
   publicationVerifications PublicationVerification[]
   simulationProfiles SimulationCapacityProfile[]
   publications EnergyPublication[]
@@ -268,6 +294,7 @@ model User {
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   simulatedPayments SimulatedPaymentAttempt[]
   sessions AuthSession[]
+  passwordResets PasswordReset[]
   offers EnergyOffer[]
   demands EnergyDemand[]
   sales EnergyTransaction[] @relation("EnergyTransactionSeller")
@@ -275,7 +302,17 @@ model User {
   proposedTransactions EnergyTransaction[] @relation("EnergyTransactionProposer")
   transactionRevisions EnergyTransactionRevision[] @relation("EnergyTransactionRevisionProposer")
 }
+model PasswordReset {
+  tokenHash String @id @db.Char(64)
+  userId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@index([expiresAt])
+}
 model AuthSession {
+  id String @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tokenHash String @id @db.Char(64)
   userId String @db.Uuid
   createdAt DateTime @default(now()) @db.Timestamptz(3)

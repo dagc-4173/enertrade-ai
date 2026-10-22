@@ -1,0 +1,38 @@
+{
+  "id": "xm-demareal-hourly-2023-2025",
+  "version": "1.0.0",
+  "range": {
+    "startDate": "2023-01-01",
+    "endDate": "2025-12-31"
+  },
+  "partitions": [
+    {
+      "id": "train",
+      "startDate": "2023-01-01",
+      "endDate": "2024-12-31",
+      "expectedRows": 17544
+    },
+    {
+      "id": "validation",
+      "startDate": "2025-01-01",
+      "endDate": "2025-06-30",
+      "expectedRows": 4344
+    },
+    {
+      "id": "test",
+      "startDate": "2025-07-01",
+      "endDate": "2025-12-31",
+      "expectedRows": 4416
+    }
+  ],
+  "target": "demanda_real_kwh",
+  "metric": "DemaReal",
+  "entity": "Sistema",
+  "unit": "kWh",
+  "expectedDays": 1096,
+  "expectedRows": 26304,
+  "windowDays": 30,
+  "temporalIdentity": "fecha_xm + periodo XM 1..24; sin timestamp inferido",
+  "evaluationScope": "retrospective; historical publication times and revisions not reconstructed",
+  "transformations": "sort only; no imputation, scaling, clipping, rounding or feature fitting"
+}

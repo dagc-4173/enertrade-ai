@@ -3,7 +3,7 @@ import type { DatasetValidationResult, PreparedDatasetResult, RegisteredDataset 
 
 // Input remains unknown deliberately: structural/business validation belongs to Express.
 export async function registerDataset(input: unknown): Promise<RegisteredDataset> {
-  const { status, data } = await postJson<RegisteredDataset>('/datasets', input)
+  const { status, data } = await postJson<RegisteredDataset>('/datasets', input, { credentials: 'include' })
   if (status !== 201 || !data || typeof data.id !== 'number' ||
       typeof data.source !== 'string' || typeof data.dataType !== 'string' ||
       typeof data.uploadedAt !== 'string' || data.status !== 'recibido' ||
@@ -17,7 +17,7 @@ export async function registerDataset(input: unknown): Promise<RegisteredDataset
 
 export async function validateDataset(datasetId: number): Promise<DatasetValidationResult> {
   // No body or Content-Type: this is the exact Express validation contract.
-  const { status, data } = await postJson<DatasetValidationResult>(`/datasets/${datasetId}/validate`)
+  const { status, data } = await postJson<DatasetValidationResult>(`/datasets/${datasetId}/validate`, undefined, { credentials: 'include' })
   // Check the response shape only; never calculate quality or infer canProceed.
   if (status !== 200 || !data || data.datasetId !== datasetId ||
       !['aprobado', 'advertencia', 'rechazado'].includes(data.status) ||
@@ -35,7 +35,7 @@ export async function validateDataset(datasetId: number): Promise<DatasetValidat
 }
 
 export async function prepareDataset(datasetId: number): Promise<PreparedDatasetResult> {
-  const { status, data } = await postJson<unknown>(`/datasets/${datasetId}/prepare`)
+  const { status, data } = await postJson<unknown>(`/datasets/${datasetId}/prepare`, undefined, { credentials: 'include' })
   const result = data !== null && typeof data === 'object' && !Array.isArray(data) ? data as Record<string, unknown> : null
   if (status !== 200 || !result ||
       result.datasetId !== datasetId || typeof result.preparedDatasetId !== 'number' || !Number.isSafeInteger(result.preparedDatasetId) || result.preparedDatasetId < 1 ||

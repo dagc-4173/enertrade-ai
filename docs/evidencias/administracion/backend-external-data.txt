@@ -1,0 +1,83 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\external-data.test.ts:
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-01: 201 exacto, HU-01 real, periodos y valores intactos [16.00ms]
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-Precio: 201 exacto, HU-01 real, periodos y valores intactos
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-DemaSIN: mapping diario exacto y source determinista
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-02: entrada inválida {"provider":"noaa","dataset":"Gene","startDate":"2024-04-01","endDate":"2024-04-01"}
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-02: entrada inválida {"provider":"xm","dataset":"unknown","startDate":"2024-04-01","endDate":"2024-04-01"}
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-02: entrada inválida {"provider":"xm","dataset":"Gene","startDate":"2024-02-30","endDate":"2024-04-01"}
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-02: entrada inválida {"provider":"xm","dataset":"Gene","startDate":"2024-04-01","endDate":"2024-03-31"} [15.00ms]
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-02: entrada inválida {"provider":"xm","dataset":"Gene","startDate":"2024-04-01","endDate":"2024-05-01"}
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-02: entrada inválida {"provider":"xm","dataset":"Gene","startDate":"2024-04-01"}
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-02: entrada inválida {"provider":"xm","dataset":"Gene","startDate":"2024-04-01","endDate":"2024-04-01","filters":{}}
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-02: entrada inválida {"provider":"xm","dataset":"Gene","startDate":"2024-04-01","endDate":"2024-04-01","source":"cliente"}
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-02: entrada inválida []
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-03: vacío -> 422 sin escritura Gene
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-03: vacío -> 422 sin escritura PrecBolsNaci
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-04: fallo XM http sin escritura
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-04: fallo XM network sin escritura
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-04: fallo XM timeout sin escritura [32.00ms]
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-04: fallo XM malformed sin escritura
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-05: fallo de registro -> 500 seguro
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-06: JSON inválido y Content-Type incorrecto no consultan ni escriben
+(pass) Importación XM: registro HU-01 real, transporte y Prisma sustituidos > IMP-07: repetición no es idempotente, source determinista
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-01: catálogo controlado, sin consulta externa
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza provider desconocido antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza provider ausente antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza dataset desconocido antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza dataset no string antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza fecha imposible antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza año no bisiesto antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza fecha sin padding antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza timestamp antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza fecha ausente antes de llamar a XM [15.00ms]
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza rango invertido antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza 31 días inclusivos antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza filtro no aplicable antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza filtro array antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza URL arbitraria antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-02: rechaza cuerpo array antes de llamar a XM
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-03: normalización horaria y contrato exacto saliente
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-04: demanda SIN diaria y unidad
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-05: precio de bolsa conserva unidad y no agrega horas
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-06: año bisiesto válido y resultado vacío explícito
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-07: HTTP XM %s -> envelope 502 seguro
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-07: HTTP XM %s -> envelope 502 seguro
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-07: HTTP XM %s -> envelope 502 seguro
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-07: HTTP XM %s -> envelope 502 seguro
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-07: HTTP XM %s -> envelope 502 seguro
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-08: error de red -> 502 sin detalles internos
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-09: timeout aborta realmente la llamada -> 504 [32.00ms]
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-10: respuesta estructuralmente malformada -> 502 (null)
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-10: respuesta estructuralmente malformada -> 502 ({})
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-10: respuesta estructuralmente malformada -> 502 ({"Metric":{"Id":"Gene"},"Items":{}})
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-10: respuesta estructuralmente malformada -> 502 ({"Metric":{"Id":"otra"},"Items":[{"Date":"2024-04-01","HourlyEntities":[{"Id":"Sistema","Values":{"code":"Sistema","Hour01":"1.25000","Hour02":"2.25000","Hour03":"3.25000","Hour04":"4.25000","Hour05":"5.25000","Hour06":"6.25000","Hour07":"7.25000","Hour08":"8.25000","Hour09":"9.25000","Hour10":"10.25000","Hour11":"11.25000","Hour12":"12.25000","Hour13":"13.25000","Hour14":"14.25000","Hour15":"15.25000","Hour16":"16.25000","Hour17":"17.25000","Hour18":"18.25000","Hour19":"19.25000","Hour20":"20.25000","Hour21":"21.25000","Hour22":"22.25000","Hour23":"23.25000","Hour24":"24.25000"}}]}]})
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-10: respuesta estructuralmente malformada -> 502 ({"Metric":{"Id":"Gene"},"Items":[{"Date":"2024-04-01","HourlyEntities":[]}]})
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-10: respuesta estructuralmente malformada -> 502 ({"Metric":{"Id":"Gene"},"Items":[{"Date":"2024-04-02","HourlyEntities":[{"Id":"Sistema","Values":{"code":"Sistema","Hour01":"1.25000","Hour02":"2.25000","Hour03":"3.25000","Hour04":"4.25000","Hour05":"5.25000","Hour06":"6.25000","Hour07":"7.25000","Hour08":"8.25000","Hour09":"9.25000","Hour10":"10.25000","Hour11":"11.25000","Hour12":"12.25000","Hour13":"13.25000","Hour14":"14.25000","Hour15":"15.25000","Hour16":"16.25000","Hour17":"17.25000","Hour18":"18.25000","Hour19":"19.25000","Hour20":"20.25000","Hour21":"21.25000","Hour22":"22.25000","Hour23":"23.25000","Hour24":"24.25000"}}]}]})
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-10: respuesta estructuralmente malformada -> 502 ({"Metric":{"Id":"Gene"},"Items":[{"Date":"2024-04-01","HourlyEntities":[{"Id":"Sistema","Values":{"code":"Sistema","Hour01":"1.25000","Hour02":"2.25000","Hour03":"3.25000","Hour04":"4.25000","Hour05":"5.25000","Hour06":"6.25000","Hour07":"7.25000","Hour08":"8.25000","Hour09":"9.25000","Hour10":"10.25000","Hour11":"11.25000","Hour12":"12.25000","Hour13":"13.25000","Hour14":"14.25000","Hour15":"15.25000","Hour16":"16.25000","Hour17":"17.25000","Hour18":"18.25000","Hour19":"19.25000","Hour20":"20.25000","Hour21":"21.25000","Hour22":"22.25000","Hour23":"23.25000","Hour24":"24.25000"}}]},{"Date":"2024-04-01","HourlyEntities":[{"Id":"Sistema","Values":{"code":"Sistema","Hour01":"1.25000","Hour02":"2.25000","Hour03":"3.25000","Hour04":"4.25000","Hour05":"5.25000","Hour06":"6.25000","Hour07":"7.25000","Hour08":"8.25000","Hour09":"9.25000","Hour10":"10.25000","Hour11":"11.25000","Hour12":"12.25000","Hour13":"13.25000","Hour14":"14.25000","Hour15":"15.25000","Hour16":"16.25000","Hour17":"17.25000","Hour18":"18.25000","Hour19":"19.25000","Hour20":"20.25000","Hour21":"21.25000","Hour22":"22.25000","Hour23":"23.25000","Hour24":"24.25000"}}]}]})
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-10: respuesta estructuralmente malformada -> 502 ({"Metric":{"Id":"Gene"},"Items":[{"Date":"2024-04-01","HourlyEntities":[{"Id":"Recurso","Values":{}}]}]})
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-11: valor inválido null no se transforma en cero
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-11: valor inválido "" no se transforma en cero
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-11: valor inválido "NaN" no se transforma en cero
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-11: valor inválido "Infinity" no se transforma en cero
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-11: valor inválido true no se transforma en cero
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-11: valor inválido {} no se transforma en cero
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-11: valor inválido "1,25" no se transforma en cero
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-11: valor inválido "0x10" no se transforma en cero
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-12: HTML de XM no se filtra
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-13: parser local seguro: JSON inválido, media type y límite [15.00ms]
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-15: timeout también cubre la lectura del cuerpo [31.00ms]
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-16: hora faltante y demanda diaria malformada se rechazan
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-17: orden cronológico, cero y negativos preservados
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-18: error interno inesperado tiene envelope seguro [16.00ms]
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-14: configuración inválida nunca hace proxy: http://servapibi.xm.com.co
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-14: configuración inválida nunca hace proxy: https://evil.example
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-14: configuración inválida nunca hace proxy: https://servapibi.xm.com.co/private
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-14: configuración inválida nunca hace proxy: https://user:secret@servapibi.xm.com.co
+(pass) Integración externa XM: HTTP local, transporte externo sustituido > EXT-14: configuración inválida nunca hace proxy: invalid
+
+ 75 pass
+ 0 fail
+ 306 expect() calls
+Ran 75 tests across 1 file. [472.00ms]

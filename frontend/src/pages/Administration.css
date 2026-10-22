@@ -1,0 +1,15 @@
+.admin-workspace { min-width:0; }
+.admin-tabs,.admin-actions,.admin-pagination {display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+.admin-tabs {margin-top:20px;}
+.admin-fields {display:flex;flex-wrap:wrap;gap:16px;align-items:end;}
+.admin-fields label,.admin-editor form>label {display:grid;gap:8px;flex:1;min-width:180px;}
+.admin-workspace input,.admin-workspace select,.admin-workspace textarea {font:inherit;border:1px solid #c9d9d0;border-radius:6px;padding:10px;background:#fff;color:#193c30;}
+.admin-editor textarea {min-height:88px;resize:vertical;}
+.admin-editor .admin-confirm {display:flex;gap:10px;align-items:center;margin:18px 0;}
+.admin-status {display:inline-block;padding:5px 10px;border-radius:20px;background:#e8f5eb;color:#075c35;font-weight:600;}
+.admin-status.is-blocked {background:#fce8e6;color:#9d2520;}
+.admin-pagination {justify-content:flex-end;margin-top:20px;}
+.admin-audit {list-style:none;padding:0;}
+.admin-audit li {padding:18px 0;border-bottom:1px solid #e0e9e3;overflow-wrap:anywhere;}
+.admin-workspace :focus-visible {outline:3px solid #87ac47;outline-offset:3px;}
+@media(max-width:640px){.admin-fields {display:grid;grid-template-columns:1fr;}.admin-fields label {min-width:0;}.admin-pagination {justify-content:space-between;}}

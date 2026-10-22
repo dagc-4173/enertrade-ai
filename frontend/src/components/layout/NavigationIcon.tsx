@@ -7,6 +7,7 @@ export function NavigationIcon({ page }: { page: PageKey | 'menu' }) {
  transactions: 'M3 7h17m-4-4 4 4-4 4M21 17H4m4-4-4 4 4 4',
  patterns: 'M3 15l4-8 5 12 5-12 4 8',
  profile: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2',
+ admin: 'M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3ZM9 12l2 2 4-4',
  menu: 'M4 6h16M4 12h16M4 18h16',
  }
  return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={paths[page]} /></svg>

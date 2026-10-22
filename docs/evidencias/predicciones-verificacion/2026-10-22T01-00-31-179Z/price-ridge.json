@@ -1,0 +1,241 @@
+{
+  "status": "available",
+  "method": "ridge",
+  "series": "price",
+  "source": "XM PrecBolsNaci/Sistema",
+  "unit": "COP/kWh",
+  "target": "precio_cop_kwh",
+  "modelId": "xm-preciobolsnaci-ridge-direct-h4-v1",
+  "modelVersion": "1.0.0-experimental",
+  "artifactSha256": "6ef75ae4a0d4c0701f0ab437a4743696f812b2e0a3c9e25d9b6db1c19bf14f90",
+  "targetDate": "2026-10-22",
+  "latestObservedDate": "2026-10-18",
+  "horizonDays": 4,
+  "generatedAt": "2026-10-22T01:00:33.422Z",
+  "contextPeriods": 672,
+  "experimental": true,
+  "promoted": false,
+  "academicValidation": "pending",
+  "confidenceStatus": "not_defined",
+  "predictions": [
+    {
+      "periodo": 1,
+      "value": 468.29635236114535
+    },
+    {
+      "periodo": 2,
+      "value": 484.01356393615515
+    },
+    {
+      "periodo": 3,
+      "value": 504.0325429473564
+    },
+    {
+      "periodo": 4,
+      "value": 507.7994318754327
+    },
+    {
+      "periodo": 5,
+      "value": 521.3897795752861
+    },
+    {
+      "periodo": 6,
+      "value": 532.3295375235587
+    },
+    {
+      "periodo": 7,
+      "value": 535.2419150250179
+    },
+    {
+      "periodo": 8,
+      "value": 506.6113987019741
+    },
+    {
+      "periodo": 9,
+      "value": 496.5504356285561
+    },
+    {
+      "periodo": 10,
+      "value": 500.7923084826749
+    },
+    {
+      "periodo": 11,
+      "value": 485.5253142021787
+    },
+    {
+      "periodo": 12,
+      "value": 506.7473663737865
+    },
+    {
+      "periodo": 13,
+      "value": 507.84710603788824
+    },
+    {
+      "periodo": 14,
+      "value": 532.3693639314724
+    },
+    {
+      "periodo": 15,
+      "value": 567.8605283967029
+    },
+    {
+      "periodo": 16,
+      "value": 645.1064388013723
+    },
+    {
+      "periodo": 17,
+      "value": 685.3551480232605
+    },
+    {
+      "periodo": 18,
+      "value": 823.8275612866723
+    },
+    {
+      "periodo": 19,
+      "value": 901.8396452779575
+    },
+    {
+      "periodo": 20,
+      "value": 876.2932746334073
+    },
+    {
+      "periodo": 21,
+      "value": 848.6858810775428
+    },
+    {
+      "periodo": 22,
+      "value": 848.1144723246241
+    },
+    {
+      "periodo": 23,
+      "value": 686.2616095305877
+    },
+    {
+      "periodo": 24,
+      "value": 613.769764080663
+    }
+  ],
+  "referenceDay": {
+    "date": "2026-10-18",
+    "values": [
+      {
+        "periodo": 1,
+        "value": 422.83143
+      },
+      {
+        "periodo": 2,
+        "value": 453.11943
+      },
+      {
+        "periodo": 3,
+        "value": 453.11943
+      },
+      {
+        "periodo": 4,
+        "value": 453.11943
+      },
+      {
+        "periodo": 5,
+        "value": 453.11943
+      },
+      {
+        "periodo": 6,
+        "value": 453.11943
+      },
+      {
+        "periodo": 7,
+        "value": 453.11943
+      },
+      {
+        "periodo": 8,
+        "value": 422.83143
+      },
+      {
+        "periodo": 9,
+        "value": 421.83143
+      },
+      {
+        "periodo": 10,
+        "value": 422.83143
+      },
+      {
+        "periodo": 11,
+        "value": 404.71943
+      },
+      {
+        "periodo": 12,
+        "value": 422.83143
+      },
+      {
+        "periodo": 13,
+        "value": 421.83143
+      },
+      {
+        "periodo": 14,
+        "value": 422.83143
+      },
+      {
+        "periodo": 15,
+        "value": 453.11943
+      },
+      {
+        "periodo": 16,
+        "value": 453.11943
+      },
+      {
+        "periodo": 17,
+        "value": 453.11943
+      },
+      {
+        "periodo": 18,
+        "value": 581.83143
+      },
+      {
+        "periodo": 19,
+        "value": 629.41543
+      },
+      {
+        "periodo": 20,
+        "value": 629.41543
+      },
+      {
+        "periodo": 21,
+        "value": 629.41543
+      },
+      {
+        "periodo": 22,
+        "value": 629.41543
+      },
+      {
+        "periodo": 23,
+        "value": 622.41443
+      },
+      {
+        "periodo": 24,
+        "value": 547.29643
+      }
+    ]
+  },
+  "historicalMetrics": {
+    "MAE": 138.842470783667,
+    "RMSE": 177.7287806408906,
+    "WAPE_percent": 18.7391549325729,
+    "bias": -40.28507985466005,
+    "n": 2880,
+    "range": {
+      "start": "2026-06-01",
+      "end": "2026-09-28"
+    },
+    "evaluationType": "external_temporal_holdout",
+    "horizonDays": 4
+  },
+  "warnings": [
+    "Precio nacional de bolsa de referencia. No es una tarifa individual.",
+    "Modelo experimental; validación prospectiva y académica pendientes. Sin intervalo probabilístico.",
+    "La línea observada corresponde al día de origen, no al día futuro objetivo. Las métricas históricas no acreditan precisión de esta consulta."
+  ],
+  "trace": {
+    "executionId": "3d821fc2-ae72-43fa-8d71-cd7563f949a3",
+    "persistence": "local_evidence"
+  }
+}

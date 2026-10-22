@@ -21,7 +21,7 @@ export function parseCapabilityVersions(value: unknown): CapabilityVersion[] {
 }
 
 export async function getCapabilityVersions(signal?: AbortSignal) {
-  const response = await apiRequest<unknown>('/capabilities/versions', { signal })
+  const response = await apiRequest<unknown>('/capabilities/versions', { signal, credentials: 'include' })
   if (response.status !== 200) throw new ApiError('response', 'La API devolvió capacidades con estado inesperado.', response.status)
   return parseCapabilityVersions(response.data)
 }

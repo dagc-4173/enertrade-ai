@@ -1,0 +1,316 @@
+bun test v1.3.13 (bf2e2cec)
+
+tests\admin.test.tsx:
+(pass) ADM-UI-01: navegación de usuario conserva orden y oculta Administración [16.00ms]
+(pass) ADM-UI-02: administrador conserva acceso normal y ofrece usuarios, auditoría y datasets
+(pass) ADM-UI-03: sesión conserva permisos reconocidos y rechaza valores desconocidos
+(pass) ADM-UI-04: contratos de cuentas y auditoría rechazan respuestas incompletas
+
+tests\auth.test.tsx:
+(pass) auth service uses cookies and parses public user without returning secrets
+(pass) rejects malformed response null
+(pass) rejects malformed response {}
+(pass) rejects malformed response {"user":null}
+(pass) rejects malformed response {"user":{"id":1,"email":"demo@example.test","name":"Demo","createdAt":"2026-09-16T00:00:00.000Z"}}
+(pass) backend errors remain visible and logout sends credentials
+(pass) store restores session, logs out and accepts login
+(pass) unauthorized bootstrap is anonymous and network failure blocks dashboard
+(pass) failed logout does not pretend server session was revoked
+(pass) guard hides principal UI during checking
+(pass) guard hides principal UI during anonymous
+(pass) guard hides principal UI during error
+(pass) authenticated guard renders principal UI
+(pass) forms provide required fields, password autocomplete and navigation
+
+tests\capability-models.test.tsx:
+(pass) joins ID+version and retains all five capabilities without assigning metadata to methods
+(pass) same ID with different summary or detail version is never merged
+(pass) duplicate summary or detail IDs are not resolved by array order
+(pass) runtime discrepancies are neutral and never override capability runtime
+(pass) ML and price show independent runtime, technical promotion, metrics and academic pending
+(pass) method matching-v1 stays neutral and does not invent lifecycle
+(pass) method energy-pattern-descriptive stays neutral and does not invent lifecycle
+(pass) catalog loading retains all capabilities without inventing values
+(pass) catalog error retains all capabilities without inventing values
+(pass) one failed detail degrades only its row; real false values remain distinct from errors
+(pass) only explicit validated metadata displays Validada
+(pass) block has a named table, four grouped columns, row headers and accessible limitation controls [15.00ms]
+(pass) loader fetches catalog then matching details in parallel, never metrics or methods [32.00ms]
+(pass) loader skips duplicated IDs, mismatched versions and methods even if present in the catalog
+(pass) failed detail is isolated and retry requests only that detail
+(pass) catalog failure does not start detail requests; retry can recover
+(pass) wrong detail identity is rejected without replacing the active artifact
+(pass) abort prevents late publications and subsequent detail requests
+
+tests\chronos-hourly.test.tsx:
+(pass) CHF-01: validate exact daily outputs and lag, reject corrupt quantiles
+(pass) CHF-02: two model choices and configuration state
+(pass) CHF-03: visible horizon, historical scope, interval caveat and 24-period chart [15.00ms]
+
+tests\chronos-market.test.tsx:
+(pass) CHMF-supply: units, model choices and evaluation status stay with the variable
+(pass) CHMF-price: units, model choices and evaluation status stay with the variable
+
+tests\current-capability-versions.test.tsx:
+(pass) current Ridge horizons coexist without ambiguous identities or lost capabilities
+
+tests\dashboard.test.tsx:
+(pass) health service requests the real endpoint and accepts both ok and degraded HTTP codes
+(pass) health service rejects malformed contracts
+(pass) an unexpected 500 from /health is rejected and never resolved as degraded
+(pass) a network failure on /health is rejected and never resolved as degraded
+(pass) indicators service requests the real endpoint and retains nullable duration
+(pass) capability versions service requests and validates all five capabilities
+(pass) services reject malformed indicator, executions and capability contracts
+(pass) Dashboard renders loading without prior values for every independent block
+(pass) health ok muestra estado Operativo y base de datos disponible
+(pass) health degraded muestra estado Degradado y base de datos no disponible
+(pass) indicators success expone total de ejecuciones, tasa de éxito y desglose succeeded/empty/failed
+(pass) indicators con total de ejecuciones cero muestra No disponible sin inventar 0 %
+(pass) un fallo de health no oculta los indicadores
+(pass) un fallo de indicators no oculta health, capabilities ni la gestión de datos
+(pass) un fallo de capabilities no hace desaparecer las métricas de indicadores
+(pass) Dashboard renders backend capability taxonomy on success
+(pass) Dashboard represents empty warnings without inventing a value
+(pass) Dashboard no expone el texto interno de desarrollo del hero
+
+tests\dataset-flow.test.tsx:
+(pass) INICIO-01C-01 / HU-01: initial registration keeps editor and examples without future results [16.00ms]
+(pass) INICIO-01C-02 / HU-01: confirmed registration keeps all metadata and HTTP evidence
+(pass) INICIO-01C-03 / HU-01: optional pending fields retain index, field and reason
+(pass) INICIO-01C-04 / HU-02: mounted validation starts pending without offering preparation
+(pass) INICIO-01C-05 / HU-02: approved validation preserves report metadata and permits preparation
+(pass) INICIO-01C-06 / HU-02: warning allows continuation according to API and preserves findings
+(pass) INICIO-01C-07 / HU-02: rejected report blocks preparation and retains critical finding context
+(pass) INICIO-01C-08 / HU-03: preparation reused=%s keeps success and all technical values
+(pass) INICIO-01C-08 / HU-03: preparation reused=%s keeps success and all technical values
+(pass) INICIO-01C-09 / HU-02: validation idle reflects real state with preparation pending
+(pass) INICIO-01C-09 / HU-02: validation loading reflects real state with preparation pending
+(pass) INICIO-01C-09 / HU-02: validation error reflects real state with preparation pending
+(pass) INICIO-01C-10 / HU-03: preparation idle never claims success
+(pass) INICIO-01C-10 / HU-03: preparation loading never claims success
+(pass) INICIO-01C-10 / HU-03: preparation error never claims success
+(pass) INICIO-01C-11 / HU-01: registration loading and backend errors remain explicit
+(pass) INICIO-01C-12 / HU-01: registration contract retains server metadata and optional pending fields
+(pass) INICIO-01C-13 / HU-02: service preserves aprobado report and sends no body
+(pass) INICIO-01C-13 / HU-02: service preserves advertencia report and sends no body
+(pass) INICIO-01C-13 / HU-02: service preserves rechazado report and sends no body
+(pass) INICIO-01C-14 / HU-01+02: service errors preserve server messages and codes
+
+tests\energy-series.test.ts:
+(pass) serializa C18c, usa cookie y conserva una respuesta Gene horaria numérica
+(pass) acepta Demand diario y Price mensual sin periodos artificiales
+(pass) conserva el error autenticación, rango o granularidad HTTP 401
+(pass) conserva el error autenticación, rango o granularidad HTTP 400
+(pass) conserva el error autenticación, rango o granularidad HTTP 413
+(pass) centraliza formato visual es-CO sin alterar números de dominio
+
+tests\forecast.test.tsx:
+(pass) one metric error does not discard available peers or invent observation dates
+(pass) HU-04: supply parsing and POST JSON send only targetDate
+(pass) demand parsing preserves direct h4, null confidence and target-only POST
+(pass) price parsing preserves trace, zero/negative prices and partial conditions
+(pass) trace failure does not discard a valid price result
+(pass) rejects invalid supply response null
+(pass) rejects invalid supply response {}
+(pass) rejects invalid supply response {"status":"available","forecastOriginDate":"2026-09-20","targetDate":"2024-09-28","horizonDays":4,"sourceArtifacts":[{"preparedDatasetId":21,"sourceDatasetId":40},{"preparedDatasetId":22,"sourceDatasetId":41}],"forecastType":"generation_availability_proxy","target":"energia_kwh","unit":"kWh","horizonPeriods":24,"modelId":"xm-gene-ridge-direct-h4-v2","modelVersion":"1.0.0-experimental","modelStatus":"experimental","academicValidation":"pending","predictions":[{"hora_xm":1,"energia_kwh":10},{"hora_xm":2,"energia_kwh":10.01},{"hora_xm":3,"energia_kwh":10.02},{"hora_xm":4,"energia_kwh":10.03},{"hora_xm":5,"energia_kwh":10.04},{"hora_xm":6,"energia_kwh":10.05},{"hora_xm":7,"energia_kwh":10.06},{"hora_xm":8,"energia_kwh":10.07},{"hora_xm":9,"energia_kwh":10.08},{"hora_xm":10,"energia_kwh":10.09},{"hora_xm":11,"energia_kwh":10.1},{"hora_xm":12,"energia_kwh":10.11},{"hora_xm":13,"energia_kwh":10.12},{"hora_xm":14,"energia_kwh":10.13},{"hora_xm":15,"energia_kwh":10.14},{"hora_xm":16,"energia_kwh":10.15},{"hora_xm":17,"energia_kwh":10.16},{"hora_xm":18,"energia_kwh":10.17},{"hora_xm":19,"energia_kwh":10.18},{"hora_xm":20,"energia_kwh":10.19},{"hora_xm":21,"energia_kwh":10.2},{"hora_xm":22,"energia_kwh":10.21},{"hora_xm":23,"energia_kwh":10.22},{"hora_xm":24,"energia_kwh":10.23}]}
+(pass) rejects invalid supply response {"status":"available","forecastOriginDate":"2026-09-20","targetDate":"2026-09-24","horizonDays":4,"sourceArtifacts":[],"forecastType":"generation_availability_proxy","target":"energia_kwh","unit":"kWh","horizonPeriods":24,"modelId":"xm-gene-ridge-direct-h4-v2","modelVersion":"1.0.0-experimental","modelStatus":"experimental","academicValidation":"pending","predictions":[{"hora_xm":1,"energia_kwh":10},{"hora_xm":2,"energia_kwh":10.01},{"hora_xm":3,"energia_kwh":10.02},{"hora_xm":4,"energia_kwh":10.03},{"hora_xm":5,"energia_kwh":10.04},{"hora_xm":6,"energia_kwh":10.05},{"hora_xm":7,"energia_kwh":10.06},{"hora_xm":8,"energia_kwh":10.07},{"hora_xm":9,"energia_kwh":10.08},{"hora_xm":10,"energia_kwh":10.09},{"hora_xm":11,"energia_kwh":10.1},{"hora_xm":12,"energia_kwh":10.11},{"hora_xm":13,"energia_kwh":10.12},{"hora_xm":14,"energia_kwh":10.13},{"hora_xm":15,"energia_kwh":10.14},{"hora_xm":16,"energia_kwh":10.15},{"hora_xm":17,"energia_kwh":10.16},{"hora_xm":18,"energia_kwh":10.17},{"hora_xm":19,"energia_kwh":10.18},{"hora_xm":20,"energia_kwh":10.19},{"hora_xm":21,"energia_kwh":10.2},{"hora_xm":22,"energia_kwh":10.21},{"hora_xm":23,"energia_kwh":10.22},{"hora_xm":24,"energia_kwh":10.23}]}
+(pass) rejects invalid supply response {"status":"available","forecastOriginDate":"2026-09-20","targetDate":"2026-09-24","horizonDays":4,"sourceArtifacts":[{"preparedDatasetId":0,"sourceDatasetId":40}],"forecastType":"generation_availability_proxy","target":"energia_kwh","unit":"kWh","horizonPeriods":24,"modelId":"xm-gene-ridge-direct-h4-v2","modelVersion":"1.0.0-experimental","modelStatus":"experimental","academicValidation":"pending","predictions":[{"hora_xm":1,"energia_kwh":10},{"hora_xm":2,"energia_kwh":10.01},{"hora_xm":3,"energia_kwh":10.02},{"hora_xm":4,"energia_kwh":10.03},{"hora_xm":5,"energia_kwh":10.04},{"hora_xm":6,"energia_kwh":10.05},{"hora_xm":7,"energia_kwh":10.06},{"hora_xm":8,"energia_kwh":10.07},{"hora_xm":9,"energia_kwh":10.08},{"hora_xm":10,"energia_kwh":10.09},{"hora_xm":11,"energia_kwh":10.1},{"hora_xm":12,"energia_kwh":10.11},{"hora_xm":13,"energia_kwh":10.12},{"hora_xm":14,"energia_kwh":10.13},{"hora_xm":15,"energia_kwh":10.14},{"hora_xm":16,"energia_kwh":10.15},{"hora_xm":17,"energia_kwh":10.16},{"hora_xm":18,"energia_kwh":10.17},{"hora_xm":19,"energia_kwh":10.18},{"hora_xm":20,"energia_kwh":10.19},{"hora_xm":21,"energia_kwh":10.2},{"hora_xm":22,"energia_kwh":10.21},{"hora_xm":23,"energia_kwh":10.22},{"hora_xm":24,"energia_kwh":10.23}]}
+(pass) rejects invalid supply response {"status":"available","forecastOriginDate":"2026-09-20","targetDate":"2026-09-24","horizonDays":4,"sourceArtifacts":[{"preparedDatasetId":21,"sourceDatasetId":40},{"preparedDatasetId":22,"sourceDatasetId":41}],"forecastType":"generation_availability_proxy","target":"energia_kwh","unit":"kWh","horizonPeriods":24,"modelId":"xm-gene-ridge-direct-h4-v2","modelVersion":"1.0.0-experimental","modelStatus":"experimental","academicValidation":"pending","predictions":[{"hora_xm":2,"energia_kwh":10.01},{"hora_xm":3,"energia_kwh":10.02},{"hora_xm":4,"energia_kwh":10.03},{"hora_xm":5,"energia_kwh":10.04},{"hora_xm":6,"energia_kwh":10.05},{"hora_xm":7,"energia_kwh":10.06},{"hora_xm":8,"energia_kwh":10.07},{"hora_xm":9,"energia_kwh":10.08},{"hora_xm":10,"energia_kwh":10.09},{"hora_xm":11,"energia_kwh":10.1},{"hora_xm":12,"energia_kwh":10.11},{"hora_xm":13,"energia_kwh":10.12},{"hora_xm":14,"energia_kwh":10.13},{"hora_xm":15,"energia_kwh":10.14},{"hora_xm":16,"energia_kwh":10.15},{"hora_xm":17,"energia_kwh":10.16},{"hora_xm":18,"energia_kwh":10.17},{"hora_xm":19,"energia_kwh":10.18},{"hora_xm":20,"energia_kwh":10.19},{"hora_xm":21,"energia_kwh":10.2},{"hora_xm":22,"energia_kwh":10.21},{"hora_xm":23,"energia_kwh":10.22},{"hora_xm":24,"energia_kwh":10.23}]}
+(pass) rejects invalid supply response {"status":"available","forecastOriginDate":"2026-09-20","targetDate":"2026-09-24","horizonDays":4,"sourceArtifacts":[{"preparedDatasetId":21,"sourceDatasetId":40},{"preparedDatasetId":22,"sourceDatasetId":41}],"forecastType":"generation_availability_proxy","target":"energia_kwh","unit":"kWh","horizonPeriods":24,"modelId":"xm-gene-ridge-direct-h4-v2","modelVersion":"1.0.0-experimental","modelStatus":"experimental","academicValidation":"pending","predictions":[{"hora_xm":1,"energia_kwh":10},{"hora_xm":1,"energia_kwh":10.01},{"hora_xm":1,"energia_kwh":10.02},{"hora_xm":1,"energia_kwh":10.03},{"hora_xm":1,"energia_kwh":10.04},{"hora_xm":1,"energia_kwh":10.05},{"hora_xm":1,"energia_kwh":10.06},{"hora_xm":1,"energia_kwh":10.07},{"hora_xm":1,"energia_kwh":10.08},{"hora_xm":1,"energia_kwh":10.09},{"hora_xm":1,"energia_kwh":10.1},{"hora_xm":1,"energia_kwh":10.11},{"hora_xm":1,"energia_kwh":10.12},{"hora_xm":1,"energia_kwh":10.13},{"hora_xm":1,"energia_kwh":10.14},{"hora_xm":1,"energia_kwh":10.15},{"hora_xm":1,"energia_kwh":10.16},{"hora_xm":1,"energia_kwh":10.17},{"hora_xm":1,"energia_kwh":10.18},{"hora_xm":1,"energia_kwh":10.19},{"hora_xm":1,"energia_kwh":10.2},{"hora_xm":1,"energia_kwh":10.21},{"hora_xm":1,"energia_kwh":10.22},{"hora_xm":1,"energia_kwh":10.23}]}
+(pass) rejects invalid supply response {"status":"available","forecastOriginDate":"2026-09-20","targetDate":"2026-09-24","horizonDays":4,"sourceArtifacts":[{"preparedDatasetId":21,"sourceDatasetId":40},{"preparedDatasetId":22,"sourceDatasetId":41}],"forecastType":"generation_availability_proxy","target":"energia_kwh","unit":"kWh","horizonPeriods":24,"modelId":"xm-gene-ridge-direct-h4-v2","modelVersion":"1.0.0-experimental","modelStatus":"experimental","academicValidation":"pending","predictions":[{"hora_xm":1,"energia_kwh":"10"},{"hora_xm":2,"energia_kwh":"10"},{"hora_xm":3,"energia_kwh":"10"},{"hora_xm":4,"energia_kwh":"10"},{"hora_xm":5,"energia_kwh":"10"},{"hora_xm":6,"energia_kwh":"10"},{"hora_xm":7,"energia_kwh":"10"},{"hora_xm":8,"energia_kwh":"10"},{"hora_xm":9,"energia_kwh":"10"},{"hora_xm":10,"energia_kwh":"10"},{"hora_xm":11,"energia_kwh":"10"},{"hora_xm":12,"energia_kwh":"10"},{"hora_xm":13,"energia_kwh":"10"},{"hora_xm":14,"energia_kwh":"10"},{"hora_xm":15,"energia_kwh":"10"},{"hora_xm":16,"energia_kwh":"10"},{"hora_xm":17,"energia_kwh":"10"},{"hora_xm":18,"energia_kwh":"10"},{"hora_xm":19,"energia_kwh":"10"},{"hora_xm":20,"energia_kwh":"10"},{"hora_xm":21,"energia_kwh":"10"},{"hora_xm":22,"energia_kwh":"10"},{"hora_xm":23,"energia_kwh":"10"},{"hora_xm":24,"energia_kwh":"10"}]}
+(pass) rejects invalid price response {"status":"available","preparedDatasetId":49,"targetDate":"2024-09-29","sourceDatasetId":68,"forecastType":"market_reference_price","target":"precio_cop_kwh","unit":"COP/kWh","granularity":"hourly","horizonDays":1,"rule":{"id":"xm-preciobolsnaci-b1","version":"1.0.0","type":"deterministic_baseline","description":"same period previous day"},"predictions":[{"periodo":1,"precio_cop_kwh":0},{"periodo":2,"precio_cop_kwh":-1.25},{"periodo":3,"precio_cop_kwh":-0.25},{"periodo":4,"precio_cop_kwh":0.75},{"periodo":5,"precio_cop_kwh":1.75},{"periodo":6,"precio_cop_kwh":2.75},{"periodo":7,"precio_cop_kwh":3.75},{"periodo":8,"precio_cop_kwh":4.75},{"periodo":9,"precio_cop_kwh":5.75},{"periodo":10,"precio_cop_kwh":6.75},{"periodo":11,"precio_cop_kwh":7.75},{"periodo":12,"precio_cop_kwh":8.75},{"periodo":13,"precio_cop_kwh":9.75},{"periodo":14,"precio_cop_kwh":10.75},{"periodo":15,"precio_cop_kwh":11.75},{"periodo":16,"precio_cop_kwh":12.75},{"periodo":17,"precio_cop_kwh":13.75},{"periodo":18,"precio_cop_kwh":14.75},{"periodo":19,"precio_cop_kwh":15.75},{"periodo":20,"precio_cop_kwh":16.75},{"periodo":21,"precio_cop_kwh":17.75},{"periodo":22,"precio_cop_kwh":18.75},{"periodo":23,"precio_cop_kwh":19.75},{"periodo":24,"precio_cop_kwh":20.75}],"factors":{"used":["previous_day_same_period_price"],"omitted":["commercial_supply","commercial_demand","generation_forecast","demand_forecast"]},"scope":{"referencePrice":true,"personalized":false,"financialSettlement":false,"commercialNegotiation":false},"trace":null}
+(pass) rejects invalid price response {"status":"available","preparedDatasetId":49,"targetDate":"2024-09-29","sourceDatasetId":68,"forecastType":"market_reference_price","target":"precio_cop_kwh","unit":"COP/kWh","granularity":"hourly","horizonDays":1,"rule":{"id":"xm-preciobolsnaci-b1","version":"1.0.0","type":"deterministic_baseline","description":"same period previous day"},"predictions":[{"periodo":1,"precio_cop_kwh":0},{"periodo":2,"precio_cop_kwh":-1.25},{"periodo":3,"precio_cop_kwh":-0.25},{"periodo":4,"precio_cop_kwh":0.75},{"periodo":5,"precio_cop_kwh":1.75},{"periodo":6,"precio_cop_kwh":2.75},{"periodo":7,"precio_cop_kwh":3.75},{"periodo":8,"precio_cop_kwh":4.75},{"periodo":9,"precio_cop_kwh":5.75},{"periodo":10,"precio_cop_kwh":6.75},{"periodo":11,"precio_cop_kwh":7.75},{"periodo":12,"precio_cop_kwh":8.75},{"periodo":13,"precio_cop_kwh":9.75},{"periodo":14,"precio_cop_kwh":10.75},{"periodo":15,"precio_cop_kwh":11.75},{"periodo":16,"precio_cop_kwh":12.75},{"periodo":17,"precio_cop_kwh":13.75},{"periodo":18,"precio_cop_kwh":14.75},{"periodo":19,"precio_cop_kwh":15.75},{"periodo":20,"precio_cop_kwh":16.75},{"periodo":21,"precio_cop_kwh":17.75},{"periodo":22,"precio_cop_kwh":18.75},{"periodo":23,"precio_cop_kwh":19.75},{"periodo":24,"precio_cop_kwh":20.75}],"factors":{"used":["previous_day_same_period_price"],"omitted":["commercial_supply","commercial_demand","generation_forecast","demand_forecast"]},"scope":{"referencePrice":true,"personalized":false,"financialSettlement":false,"commercialNegotiation":false},"trace":{"executionId":null,"persistence":"persisted","conditionsCompleteness":"partial"}}
+(pass) rejects invalid price response {"status":"available","preparedDatasetId":49,"targetDate":"2024-09-29","sourceDatasetId":68,"forecastType":"market_reference_price","target":"precio_cop_kwh","unit":"kWh","granularity":"hourly","horizonDays":1,"rule":{"id":"xm-preciobolsnaci-b1","version":"1.0.0","type":"deterministic_baseline","description":"same period previous day"},"predictions":[{"periodo":1,"precio_cop_kwh":0},{"periodo":2,"precio_cop_kwh":-1.25},{"periodo":3,"precio_cop_kwh":-0.25},{"periodo":4,"precio_cop_kwh":0.75},{"periodo":5,"precio_cop_kwh":1.75},{"periodo":6,"precio_cop_kwh":2.75},{"periodo":7,"precio_cop_kwh":3.75},{"periodo":8,"precio_cop_kwh":4.75},{"periodo":9,"precio_cop_kwh":5.75},{"periodo":10,"precio_cop_kwh":6.75},{"periodo":11,"precio_cop_kwh":7.75},{"periodo":12,"precio_cop_kwh":8.75},{"periodo":13,"precio_cop_kwh":9.75},{"periodo":14,"precio_cop_kwh":10.75},{"periodo":15,"precio_cop_kwh":11.75},{"periodo":16,"precio_cop_kwh":12.75},{"periodo":17,"precio_cop_kwh":13.75},{"periodo":18,"precio_cop_kwh":14.75},{"periodo":19,"precio_cop_kwh":15.75},{"periodo":20,"precio_cop_kwh":16.75},{"periodo":21,"precio_cop_kwh":17.75},{"periodo":22,"precio_cop_kwh":18.75},{"periodo":23,"precio_cop_kwh":19.75},{"periodo":24,"precio_cop_kwh":20.75}],"factors":{"used":["previous_day_same_period_price"],"omitted":["commercial_supply","commercial_demand","generation_forecast","demand_forecast"]},"scope":{"referencePrice":true,"personalized":false,"financialSettlement":false,"commercialNegotiation":false},"trace":{"executionId":"1fbd029a-21e9-4322-ae1b-7838d7511eed","persistence":"persisted","conditionsCompleteness":"partial"}}
+(pass) rejects invalid price response {"status":"available","preparedDatasetId":49,"targetDate":"2024-09-29","sourceDatasetId":68,"forecastType":"market_reference_price","target":"precio_cop_kwh","unit":"COP/kWh","granularity":"hourly","horizonDays":1,"rule":{"id":"xm-preciobolsnaci-b1","version":"1.0.0","type":"deterministic_baseline","description":"same period previous day"},"predictions":[],"factors":{"used":["previous_day_same_period_price"],"omitted":["commercial_supply","commercial_demand","generation_forecast","demand_forecast"]},"scope":{"referencePrice":true,"personalized":false,"financialSettlement":false,"commercialNegotiation":false},"trace":{"executionId":"1fbd029a-21e9-4322-ae1b-7838d7511eed","persistence":"persisted","conditionsCompleteness":"partial"}}
+(pass) supply metrics are GET without body; all evaluation fields are retained
+(pass) demand metrics select horizon and retain retrospective technical scope
+(pass) forecast availability is authenticated and preserves Gene D+7, Demand D+6, Price D+1
+(pass) rejects invalid metrics {"status":"available","modelId":"xm-gene-ridge-direct-h4-v2","modelVersion":"1.0.0-experimental","active":true,"modelStatus":"experimental","academicValidation":"pending","unit":"kWh","forecastType":"generation_availability_proxy","target":"energia_kwh","horizonPeriods":24,"horizonDays":4,"baselineReference":"B_HISTORICAL_MEAN","training":{"trainedAt":null,"trainedAtStatus":"not_recorded","snapshotSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","sourceRange":{"start":"2024-01-01","end":"2024-03-30"},"effectiveRange":{"start":"2024-01-01","end":"2024-03-30"}},"evaluation":{"type":"external_temporal_holdout","range":{"start":"2024-01-01","end":"2024-03-30"},"snapshotSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","evaluable":720,"unavailable":0,"MAE":2,"RMSE":{"value":3,"unit":"kWh"},"bias":{"value":-1,"unit":"kWh"},"percentageError":{"metric":"WAPE","value":1.5,"unit":"percent"}}}
+(pass) rejects invalid metrics {"status":"available","modelId":"xm-gene-ridge-direct-h4-v2","modelVersion":"1.0.0-experimental","active":true,"modelStatus":"experimental","academicValidation":"pending","unit":"kWh","forecastType":"generation_availability_proxy","target":"energia_kwh","horizonPeriods":24,"horizonDays":4,"baselineReference":"B_HISTORICAL_MEAN","training":{"trainedAt":"invented","trainedAtStatus":"not_recorded","snapshotSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","sourceRange":{"start":"2024-01-01","end":"2024-03-30"},"effectiveRange":{"start":"2024-01-01","end":"2024-03-30"}},"evaluation":{"type":"external_temporal_holdout","range":{"start":"2024-01-01","end":"2024-03-30"},"snapshotSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","evaluable":720,"unavailable":0,"MAE":{"value":2,"unit":"kWh"},"RMSE":{"value":3,"unit":"kWh"},"bias":{"value":-1,"unit":"kWh"},"percentageError":{"metric":"WAPE","value":1.5,"unit":"percent"}}}
+(pass) rejects invalid metrics {"status":"available","modelId":"xm-gene-ridge-direct-h4-v2","modelVersion":"1.0.0-experimental","active":true,"modelStatus":"experimental","academicValidation":"pending","unit":"kWh","forecastType":"generation_availability_proxy","target":"energia_kwh","horizonPeriods":24,"horizonDays":4,"baselineReference":"B_HISTORICAL_MEAN","training":{"trainedAt":null,"trainedAtStatus":"not_recorded","snapshotSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","sourceRange":{"start":"2024-01-01","end":"2024-03-30"},"effectiveRange":{"start":"2024-01-01","end":"2024-03-30"}},"evaluation":{"type":"external_temporal_holdout","range":{"start":"2024-01-01","end":"2024-03-30"},"snapshotSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","evaluable":720,"unavailable":0,"MAE":{"value":2,"unit":"kWh"},"RMSE":{"value":3,"unit":"kWh"},"bias":{"value":-1,"unit":"kWh"},"percentageError":{"metric":"MAPE","value":1,"unit":"percent"}}}
+(pass) retains safe backend error and HTTP 400
+(pass) retains safe backend error and HTTP 404
+(pass) retains safe backend error and HTTP 409
+(pass) retains safe backend error and HTTP 422
+(pass) retains safe backend error and HTTP 500
+(pass) HU04-MULTI-03/04/10: supply keeps FORECAST_DATA_INSUFFICIENT visible with its exact backend code and message
+(pass) HU04-MULTI-06: supply keeps PREPARED_DATASET_INCONSISTENT visible for conflicting cross-artifact history
+(pass) direct supply calls retain FORECAST_HORIZON_NOT_SUPPORTED and its domain message
+(pass) backend stack is not exposed
+(pass) non-JSON and network failures are typed safely
+(pass) Predictions mounts one forecast, three accessible variable tabs and lazy history
+(pass) Oferta y Demanda resuelven preparados automáticamente; Precio conserva selector
+(pass) Oferta availability renders experimental D+1..D+7 range and blocks D+8
+(pass) Demanda availability distinguishes received XM data from semantically usable observations
+(pass) Demanda respeta target elegible con huecos y horizonte desde origen, no desde currentDate
+(pass) Demanda consulta métricas h6 sin reutilizar h4
+(pass) ForecastRunOutcome expresa loading, éxito con 24 predicciones y trazabilidad, e insuficiencia/inconsistencia sin ocultar el código
+(pass) ResultView Demanda usa fuentes trazables, origen, h4 y estado experimental
+(pass) Precio B1 presenta versión real, origen D-1, 24 periodos y ningún modelo HU-08 offline [16.00ms]
+(pass) Availability común conserva etiquetas, aviso sin target y error
+(pass) all date selectors offer only backend eligible dates, including Gene holes
+(pass) extended availability validates candidate dates and model/product limits
+(pass) availability UI reports incomplete B1 sources instead of declaring all failures stale
+(pass) B1 availability validates buildable prepared IDs consistently with the target
+(pass) parser accepts frozen V5 h%s metrics as VALIDATION, not retrospective or prospective validation
+(pass) parser accepts frozen V5 h%s metrics as VALIDATION, not retrospective or prospective validation
+(pass) parser accepts frozen V5 h%s metrics as VALIDATION, not retrospective or prospective validation
+(pass) parser accepts frozen V5 h%s metrics as VALIDATION, not retrospective or prospective validation
+(pass) parser accepts frozen V5 h%s metrics as VALIDATION, not retrospective or prospective validation
+(pass) parser accepts frozen V5 h%s metrics as VALIDATION, not retrospective or prospective validation
+(pass) parser rejects incorrect V5 metadata, wrong requested horizon, missing metric and h7
+
+tests\hourly-market.test.tsx:
+(pass) HOUR-UI-01: formulario ofrece tabla con 24 horas sin publicar automáticamente
+(pass) HOUR-UI-02: mercado ofrece selección de publicación propia y tabla de horas
+(pass) HOUR-UI-03: precarga de términos conserva decimales es-CO
+(pass) HOUR-UI-04: diagnóstico de hora incompatible es un contrato válido
+
+tests\hourly-ridge.test.tsx:
+(pass) RHUI-demand-01: strict hourly identity, unit, horizon and reference contract
+(pass) RHUI-demand-02: Ridge choice and observed/forecast graph without invented quantiles [15.00ms]
+(pass) RHUI-price-01: strict hourly identity, unit, horizon and reference contract
+(pass) RHUI-price-02: Ridge choice and observed/forecast graph without invented quantiles
+
+tests\marketplace.test.tsx:
+(pass) carga ofertas y demandas reales con cookies y conserva listados vacíos
+(pass) servicios preservan DTOs numéricos de oferta y demanda
+(pass) formularios envían números y nunca userId
+(pass) formatos numéricos es-CO cumplen precisión de energía y precio
+(pass) decimales localizados separan display es-CO y payload canónico
+(pass) filtros de publicaciones conservan estado, conteos y orden reciente
+(pass) fingerprint detecta cambios de dominio del mercado sin ejecutar matching
+(pass) la página no ejecuta POST automáticamente y no muestra resultados mock de matching [16.00ms]
+(pass) las acciones de publicaciones usan botones iguales y permanecen visibles al desplazar la tabla
+(pass) el contrato frontend conserva publicaciones vencidas para el historial
+(pass) GET /mine normaliza saldos decimales en cadena y rechaza DTO incompleto
+(pass) mis ofertas y demandas muestran saldo derivado con formato es-CO
+(pass) demanda completamente cubierta muestra Completada, saldo cero y no acciones
+(pass) los errores 401 del backend se conservan como ApiError seguro
+(pass) rechaza DTOs inesperados del backend
+(pass) demanda ACTIVE se actualiza por PATCH con el contrato esperado
+(pass) compatibilidad 900 frente a 950 deja el CTA de negociación habilitado y sin POST
+(pass) fecha distinta deshabilita la negociación aunque exista saldo y precio compatible
+(pass) compatibilidad de precio y fecha habilita cantidades parciales negociables
+(pass) una demanda mayor que la oferta disponible sigue siendo parcialmente negociable
+(pass) el saldo propio descuenta reservas pendientes y confirmadas antes de calcular el máximo
+(pass) seleccionar propuesta con mi demanda no hace POST y conserva IDs y máximo correctos
+(pass) GET /transactions/mine incluye pendiente bajo Todas y Pendientes
+(pass) contrato transaccional exige ownership permitido y no expone autor
+(pass) PATCH /transactions sólo envía quantityKwh y acepta respuesta 200
+(pass) PATCH rechazado conserva el mensaje del backend para el formulario
+(pass) respuestas válidas de editar, aceptar, rechazar y cancelar conservan el DTO participante
+(pass) counter e historial usan contratos C21b sin identidades privadas
+(pass) permisos separan creador, receptor, aceptación previa y legado
+(pass) el éxito muestra los datos de la propuesta y el acceso a Transacciones
+(pass) la UI C21b precarga el precio propio y presenta término, acciones e historial sin IDs
+(pass) errores reales de edición o propuesta conservan mensaje, código y estado seguro
+
+tests\matching-negotiation.test.tsx:
+(pass) MATCH-CTA-01: comprador y vendedor abren su pareja y precargan cantidad/precio exactos
+(pass) MATCH-CTA-02: terceros, saldo insuficiente, horas distintas e históricos no abren negociación
+(pass) MATCH-CTA-03: botón visible por asignación y deshabilitado con explicación si está desactualizada
+
+tests\matching-patterns.test.tsx:
+(pass) matching service posts an empty authenticated JSON body and validates response
+(pass) matching UI explica cobertura, referencias cortas, motivos y asignaciones sin datos privados
+(pass) matching loading and API errors are visible without a false success
+(pass) patterns services send the exact analysis body and real filter query
+(pass) patterns results render distribution, trend and recurrence without invented confidence or recommendations
+(pass) patterns initial render keeps normal analysis and hides administrative history
+(pass) patterns history accepts empty responses and rejects malformed or API error responses safely
+(pass) matching parser rechaza cobertura ausente o fuera de rango
+(pass) PATTERN-UI-SAVE: fallo de persistencia no se presenta como guardado
+(pass) PATTERN-UI-DETAIL: histórico permite representar valores y unidades sin nuevo análisis
+
+tests\models.test.ts:
+(pass) INICIO-01B parser accepts real detail shape without root runtime: xm-gene-ridge
+(pass) INICIO-01B parser accepts real detail shape without root runtime: xm-demandasin-ridge
+(pass) INICIO-01B parser accepts real detail shape without root runtime: xm-preciobolsnaci-b1
+(pass) INICIO-01B malformed lifecycle is rejected: 
+(pass) INICIO-01B malformed lifecycle is rejected: null
+(pass) INICIO-01B malformed lifecycle is rejected: {}
+(pass) INICIO-01B malformed lifecycle is rejected: {"activeInRuntime":"true","promoted":true,"academicValidation":"pending"}
+(pass) INICIO-01B malformed lifecycle is rejected: {"activeInRuntime":true,"promoted":"false","academicValidation":"pending"}
+(pass) INICIO-01B malformed lifecycle is rejected: {"activeInRuntime":true,"promoted":false,"academicValidation":"approved"}
+(pass) INICIO-01B preserves explicit false, pending and validated without root fallback
+(pass) INICIO-01B rejects malformed catalog: null
+(pass) INICIO-01B rejects malformed catalog: {}
+(pass) INICIO-01B rejects malformed catalog: {"artifacts":[{}]}
+(pass) INICIO-01B rejects malformed catalog: {"artifacts":[{"id":"xm-gene-ridge","version":"1.0.0","kind":"model","type":"ridge","target":"energia_kwh","unit":"kWh","forecastType":"generation_availability_proxy","activeInRuntime":"true"}]}
+(pass) INICIO-01B rejects malformed catalog: {"artifacts":[{"id":"xm-gene-ridge","version":"1.0.0","kind":"model","type":"ridge","target":"energia_kwh","unit":"kWh","forecastType":"generation_availability_proxy"}]}
+(pass) INICIO-01B rejects malformed catalog: {"artifacts":[{"id":"xm-gene-ridge","version":"1.0.0","kind":"method","type":"ridge","target":"energia_kwh","unit":"kWh","forecastType":"generation_availability_proxy","activeInRuntime":true}]}
+(pass) INICIO-01B detail validation remains strict: {"id":"xm-gene-ridge","version":"1.0.0","kind":"model","type":"ridge","target":"energia_kwh","unit":"kWh","forecastType":"generation_availability_proxy","horizon":{"value":24,"unit":"periods"},"data":{"source":"XM","profile":"xm_gene_preparacion_base@1.0.0","ruleset":"xm_gene_base@1.0.0","trainingRange":{"start":"2024-01-01","end":"2024-03-30"},"effectiveTrainingRange":{"start":"2024-01-08","end":"2024-03-30"},"externalHoldoutRange":{"start":"2024-03-31","end":"2024-04-29"}},"method":{"equation":"y_hat = beta0 + sum(beta_j * ((x_j - mu_j) / sigma_j))","features":[],"parameters":{}},"quality":{"metricsAvailable":"true"},"limitations":["Generación agregada XM; no diferenciada por tecnología."],"lifecycle":{"activeInRuntime":true,"promoted":true,"academicValidation":"pending"}}
+(pass) INICIO-01B detail validation remains strict: {"id":"xm-gene-ridge","version":"1.0.0","kind":"model","type":"ridge","target":"energia_kwh","unit":"kWh","forecastType":"generation_availability_proxy","horizon":{"value":24,"unit":"periods"},"data":{"source":"XM","trainingRange":{"start":1}},"method":{"equation":"y_hat = beta0 + sum(beta_j * ((x_j - mu_j) / sigma_j))","features":[],"parameters":{}},"quality":{"metricsAvailable":true},"limitations":["Generación agregada XM; no diferenciada por tecnología."],"lifecycle":{"activeInRuntime":true,"promoted":true,"academicValidation":"pending"}}
+(pass) INICIO-01B detail validation remains strict: {"id":"xm-gene-ridge","version":"1.0.0","kind":"model","type":"ridge","target":"energia_kwh","unit":"kWh","forecastType":"generation_availability_proxy","horizon":{"value":24,"unit":"periods"},"data":{"source":"XM","profile":"xm_gene_preparacion_base@1.0.0","ruleset":"xm_gene_base@1.0.0","trainingRange":{"start":"2024-01-01","end":"2024-03-30"},"effectiveTrainingRange":{"start":"2024-01-08","end":"2024-03-30"},"externalHoldoutRange":{"start":"2024-03-31","end":"2024-04-29"}},"method":{"equation":"x","features":[4],"parameters":{}},"quality":{"metricsAvailable":true},"limitations":["Generación agregada XM; no diferenciada por tecnología."],"lifecycle":{"activeInRuntime":true,"promoted":true,"academicValidation":"pending"}}
+(pass) INICIO-01B detail validation remains strict: {"id":"xm-gene-ridge","version":"1.0.0","kind":"model","type":"ridge","target":"energia_kwh","unit":"kWh","forecastType":"generation_availability_proxy","horizon":{"value":24,"unit":"periods"},"data":{"source":"XM","profile":"xm_gene_preparacion_base@1.0.0","ruleset":"xm_gene_base@1.0.0","trainingRange":{"start":"2024-01-01","end":"2024-03-30"},"effectiveTrainingRange":{"start":"2024-01-08","end":"2024-03-30"},"externalHoldoutRange":{"start":"2024-03-31","end":"2024-04-29"}},"method":{"equation":"y_hat = beta0 + sum(beta_j * ((x_j - mu_j) / sigma_j))","features":[],"parameters":{}},"quality":{"metricsAvailable":true},"limitations":[null],"lifecycle":{"activeInRuntime":true,"promoted":true,"academicValidation":"pending"}}
+(pass) INICIO-01B services preserve GET, abort signal, catalog and detail contracts
+
+tests\navigation.test.tsx:
+(pass) NAV-01: navegación identifica página activa y ofrece control móvil accesible
+
+tests\password-recovery.test.tsx:
+(pass) REC-UI-01: login ofrece recuperación y el formulario solo pide correo
+(pass) REC-UI-02: contraseña con confirmación, token no visible
+(pass) REC-UI-03: valida fragmento y enlace corrupto
+(pass) REC-UI-04: API usa JSON y token en cuerpo, sin correo ni rol al restablecer
+
+tests\payment-notification.test.tsx:
+(pass) NOTICE-UI-01: aviso identifica una o varias transacciones confirmadas por pagar y acceso a gestión
+(pass) NOTICE-UI-02: pendiente de resolución se distingue de nuevo pago y aprobación elimina aviso
+(pass) NOTICE-UI-03: consulta compacta autenticada y conteos coherentes
+
+tests\predictions-layout.test.tsx:
+(pass) UI-PRED-01: one view and model control, accessible tabs and no eager history
+(pass) UI-PRED-02: daily demand and B1 remain explicit alternative methods
+(pass) UI-PRED-03: hourly Ridge/Chronos use one shared selector and correct variable panel
+
+tests\prepared-datasets.test.tsx:
+(pass) prepared datasets service gets the catalog and validates the summary DTO
+(pass) selector renders loading, compatible option, empty and safe error states
+(pass) B1 selector excludes compatible artifacts without a buildable source day
+(pass) rejects unexpected catalog and keeps no prepared dataset IDs hardcoded at runtime
+(pass) prepares a validated dataset with no body and retains only its real summary
+(pass) preparation rejects malformed confirmation and retains safe backend errors
+(pass) preparation UI renders loading, result metadata and safe errors
+(pass) a later selector catalog read obtains prepared datasets from the backend
+
+tests\profile.test.tsx:
+(pass) PROFILE-01: datos disponibles y simulación conservan alcance sin inventar edición de cuenta [16.00ms]
+(pass) PROFILE-02: sesión ausente no se anuncia activa ni permite configuración
+
+tests\publication-verification.test.tsx:
+(pass) VERIFY-UI-01: identifica aprobación simulada, límite y versión sin ejecutar al renderizar
+(pass) VERIFY-UI-02: histórico sin hora conserva estado desconocido y botón deshabilitado
+(pass) VERIFY-UI-03: perfil consulta estado antes de afirmar configuración y no inventa límites
+(pass) VERIFY-UI-04: parser rechaza orígenes y estados desconocidos
+
+tests\series-chart.test.tsx:
+(pass) gráfica de datos reales muestra punto, unidad, leyenda y tooltip accesible
+(pass) gráfica expresa loading, empty y error sin puntos falsos
+
+tests\simulated-payment.test.tsx:
+(pass) PAY-UI-01: comprobante indica simulación y no se muestra para rechazo
+(pass) PAY-UI-02: pago está separado de aceptación y carga solo al abrir
+(pass) PAY-UI-03: contrato exige simulación, COP y comprobante solo aprobado
+(pass) PAY-UI-04: el cliente envía escenario y clave de intento, nunca importe o tarjetas
+(pass) PAY-PDF-01: PDF real conserva importe exacto, referencia, aviso y hora final [16.00ms]
+(pass) PAY-PDF-02: no genera comprobante para pago rechazado o pendiente
+
+tests\transaction-payment.test.ts:
+(pass) PAY-ROW-01: solo acuerdos confirmados sin pago aprobado se resaltan
+(pass) PAY-ROW-02: texto distingue falta de pago, resolución pendiente y aprobación
+
+tests\transaction-presentation.test.ts:
+(pass) TX-VIEW-01: turno de respuesta sigue aceptaciones y revisión vigente en ambos roles
+(pass) TX-VIEW-02: filtros combinados conservan fecha, estado y turno sin modificar registros
+
+tests\verification-gate.test.tsx:
+(pass) GATE-UI-01: selección preexistente no permite proponer si la publicación propia queda inactiva [15.00ms]
+(pass) GATE-UI-02: estado inactivo es visible y permite corrección, sin confundirse con cancelación
+
+ 254 pass
+ 0 fail
+ 1119 expect() calls
+Ran 254 tests across 28 files. [379.00ms]

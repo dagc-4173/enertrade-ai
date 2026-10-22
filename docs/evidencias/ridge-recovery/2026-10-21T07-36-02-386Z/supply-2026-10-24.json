@@ -1,0 +1,137 @@
+{
+  "emittedAt": "2026-10-21T07:36:13.876Z",
+  "response": {
+    "status": "available",
+    "sourceArtifacts": [
+      {
+        "preparedDatasetId": 68,
+        "sourceDatasetId": 198
+      },
+      {
+        "preparedDatasetId": 69,
+        "sourceDatasetId": 200
+      },
+      {
+        "preparedDatasetId": 72,
+        "sourceDatasetId": 206
+      },
+      {
+        "preparedDatasetId": 74,
+        "sourceDatasetId": 210
+      },
+      {
+        "preparedDatasetId": 79,
+        "sourceDatasetId": 219
+      }
+    ],
+    "forecastType": "generation_availability_proxy",
+    "target": "energia_kwh",
+    "unit": "kWh",
+    "horizonPeriods": 24,
+    "forecastOriginDate": "2026-10-17",
+    "targetDate": "2026-10-24",
+    "horizonDays": 7,
+    "modelId": "xm-gene-ridge-direct-h7-v2",
+    "modelVersion": "1.0.0-experimental",
+    "modelStatus": "experimental",
+    "academicValidation": "pending",
+    "predictions": [
+      {
+        "hora_xm": 1,
+        "energia_kwh": 9725096.786233906
+      },
+      {
+        "hora_xm": 2,
+        "energia_kwh": 9381542.223129742
+      },
+      {
+        "hora_xm": 3,
+        "energia_kwh": 9098545.390116975
+      },
+      {
+        "hora_xm": 4,
+        "energia_kwh": 8889050.044876143
+      },
+      {
+        "hora_xm": 5,
+        "energia_kwh": 8826359.706749847
+      },
+      {
+        "hora_xm": 6,
+        "energia_kwh": 8846905.333348205
+      },
+      {
+        "hora_xm": 7,
+        "energia_kwh": 8908208.46811657
+      },
+      {
+        "hora_xm": 8,
+        "energia_kwh": 9271075.213562213
+      },
+      {
+        "hora_xm": 9,
+        "energia_kwh": 9693592.349130804
+      },
+      {
+        "hora_xm": 10,
+        "energia_kwh": 9953311.772438195
+      },
+      {
+        "hora_xm": 11,
+        "energia_kwh": 10236251.40871977
+      },
+      {
+        "hora_xm": 12,
+        "energia_kwh": 10418351.513207857
+      },
+      {
+        "hora_xm": 13,
+        "energia_kwh": 10398918.66998678
+      },
+      {
+        "hora_xm": 14,
+        "energia_kwh": 10346497.133335212
+      },
+      {
+        "hora_xm": 15,
+        "energia_kwh": 10333152.9703264
+      },
+      {
+        "hora_xm": 16,
+        "energia_kwh": 10369095.692210833
+      },
+      {
+        "hora_xm": 17,
+        "energia_kwh": 10383241.861222753
+      },
+      {
+        "hora_xm": 18,
+        "energia_kwh": 10532859.11214937
+      },
+      {
+        "hora_xm": 19,
+        "energia_kwh": 11120648.663526392
+      },
+      {
+        "hora_xm": 20,
+        "energia_kwh": 11043785.848916365
+      },
+      {
+        "hora_xm": 21,
+        "energia_kwh": 10739858.377821293
+      },
+      {
+        "hora_xm": 22,
+        "energia_kwh": 10321136.176401645
+      },
+      {
+        "hora_xm": 23,
+        "energia_kwh": 9844958.362051861
+      },
+      {
+        "hora_xm": 24,
+        "energia_kwh": 9395393.90790788
+      }
+    ]
+  }
+}

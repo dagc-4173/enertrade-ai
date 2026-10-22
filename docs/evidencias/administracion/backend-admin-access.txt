@@ -1,0 +1,23 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\admin-access.test.ts:
+(pass) ADM-01: permisos se deniegan por defecto y admiten únicamente ADMIN activo [16.00ms]
+(pass) ADM-02: aplicación impide al usuario normal cambiar cuentas, sincronizar, importar o consultar histórico técnico [15.00ms]
+(pass) ADM-03: origen cruzado se rechaza antes de mutaciones administrativas
+(pass) ADM-04: último administrador no puede degradarse ni bloquearse
+(pass) ADM-05: cambios no autorizados o incompletos rechazados {"body":null}
+(pass) ADM-05: cambios no autorizados o incompletos rechazados {"body":[]}
+(pass) ADM-05: cambios no autorizados o incompletos rechazados {"body":{}}
+(pass) ADM-05: cambios no autorizados o incompletos rechazados {"body":{"role":"OWNER","reason":"Prueba válida"}}
+(pass) ADM-05: cambios no autorizados o incompletos rechazados {"body":{"role":["ADMIN"],"reason":"Prueba válida"}}
+(pass) ADM-05: cambios no autorizados o incompletos rechazados {"body":{"status":"DELETED","reason":"Prueba válida"}}
+(pass) ADM-05: cambios no autorizados o incompletos rechazados {"body":{"role":"ADMIN","reason":"x"}}
+(pass) ADM-05: cambios no autorizados o incompletos rechazados {"body":{"role":"ADMIN","reason":"Prueba válida","email":"foreign@example.test"}}
+(pass) ADM-05: cambios no autorizados o incompletos rechazados {"body":{"password":"secret","reason":"Prueba válida"}}
+(pass) ADM-06: bloqueo impide login y elimina sesión existente aunque tenga token válido [188.00ms]
+(pass) ADM-07: registro no acepta autoconcederse rol ADMIN
+
+ 15 pass
+ 0 fail
+ 44 expect() calls
+Ran 15 tests across 1 file. [480.00ms]

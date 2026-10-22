@@ -1,0 +1,164 @@
+{
+  "capabilities": [
+    {
+      "capability": "supply_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-gene-ridge-direct-h1-v2",
+      "version": "1.0.0-experimental",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "supply_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-gene-ridge-direct-h2-v2",
+      "version": "1.0.0-experimental",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "supply_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-gene-ridge-direct-h3-v2",
+      "version": "1.0.0-experimental",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "supply_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-gene-ridge-direct-h4-v2",
+      "version": "1.0.0-experimental",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "supply_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-gene-ridge-direct-h5-v2",
+      "version": "1.0.0-experimental",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "supply_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-gene-ridge-direct-h6-v2",
+      "version": "1.0.0-experimental",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "supply_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-gene-ridge-direct-h7-v2",
+      "version": "1.0.0-experimental",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "demand_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-demandasin-ridge-direct-h1-v5",
+      "version": "hu06-demand-v5-c-primary@1.0.0",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "demand_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-demandasin-ridge-direct-h2-v5",
+      "version": "hu06-demand-v5-c-primary@1.0.0",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "demand_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-demandasin-ridge-direct-h3-v5",
+      "version": "hu06-demand-v5-c-primary@1.0.0",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "demand_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-demandasin-ridge-direct-h4-v5",
+      "version": "hu06-demand-v5-c-primary@1.0.0",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "demand_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-demandasin-ridge-direct-h5-v5",
+      "version": "hu06-demand-v5-c-primary@1.0.0",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "demand_forecast",
+      "artifactType": "ml_model",
+      "id": "xm-demandasin-ridge-direct-h6-v5",
+      "version": "hu06-demand-v5-c-primary@1.0.0",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "price_estimation",
+      "artifactType": "deterministic_rule",
+      "id": "xm-preciobolsnaci-b1",
+      "version": "1.0.0",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "matching",
+      "artifactType": "deterministic_method",
+      "id": "matching-hourly-v2",
+      "version": "v2",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    },
+    {
+      "capability": "pattern_recognition",
+      "artifactType": "deterministic_method",
+      "id": "energy-pattern-descriptive",
+      "version": "1.0.0",
+      "status": "active",
+      "active": true,
+      "date": null,
+      "dateStatus": "not_recorded"
+    }
+  ]
+}

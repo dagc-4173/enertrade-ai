@@ -1,0 +1,81 @@
+{
+  "series": "price",
+  "source": "XM PrecBolsNaci/Sistema",
+  "unit": "COP/kWh",
+  "target": "precio_cop_kwh",
+  "origin": "2026-10-18",
+  "supportedHorizons": [
+    4,
+    5,
+    6
+  ],
+  "eligibleTargetDates": [
+    "2026-10-22",
+    "2026-10-23",
+    "2026-10-24"
+  ],
+  "models": [
+    {
+      "modelId": "xm-preciobolsnaci-ridge-direct-h4-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 4,
+      "artifactSha256": "6ef75ae4a0d4c0701f0ab437a4743696f812b2e0a3c9e25d9b6db1c19bf14f90",
+      "metrics": {
+        "MAE": 138.842470783667,
+        "RMSE": 177.7287806408906,
+        "WAPE_percent": 18.7391549325729,
+        "bias": -40.28507985466005,
+        "n": 2880,
+        "range": {
+          "start": "2026-06-01",
+          "end": "2026-09-28"
+        },
+        "evaluationType": "external_temporal_holdout",
+        "horizonDays": 4
+      },
+      "promoted": false
+    },
+    {
+      "modelId": "xm-preciobolsnaci-ridge-direct-h5-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 5,
+      "artifactSha256": "8d232e049c49b1a4e9c40bfd2c403340ab2a46baa3d6656da8b9e2f70bfd8626",
+      "metrics": {
+        "MAE": 146.10116686871632,
+        "RMSE": 185.80601420028975,
+        "WAPE_percent": 19.718839533246264,
+        "bias": -46.429251360236776,
+        "n": 2880,
+        "range": {
+          "start": "2026-06-01",
+          "end": "2026-09-28"
+        },
+        "evaluationType": "external_temporal_holdout",
+        "horizonDays": 5
+      },
+      "promoted": false
+    },
+    {
+      "modelId": "xm-preciobolsnaci-ridge-direct-h6-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 6,
+      "artifactSha256": "2f92bc92af762bf1d7b2c76ba3f216253476d8d80987a26099ae17c34d37d756",
+      "metrics": {
+        "MAE": 152.4321413111971,
+        "RMSE": 192.30155703063983,
+        "WAPE_percent": 20.573312305750132,
+        "bias": -54.896487514427314,
+        "n": 2880,
+        "range": {
+          "start": "2026-06-01",
+          "end": "2026-09-28"
+        },
+        "evaluationType": "external_temporal_holdout",
+        "horizonDays": 6
+      },
+      "promoted": false
+    }
+  ],
+  "experimental": true,
+  "academicValidation": "pending"
+}

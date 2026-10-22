@@ -1,0 +1,241 @@
+{
+  "status": "available",
+  "method": "ridge",
+  "series": "demand",
+  "source": "XM DemaReal/Sistema",
+  "unit": "kWh",
+  "target": "demanda_real_kwh",
+  "modelId": "xm-demareal-ridge-direct-h4-v1",
+  "modelVersion": "1.0.0-experimental",
+  "artifactSha256": "69f792ca1608e09073a69a794307af34377449f18de23959d3ceb56b44bcaaca",
+  "targetDate": "2026-10-22",
+  "latestObservedDate": "2026-10-18",
+  "horizonDays": 4,
+  "generatedAt": "2026-10-21T08:20:37.777Z",
+  "contextPeriods": 672,
+  "experimental": true,
+  "promoted": false,
+  "academicValidation": "pending",
+  "confidenceStatus": "not_defined",
+  "predictions": [
+    {
+      "periodo": 1,
+      "value": 6181330.814490965
+    },
+    {
+      "periodo": 2,
+      "value": 6029779.005139181
+    },
+    {
+      "periodo": 3,
+      "value": 5938523.527800282
+    },
+    {
+      "periodo": 4,
+      "value": 5876848.813757466
+    },
+    {
+      "periodo": 5,
+      "value": 5886780.437590464
+    },
+    {
+      "periodo": 6,
+      "value": 5971151.243296083
+    },
+    {
+      "periodo": 7,
+      "value": 6097472.458113204
+    },
+    {
+      "periodo": 8,
+      "value": 6382057.438616262
+    },
+    {
+      "periodo": 9,
+      "value": 6739532.142282529
+    },
+    {
+      "periodo": 10,
+      "value": 7090132.926138969
+    },
+    {
+      "periodo": 11,
+      "value": 7340609.556783243
+    },
+    {
+      "periodo": 12,
+      "value": 7562560.884439111
+    },
+    {
+      "periodo": 13,
+      "value": 7655074.682429406
+    },
+    {
+      "periodo": 14,
+      "value": 7629676.92772876
+    },
+    {
+      "periodo": 15,
+      "value": 7632691.521704622
+    },
+    {
+      "periodo": 16,
+      "value": 7467174.843209975
+    },
+    {
+      "periodo": 17,
+      "value": 7327171.654853483
+    },
+    {
+      "periodo": 18,
+      "value": 7197276.860172205
+    },
+    {
+      "periodo": 19,
+      "value": 7312237.5665063
+    },
+    {
+      "periodo": 20,
+      "value": 7234641.620776212
+    },
+    {
+      "periodo": 21,
+      "value": 7108608.532393665
+    },
+    {
+      "periodo": 22,
+      "value": 6831322.9905012045
+    },
+    {
+      "periodo": 23,
+      "value": 6594613.623269334
+    },
+    {
+      "periodo": 24,
+      "value": 6369945.939776758
+    }
+  ],
+  "referenceDay": {
+    "date": "2026-10-18",
+    "values": [
+      {
+        "periodo": 1,
+        "value": 2043726.42
+      },
+      {
+        "periodo": 2,
+        "value": 1935890.44
+      },
+      {
+        "periodo": 3,
+        "value": 1914099.4
+      },
+      {
+        "periodo": 4,
+        "value": 1921327.05
+      },
+      {
+        "periodo": 5,
+        "value": 1921677.17
+      },
+      {
+        "periodo": 6,
+        "value": 1995526.66
+      },
+      {
+        "periodo": 7,
+        "value": 2158333.16
+      },
+      {
+        "periodo": 8,
+        "value": 2488602.77
+      },
+      {
+        "periodo": 9,
+        "value": 2847407.08
+      },
+      {
+        "periodo": 10,
+        "value": 3196072.45
+      },
+      {
+        "periodo": 11,
+        "value": 3399313
+      },
+      {
+        "periodo": 12,
+        "value": 3506821.35
+      },
+      {
+        "periodo": 13,
+        "value": 3477780.73
+      },
+      {
+        "periodo": 14,
+        "value": 3077641.83
+      },
+      {
+        "periodo": 15,
+        "value": 2955776.17
+      },
+      {
+        "periodo": 16,
+        "value": 2489297.2
+      },
+      {
+        "periodo": 17,
+        "value": 2279045.54
+      },
+      {
+        "periodo": 18,
+        "value": 2031697.5
+      },
+      {
+        "periodo": 19,
+        "value": 2171472.36
+      },
+      {
+        "periodo": 20,
+        "value": 2082174.56
+      },
+      {
+        "periodo": 21,
+        "value": 2059517.4
+      },
+      {
+        "periodo": 22,
+        "value": 1825479.74
+      },
+      {
+        "periodo": 23,
+        "value": 1825900.83
+      },
+      {
+        "periodo": 24,
+        "value": 1847165.21
+      }
+    ]
+  },
+  "historicalMetrics": {
+    "MAE": 396049.43625008326,
+    "RMSE": 522740.2745918988,
+    "WAPE_percent": 4.232629547073019,
+    "bias": -60707.28034686372,
+    "n": 4344,
+    "range": {
+      "start": "2025-01-01",
+      "end": "2025-06-30"
+    },
+    "evaluationType": "validation_technical",
+    "horizonDays": 4
+  },
+  "warnings": [
+    "Demanda horaria DemaReal; excluye alumbrado público. No equivale a DemaSIN diario.",
+    "Modelo experimental; validación prospectiva y académica pendientes. Sin intervalo probabilístico.",
+    "La línea observada corresponde al día de origen, no al día futuro objetivo. Las métricas históricas no acreditan precisión de esta consulta."
+  ],
+  "trace": {
+    "executionId": "aa7b2a54-a80d-4546-89e3-a9adbfdb511f",
+    "persistence": "local_evidence"
+  }
+}

@@ -5,6 +5,7 @@ export type PageKey =
   | 'transactions'
   | 'patterns'
   | 'profile'
+  | 'admin'
 
 export type StatusTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral'
 

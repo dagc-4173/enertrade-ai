@@ -174,8 +174,8 @@ test('un fallo de indicators no oculta health, capabilities ni la gestión de da
   expect(html).toContain('No fue posible cargar los indicadores.')
   expect(html).toContain('Reintentar indicadores')
   expect(html).toContain('Artefactos activos')
-  expect(html).toContain('Registrar dataset')
-  expect(html).toContain('Fuentes de datos')
+  expect(html).toContain('El registro y preparación de datasets se encuentran en Administración.')
+  expect(html).not.toContain('Registrar dataset')
 })
 
 test('un fallo de capabilities no hace desaparecer las métricas de indicadores', () => {

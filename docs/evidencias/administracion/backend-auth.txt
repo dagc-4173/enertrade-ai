@@ -1,0 +1,20 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\auth.test.ts:
+(pass) register persists Argon2id and only exposes public user [187.00ms]
+(pass) duplicate normalized email returns 409 [156.00ms]
+(pass) invalid registration {"email":"bad","name":"Demo","password":"test-only-long-passphrase"}
+(pass) invalid registration {"email":"demo@example.test","name":"Demo","password":"short"}
+(pass) invalid registration {"email":"demo@example.test","name":"","password":"test-only-long-passphrase"}
+(pass) invalid registration {"email":"demo@example.test","name":"Demo","password":12}
+(pass) login cookie, me and logout revoke the session [172.00ms]
+(pass) invalid credentials have identical envelopes for unknown email and wrong password [266.00ms]
+(pass) me rejects absent, forged and expired sessions [172.00ms]
+(pass) login rotates a previous authenticated token [265.00ms]
+(pass) cross-origin writes and non-JSON writes are rejected
+(pass) parser and internal errors are safe [79.00ms]
+
+ 12 pass
+ 0 fail
+ 42 expect() calls
+Ran 12 tests across 1 file. [1.67s]

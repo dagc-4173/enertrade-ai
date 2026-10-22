@@ -1,0 +1,12 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\xm-daily-sync.controller.test.ts:
+(pass) XM sync and availability routes require the existing authentication boundary [78.00ms]
+(pass) authenticated routes validate input and expose only requested XM metric [157.00ms]
+(pass) global availability database failure remains HTTP 500 and never a partial success [31.00ms]
+(pass) single-metric sync exposes additive NO_NEW_DATA metadata without invoking artifact services [31.00ms]
+
+ 4 pass
+ 0 fail
+ 12 expect() calls
+Ran 4 tests across 1 file. [520.00ms]

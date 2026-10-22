@@ -6,7 +6,8 @@ const updateMany = mock(async (_args: any): Promise<any> => ({ count: 1 }));
 const preparedFind = mock(async (_args: any): Promise<any> => null);
 const preparedCreate = mock(async (_args: any): Promise<any> => null);
 mock.module('@/lib/prisma', () => ({ prisma: { energyDataset: { create, findUnique, updateMany }, preparedDataset: {findUnique: preparedFind, create: preparedCreate} } }));
-const { app } = await import('@/app');
+const { createApp } = await import('@/app');
+const app = createApp({ administrativeAuth: { me: async () => ({ id: crypto.randomUUID(), email: 'dataset-admin@example.test', name: 'Admin fixture', createdAt: new Date(), role: 'ADMIN', status: 'ACTIVE' }) } });
 
 // HTTP real sobre loopback; solo se sustituye la escritura Prisma.
 const server = app.listen(0, '127.0.0.1');

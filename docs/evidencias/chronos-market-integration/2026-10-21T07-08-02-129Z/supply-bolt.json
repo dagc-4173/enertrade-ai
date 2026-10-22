@@ -1,0 +1,179 @@
+{
+  "status": "available",
+  "model": "bolt",
+  "modelId": "amazon/chronos-bolt-small",
+  "modelVersion": "772f3d25d38aec6d914c8949dab4462e2d46f5d8",
+  "forecastType": "experimental_hourly_system_supply",
+  "series": "supply",
+  "source": "XM Gene/Sistema",
+  "target": "energia_kwh",
+  "unit": "kWh",
+  "targetDate": "2026-09-30",
+  "latestObservedDate": "2026-09-28",
+  "contextFrom": "2026-09-01",
+  "contextPeriods": 672,
+  "horizonDays": 2,
+  "generatedPeriods": 48,
+  "bridgePeriods": 24,
+  "generatedAt": "2026-09-29T08:00:00.000Z",
+  "experimental": true,
+  "academicValidation": "pending",
+  "confidenceStatus": "not_prospectively_calibrated",
+  "predictions": [
+    {
+      "periodo": 1,
+      "q10": 9163105,
+      "q50": 9431890,
+      "q90": 9649444
+    },
+    {
+      "periodo": 2,
+      "q10": 8805987,
+      "q50": 9075066,
+      "q90": 9296041
+    },
+    {
+      "periodo": 3,
+      "q10": 8552582,
+      "q50": 8806907,
+      "q90": 9016734
+    },
+    {
+      "periodo": 4,
+      "q10": 8422118,
+      "q50": 8672306,
+      "q90": 8889061
+    },
+    {
+      "periodo": 5,
+      "q10": 8492417,
+      "q50": 8766068,
+      "q90": 9054555
+    },
+    {
+      "periodo": 6,
+      "q10": 8791816,
+      "q50": 9103016,
+      "q90": 9419348
+    },
+    {
+      "periodo": 7,
+      "q10": 9000416,
+      "q50": 9290320,
+      "q90": 9605336
+    },
+    {
+      "periodo": 8,
+      "q10": 9338307,
+      "q50": 9643868,
+      "q90": 9940870
+    },
+    {
+      "periodo": 9,
+      "q10": 9727291,
+      "q50": 10063521,
+      "q90": 10368923
+    },
+    {
+      "periodo": 10,
+      "q10": 10028492,
+      "q50": 10361585,
+      "q90": 10654048
+    },
+    {
+      "periodo": 11,
+      "q10": 10345934,
+      "q50": 10713924,
+      "q90": 11027857
+    },
+    {
+      "periodo": 12,
+      "q10": 10585414,
+      "q50": 10994172,
+      "q90": 11352010
+    },
+    {
+      "periodo": 13,
+      "q10": 10673223,
+      "q50": 11092315,
+      "q90": 11450663
+    },
+    {
+      "periodo": 14,
+      "q10": 10756206,
+      "q50": 11172391,
+      "q90": 11524556
+    },
+    {
+      "periodo": 15,
+      "q10": 10992923,
+      "q50": 11451207,
+      "q90": 11851677
+    },
+    {
+      "periodo": 16,
+      "q10": 11050980,
+      "q50": 11526177,
+      "q90": 11926165
+    },
+    {
+      "periodo": 17,
+      "q10": 10914800,
+      "q50": 11335465,
+      "q90": 11699070
+    },
+    {
+      "periodo": 18,
+      "q10": 10990758,
+      "q50": 11390524,
+      "q90": 11718805
+    },
+    {
+      "periodo": 19,
+      "q10": 11298202,
+      "q50": 11781596,
+      "q90": 12155592
+    },
+    {
+      "periodo": 20,
+      "q10": 11438974,
+      "q50": 11983281,
+      "q90": 12382275
+    },
+    {
+      "periodo": 21,
+      "q10": 11193504,
+      "q50": 11692414,
+      "q90": 12063657
+    },
+    {
+      "periodo": 22,
+      "q10": 10777229,
+      "q50": 11198216,
+      "q90": 11522411
+    },
+    {
+      "periodo": 23,
+      "q10": 10254516,
+      "q50": 10632186,
+      "q90": 10919407
+    },
+    {
+      "periodo": 24,
+      "q10": 9615281,
+      "q50": 9947984,
+      "q90": 10223373
+    }
+  ],
+  "historicalMetrics": null,
+  "warnings": [
+    "Generación agregada del SIN como aproximación de oferta; no representa disponibilidad ni ofertas de un proveedor.",
+    "Evaluación histórica específica pendiente; no se trasladan métricas de demanda a esta variable.",
+    "Cuantiles experimentales; no representan un intervalo prospectivamente calibrado.",
+    "El desempeño histórico de un día no acredita el desempeño con retraso de publicación."
+  ],
+  "trace": {
+    "executionId": "30aa95dc-cf47-460d-b47a-922d4b4bc255",
+    "persistence": "local_evidence"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "protocol": {
+    "version": "1.0.0-experimental",
+    "source": "XM DemaReal/Sistema",
+    "corpusSha256": "e52819f935bb22c6d01cfd4546b23c192d6848ecd748c352d2c2e355881f4fa6",
+    "trainEnd": "2024-12-31",
+    "validationStart": "2025-01-01",
+    "validationEnd": "2025-06-30",
+    "horizons": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "alphas": [
+      0.01,
+      0.1,
+      1,
+      10,
+      100,
+      1000
+    ],
+    "contextPeriods": 672,
+    "selection": "minimum validation MAE, then smaller alpha",
+    "evaluation": "validation_technical; previously exposed corpus; no new unseen holdout claim",
+    "state": "pendingProspectiveValidation",
+    "limitations": [
+      "Independent direct models; no recursive bridging",
+      "No clipping, calibration, covariates or fine tuning",
+      "No final-test evaluation or model promotion in this experiment"
+    ]
+  },
+  "protocolSha256": "1b454d3981feabd39f0b9743d0757fc010a4bcdcfc67325ed27507baab1efc0e",
+  "sourceSha256": "6ad0bff56dab0604b3771bf7509510f0363942fb098f21c8b6048de5d5a27d4c",
+  "registeredAt": "2026-10-21T08:13:09.663815+00:00"
+}

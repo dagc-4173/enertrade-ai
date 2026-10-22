@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "executedAt": "2026-10-21T08:20:38.646Z",
+  "source": "live XM acquisition; actual frozen Ridge inference",
+  "authentication": "substituted only in this loopback test; not a session/browser test",
+  "training": false,
+  "scoring": false,
+  "results": [
+    {
+      "series": "demand",
+      "httpStatus": 200,
+      "modelId": "xm-demareal-ridge-direct-h4-v1",
+      "targetDate": "2026-10-22",
+      "origin": "2026-10-18",
+      "horizonDays": 4,
+      "rows": 24,
+      "executionId": "aa7b2a54-a80d-4546-89e3-a9adbfdb511f"
+    },
+    {
+      "series": "price",
+      "httpStatus": 200,
+      "modelId": "xm-preciobolsnaci-ridge-direct-h4-v1",
+      "targetDate": "2026-10-22",
+      "origin": "2026-10-18",
+      "horizonDays": 4,
+      "rows": 24,
+      "executionId": "1dd5420a-6cab-43cc-ad32-f79ab5a93031"
+    }
+  ]
+}

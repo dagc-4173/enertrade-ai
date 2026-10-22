@@ -1,0 +1,48 @@
+name: enertrade
+services:
+  app:
+    image: enertrade-ai:local
+    build:
+      context: .
+      target: ${BUILD_TARGET:-runtime-chronos}
+    env_file:
+      - .env.deploy
+    environment:
+      PORT: "8080"
+      NODE_ENV: ${NODE_ENV:-production}
+      FRONTEND_ORIGIN: ${PUBLIC_ORIGIN:?Define PUBLIC_ORIGIN en .env.deploy}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-0}
+      CHRONOS_REQUIRED: ${CHRONOS_REQUIRED:-true}
+      XM_AUTO_SYNC_ENABLED: ${XM_AUTO_SYNC_ENABLED:-false}
+    ports:
+      - "127.0.0.1:${LOCAL_PORT:-8080}:8080"
+    volumes:
+      - evidence:/app/data
+      - type: bind
+        source: ${CHRONOS2_HOST_PATH:-./deployment/models/chronos2}
+        target: /models/chronos2
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${CHRONOS_BOLT_HOST_PATH:-./deployment/models/bolt}
+        target: /models/bolt
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+  migrate:
+    image: enertrade-ai:local
+    env_file:
+      - .env.deploy
+    environment:
+      CHRONOS_REQUIRED: "false"
+    profiles: [tools]
+    command: [bun, --bun, run, prisma, migrate, deploy]
+    restart: "no"
+    init: true
+volumes:
+  evidence:

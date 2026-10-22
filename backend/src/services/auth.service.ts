@@ -2,23 +2,28 @@ import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 export const sessionLifetimeMs = 8 * 60 * 60 * 1000;
 export const authCookieName = 'enertrade_session';
-export type AuthUser = { id: string; email: string; name: string; createdAt: Date };
+export type AuthUser = { id: string; email: string; name: string; createdAt: Date; role?: 'USER' | 'ADMIN'; status?: 'ACTIVE' | 'BLOCKED' };
 type StoredUser = AuthUser & { passwordHash: string };
 export interface AuthRepository {
  createUser(data: { email: string; name: string; passwordHash: string }): Promise<AuthUser>;
  findUser(email: string): Promise<StoredUser | null>;
- createSession(data: { tokenHash: string; userId: string; expiresAt: Date }): Promise<unknown>;
+ createSession(data: { tokenHash: string; userId: string; expiresAt: Date; expectedPasswordHash?: string }): Promise<unknown>;
  findSession(tokenHash: string): Promise<{ expiresAt: Date; user: AuthUser } | null>;
  deleteSession(tokenHash: string): Promise<unknown>;
 }
-const select = { id: true, email: true, name: true, createdAt: true } as const;
-const repository: AuthRepository = {
- createUser: data => prisma.user.create({ data, select }),
- findUser: email => prisma.user.findUnique({ where: { email } }),
- createSession: data => prisma.authSession.create({ data }),
- findSession: tokenHash => prisma.authSession.findUnique({ where: { tokenHash }, select: { expiresAt: true, user: { select } } }),
- deleteSession: tokenHash => prisma.authSession.deleteMany({ where: { tokenHash } }),
-};
+const select = { id: true, email: true, name: true, createdAt: true, role: true, status: true } as const;
+export function createAuthRepository(database = prisma): AuthRepository { return {
+ createUser: data => database.user.create({ data, select }),
+ findUser: email => database.user.findUnique({ where: { email } }),
+ createSession: ({expectedPasswordHash,...data}) => database.$transaction(async tx=>{
+  const users=await tx.$queryRaw<Array<{passwordHash:string;status:string}>>`SELECT "passwordHash","status" FROM "User" WHERE "id"=${data.userId}::uuid FOR UPDATE`;
+  if(!users[0] || users[0].status!=='ACTIVE' || users[0].passwordHash!==expectedPasswordHash)throw new AuthError(401,'INVALID_CREDENTIALS','Correo o contraseña incorrectos.');
+  return tx.authSession.create({data});
+ },{maxWait:10000,timeout:15000}),
+ findSession: tokenHash => database.authSession.findUnique({ where: { tokenHash }, select: { expiresAt: true, user: { select } } }),
+ deleteSession: tokenHash => database.authSession.deleteMany({ where: { tokenHash } }),
+}; }
+const repository=createAuthRepository();
 export class AuthError extends Error {
  constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
@@ -60,14 +65,16 @@ export function createAuthService(repo: AuthRepository = repository, now: () => 
    dummyHash ??= hashPassword(randomBytes(32).toString('hex'));
    const matches = await Bun.password.verify(password, user?.passwordHash ?? await dummyHash);
    if (!user || !matches) throw new AuthError(401, 'INVALID_CREDENTIALS', 'Correo o contraseña incorrectos.');
+   if (user.status === 'BLOCKED') throw new AuthError(403, 'ACCOUNT_BLOCKED', 'Tu cuenta está bloqueada. Contacta al administrador.');
    const token = randomBytes(32).toString('base64url');
    if (validToken(previousToken)) await repo.deleteSession(hashToken(previousToken));
-   await repo.createSession({ tokenHash: hashToken(token), userId: user.id, expiresAt: new Date(now().getTime() + sessionLifetimeMs) });
-   return { token, user: { id: user.id, email: user.email, name: user.name, createdAt: user.createdAt } };
+   await repo.createSession({ tokenHash: hashToken(token), userId: user.id, expectedPasswordHash: user.passwordHash, expiresAt: new Date(now().getTime() + sessionLifetimeMs) });
+   return { token, user: { id: user.id, email: user.email, name: user.name, createdAt: user.createdAt, ...(user.role ? { role: user.role } : {}), ...(user.status ? { status: user.status } : {}) } };
   },
   async me(token?: string) {
    const session = validToken(token) ? await repo.findSession(hashToken(token)) : null;
    if (!session || session.expiresAt <= now()) throw new AuthError(401, 'UNAUTHENTICATED', 'Debes iniciar sesión.');
+   if (session.user.status === 'BLOCKED') { await repo.deleteSession(hashToken(token!)); throw new AuthError(403, 'ACCOUNT_BLOCKED', 'Tu cuenta está bloqueada. Contacta al administrador.'); }
    return session.user;
   },
   async logout(token?: string) { if (validToken(token)) await repo.deleteSession(hashToken(token)); },

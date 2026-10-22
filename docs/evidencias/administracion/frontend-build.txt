@@ -1,0 +1,16 @@
+$ tsc -b && vite build
+vite v8.0.11 building client environment for production...
+[2K
+transforming...✓ 309 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                0.46 kB │ gzip:   0.29 kB
+dist/assets/index-DvhVmD7I.css                53.30 kB │ gzip:  10.08 kB
+dist/assets/typeof-mVVFPGHC.js                 0.27 kB │ gzip:   0.16 kB
+dist/assets/purify.es-C7prPC2F.js             28.07 kB │ gzip:  11.08 kB
+dist/assets/index.es-C0hKtegU.js             151.53 kB │ gzip:  48.91 kB
+dist/assets/html2canvas-DokJ_ePU.js          199.56 kB │ gzip:  46.78 kB
+dist/assets/simulatedReceiptPdf-BtPysN3R.js  401.21 kB │ gzip: 130.69 kB
+dist/assets/index-Bv3Bjc8g.js                410.83 kB │ gzip: 115.48 kB
+
+✓ built in 248ms

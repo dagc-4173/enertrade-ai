@@ -1,0 +1,39 @@
+{
+  "metrics": [
+    {
+      "metric": "PrecBolsNaci",
+      "status": "synchronized",
+      "outcome": "SYNCED",
+      "latestCompleteAvailableDate": "2026-10-17",
+      "requestedFrom": "2026-10-06",
+      "requestedTo": "2026-10-17",
+      "newDays": 12,
+      "ingestedRows": 288,
+      "previousPersistedUntil": "2026-10-05",
+      "availableUntil": "2026-10-17",
+      "synchronizedUntil": "2026-10-17",
+      "providerAvailableUntil": "2026-10-17",
+      "persistedUntil": "2026-10-17",
+      "latestIndividuallyUsableDate": "2026-10-17",
+      "semanticExcludedDates": [],
+      "windowsCreatedOrReused": [
+        {
+          "from": "2026-10-06",
+          "to": "2026-10-17",
+          "manifestId": 115,
+          "energyDatasetId": 222,
+          "contentHash": "b784362b50390b28ddccde278c4ace274a391ff6afcb33da2fbde70af2f90072",
+          "reused": false
+        }
+      ],
+      "consolidatedDatasetId": 19,
+      "energyDatasetId": 223,
+      "preparedDatasetId": 81,
+      "validationStatus": "aprobado",
+      "preparationProfile": {
+        "id": "xm_preciobolsnaci_preparacion_base",
+        "version": "1.0.0"
+      }
+    }
+  ]
+}

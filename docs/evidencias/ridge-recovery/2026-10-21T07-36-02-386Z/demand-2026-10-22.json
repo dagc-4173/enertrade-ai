@@ -1,0 +1,104 @@
+{
+  "emittedAt": "2026-10-21T07:36:14.164Z",
+  "response": {
+    "status": "available",
+    "forecastType": "aggregate_demand_proxy",
+    "target": "demanda_kwh",
+    "unit": "kWh",
+    "modelId": "xm-demandasin-ridge-direct-h6-v5",
+    "modelVersion": "hu06-demand-v5-c-primary@1.0.0",
+    "modelStatus": "experimental",
+    "academicValidation": "pending",
+    "modelState": "pendingProspectiveValidation",
+    "forecastOriginDate": "2026-10-16",
+    "targetDate": "2026-10-22",
+    "horizonDays": 6,
+    "sourceArtifacts": [
+      {
+        "preparedDatasetId": 56,
+        "sourceDatasetId": 152
+      },
+      {
+        "preparedDatasetId": 70,
+        "sourceDatasetId": 202
+      },
+      {
+        "preparedDatasetId": 75,
+        "sourceDatasetId": 212
+      },
+      {
+        "preparedDatasetId": 80,
+        "sourceDatasetId": 221
+      }
+    ],
+    "prediction": {
+      "demanda_kwh": 252704908.7271259
+    },
+    "confidence": null,
+    "confidenceStatus": "not_defined",
+    "featureSourceDates": [
+      "2026-09-15",
+      "2026-09-17",
+      "2026-09-18",
+      "2026-09-19",
+      "2026-09-20",
+      "2026-09-21",
+      "2026-09-22",
+      "2026-09-23",
+      "2026-09-24",
+      "2026-09-25",
+      "2026-09-26",
+      "2026-09-27",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09",
+      "2026-10-10",
+      "2026-10-11",
+      "2026-10-12",
+      "2026-10-13",
+      "2026-10-14",
+      "2026-10-15",
+      "2026-10-16"
+    ],
+    "actualSourceDates": [
+      "2026-09-15",
+      "2026-09-17",
+      "2026-09-18",
+      "2026-09-19",
+      "2026-09-20",
+      "2026-09-21",
+      "2026-09-22",
+      "2026-09-23",
+      "2026-09-24",
+      "2026-09-25",
+      "2026-09-26",
+      "2026-09-27",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09",
+      "2026-10-10",
+      "2026-10-11",
+      "2026-10-12",
+      "2026-10-13",
+      "2026-10-14",
+      "2026-10-15",
+      "2026-10-16"
+    ],
+    "oldestDate": "2026-09-15",
+    "newestDate": "2026-10-16",
+    "count": 28,
+    "calendarSpanDays": 32
+  }
+}

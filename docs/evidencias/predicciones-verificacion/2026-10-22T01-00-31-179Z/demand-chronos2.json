@@ -1,0 +1,191 @@
+{
+  "status": "available",
+  "model": "chronos2",
+  "modelId": "amazon/chronos-2",
+  "modelVersion": "29ec3766d36d6f73f0696f85560a422f50e8498c",
+  "forecastType": "experimental_hourly_system_demand",
+  "series": "demand",
+  "source": "XM DemaReal/Sistema",
+  "target": "demanda_real_kwh",
+  "unit": "kWh",
+  "targetDate": "2026-10-22",
+  "latestObservedDate": "2026-10-18",
+  "contextFrom": "2026-09-21",
+  "contextPeriods": 672,
+  "horizonDays": 4,
+  "generatedPeriods": 96,
+  "bridgePeriods": 72,
+  "generatedAt": "2026-10-22T01:01:45.303Z",
+  "experimental": true,
+  "academicValidation": "pending",
+  "confidenceStatus": "not_prospectively_calibrated",
+  "predictions": [
+    {
+      "periodo": 1,
+      "q10": 1642178,
+      "q50": 2254206.5,
+      "q90": 3156111.5
+    },
+    {
+      "periodo": 2,
+      "q10": 1578115,
+      "q50": 2181332.5,
+      "q90": 3162248
+    },
+    {
+      "periodo": 3,
+      "q10": 1534461,
+      "q50": 2195542.5,
+      "q90": 3098450.5
+    },
+    {
+      "periodo": 4,
+      "q10": 1675296.5,
+      "q50": 2247001,
+      "q90": 3035590
+    },
+    {
+      "periodo": 5,
+      "q10": 1742671.5,
+      "q50": 2327049.5,
+      "q90": 3050009
+    },
+    {
+      "periodo": 6,
+      "q10": 1799022,
+      "q50": 2375150,
+      "q90": 3038904.5
+    },
+    {
+      "periodo": 7,
+      "q10": 1782192.5,
+      "q50": 2463406.5,
+      "q90": 3001669
+    },
+    {
+      "periodo": 8,
+      "q10": 1877839,
+      "q50": 2505969,
+      "q90": 3261195
+    },
+    {
+      "periodo": 9,
+      "q10": 2078623.5,
+      "q50": 2808633.5,
+      "q90": 4495666.5
+    },
+    {
+      "periodo": 10,
+      "q10": 2241427,
+      "q50": 2914701.5,
+      "q90": 4668898
+    },
+    {
+      "periodo": 11,
+      "q10": 2292826.5,
+      "q50": 3090416.5,
+      "q90": 4966370
+    },
+    {
+      "periodo": 12,
+      "q10": 2390539,
+      "q50": 3143343,
+      "q90": 5238848
+    },
+    {
+      "periodo": 13,
+      "q10": 2426418,
+      "q50": 3190536,
+      "q90": 5423952
+    },
+    {
+      "periodo": 14,
+      "q10": 2418424,
+      "q50": 3163385,
+      "q90": 5548292
+    },
+    {
+      "periodo": 15,
+      "q10": 2372915.5,
+      "q50": 3111225,
+      "q90": 5601064
+    },
+    {
+      "periodo": 16,
+      "q10": 2363768,
+      "q50": 3072257,
+      "q90": 5785519.5
+    },
+    {
+      "periodo": 17,
+      "q10": 2400701,
+      "q50": 3045485.5,
+      "q90": 5586920
+    },
+    {
+      "periodo": 18,
+      "q10": 2342633,
+      "q50": 3002895,
+      "q90": 5801214
+    },
+    {
+      "periodo": 19,
+      "q10": 2313274,
+      "q50": 3096552.5,
+      "q90": 5971631.5
+    },
+    {
+      "periodo": 20,
+      "q10": 2348530.5,
+      "q50": 3138641.5,
+      "q90": 6046026
+    },
+    {
+      "periodo": 21,
+      "q10": 2396653.5,
+      "q50": 3112411.5,
+      "q90": 5859146
+    },
+    {
+      "periodo": 22,
+      "q10": 2236093.5,
+      "q50": 2917751.5,
+      "q90": 5567174.5
+    },
+    {
+      "periodo": 23,
+      "q10": 1962748,
+      "q50": 2700358,
+      "q90": 5126052
+    },
+    {
+      "periodo": 24,
+      "q10": 1813329,
+      "q50": 2489531,
+      "q90": 4752127
+    }
+  ],
+  "historicalMetrics": {
+    "range": {
+      "start": "2025-07-01",
+      "end": "2025-12-31"
+    },
+    "n": 4416,
+    "MAE": 166051.50639266305,
+    "RMSE": 263990.01975722687,
+    "WAPE_percent": 1.719333795001614,
+    "bias": 736.243892663037,
+    "coverageQ10Q90": 0.7110507246376812,
+    "evaluationType": "shared_retrospective_comparison",
+    "corpusSha256": "e52819f935bb22c6d01cfd4546b23c192d6848ecd748c352d2c2e355881f4fa6"
+  },
+  "warnings": [
+    "Demanda agregada; excluye alumbrado público. No equivale a DemaSIN ni a consumo individual.",
+    "Cuantiles experimentales; no representan un intervalo prospectivamente calibrado.",
+    "El desempeño histórico de un día no acredita el desempeño con retraso de publicación."
+  ],
+  "trace": {
+    "executionId": "b5d94820-e217-4f70-81d8-4e52deeba8a1",
+    "persistence": "local_evidence"
+  }
+}

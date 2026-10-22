@@ -1,0 +1,45 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\energy-marketplace.test.ts:
+(pass) DECIMAL: comparaciones exactas de publicaciones > offer: revalida compromiso Decimal bajo bloqueo aunque la prelectura no tenga reservas [16.00ms]
+(pass) DECIMAL: comparaciones exactas de publicaciones > demand: revalida compromiso Decimal bajo bloqueo aunque la prelectura no tenga reservas
+(pass) DECIMAL: comparaciones exactas de publicaciones > offer: frontera {"quantity":999999999999998.9,"confirmed":"999999999999998.80","reserved":"0.09","status":200,"balance":0.01} con Decimal y repositorio en memoria [15.00ms]
+(pass) DECIMAL: comparaciones exactas de publicaciones > offer: frontera {"quantity":999999999999998.9,"confirmed":"999999999999998.80","reserved":"0.10","status":200,"balance":0} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > offer: frontera {"quantity":999999999999998.9,"confirmed":"999999999999998.80","reserved":"0.11","status":409,"balance":0} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > offer: frontera {"quantity":10.25,"confirmed":"10.20","reserved":"0.04","status":200,"balance":0.01} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > offer: frontera {"quantity":10.25,"confirmed":"10.20","reserved":"0.05","status":200,"balance":0} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > offer: frontera {"quantity":10.25,"confirmed":"10.20","reserved":"0.06","status":409,"balance":0} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > offer: frontera {"quantity":0.01,"confirmed":"0","reserved":"0.01","status":200,"balance":0} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > demand: frontera {"quantity":999999999999998.9,"confirmed":"999999999999998.80","reserved":"0.09","status":200,"balance":0.01} con Decimal y repositorio en memoria [16.00ms]
+(pass) DECIMAL: comparaciones exactas de publicaciones > demand: frontera {"quantity":999999999999998.9,"confirmed":"999999999999998.80","reserved":"0.10","status":200,"balance":0} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > demand: frontera {"quantity":999999999999998.9,"confirmed":"999999999999998.80","reserved":"0.11","status":409,"balance":0} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > demand: frontera {"quantity":10.25,"confirmed":"10.20","reserved":"0.04","status":200,"balance":0.01} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > demand: frontera {"quantity":10.25,"confirmed":"10.20","reserved":"0.05","status":200,"balance":0} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > demand: frontera {"quantity":10.25,"confirmed":"10.20","reserved":"0.06","status":409,"balance":0} con Decimal y repositorio en memoria
+(pass) DECIMAL: comparaciones exactas de publicaciones > demand: frontera {"quantity":0.01,"confirmed":"0","reserved":"0.01","status":200,"balance":0} con Decimal y repositorio en memoria
+(pass) EnergyOffer > POST válido autenticado -> 201 y DTO numérico sin userId
+(pass) EnergyOffer > sin auth -> 401
+(pass) EnergyOffer > quantity inválida -> 400
+(pass) EnergyOffer > quantity inválida -> 400
+(pass) EnergyOffer > price <= 0 -> 400
+(pass) EnergyOffer > fecha inválida -> 400
+(pass) EnergyOffer > userId extra -> 400
+(pass) EnergyOffer > GET /mine solo devuelve registros propios con saldo derivado
+(pass) EnergyOffer > PATCH propia ACTIVE actualiza todos los campos [15.00ms]
+(pass) EnergyOffer > PATCH permite aumentar sobre compromisos, rechaza reducir bajo ellos y cancelar permanece bloqueado
+(pass) EnergyOffer > cancelación propia ACTIVE es lógica y no permite repetirla
+(pass) EnergyDemand > POST válido autenticado -> 201 y DTO numérico sin userId
+(pass) EnergyDemand > sin auth -> 401
+(pass) EnergyDemand > quantity inválida -> 400
+(pass) EnergyDemand > maxPricePerKwh <= 0 -> 400
+(pass) EnergyDemand > fecha inválida -> 400
+(pass) EnergyDemand > userId extra -> 400
+(pass) EnergyDemand > GET /mine aislado por usuario con saldo derivado
+(pass) EnergyDemand > PATCH propia ACTIVE actualiza cantidad, máximo y fecha
+(pass) EnergyDemand > PATCH demanda permite reducir hasta compromisos y rechaza menos; cancelación sigue bloqueada
+(pass) EnergyDemand > PATCH ajeno se rechaza
+
+ 37 pass
+ 0 fail
+ 74 expect() calls
+Ran 37 tests across 1 file. [406.00ms]

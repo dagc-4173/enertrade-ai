@@ -1,0 +1,18 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\simulated-payment.test.ts:
+(pass) PAY-ISOLATED: no registra ni resuelve pagos con participantes fuera del fixture [16.00ms]
+(pass) PAY-01: importe y comprobante se toman del acuerdo, sin exponer clave/pagador
+(pass) PAY-02: repetición de clave conserva un intento; mismo pago no se aprueba dos veces
+(pass) PAY-03: solo comprador y acuerdo confirmado; vendedor consulta y tercero no accede
+(pass) PAY-04: rechazado permite reintentar; pendiente bloquea otro intento hasta resolución
+(pass) PAY-05: resolución idempotente e inmutabilidad del resultado final
+(pass) PAY-06: rechaza manipulación y contratos inválidos
+(pass) PAY-06: rechaza manipulación y contratos inválidos
+(pass) PAY-06: rechaza manipulación y contratos inválidos
+(pass) PAY-06: rechaza manipulación y contratos inválidos
+
+ 10 pass
+ 0 fail
+ 33 expect() calls
+Ran 10 tests across 1 file. [143.00ms]

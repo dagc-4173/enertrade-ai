@@ -1,0 +1,45 @@
+{
+  "metrics": [
+    {
+      "metric": "DemaSIN",
+      "status": "synchronized",
+      "outcome": "SYNCED",
+      "latestCompleteAvailableDate": "2026-10-18",
+      "requestedFrom": "2026-10-05",
+      "requestedTo": "2026-10-18",
+      "newDays": 14,
+      "ingestedRows": 14,
+      "previousPersistedUntil": "2026-10-04",
+      "availableUntil": "2026-10-18",
+      "synchronizedUntil": "2026-10-18",
+      "providerAvailableUntil": "2026-10-18",
+      "persistedUntil": "2026-10-18",
+      "latestIndividuallyUsableDate": "2026-10-17",
+      "semanticExcludedDates": [
+        "2026-09-16",
+        "2026-09-28",
+        "2026-09-29",
+        "2026-10-04",
+        "2026-10-18"
+      ],
+      "windowsCreatedOrReused": [
+        {
+          "from": "2026-10-05",
+          "to": "2026-10-18",
+          "manifestId": 114,
+          "energyDatasetId": 220,
+          "contentHash": "89051b3ca28dcbed3f7edcd7783ee946714278520e3dc1de1a899e25d6d09916",
+          "reused": false
+        }
+      ],
+      "consolidatedDatasetId": 18,
+      "energyDatasetId": 221,
+      "preparedDatasetId": 80,
+      "validationStatus": "advertencia",
+      "preparationProfile": {
+        "id": "xm_demandasin_preparacion_base",
+        "version": "1.0.0"
+      }
+    }
+  ]
+}

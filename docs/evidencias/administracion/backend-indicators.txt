@@ -1,0 +1,15 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\indicators.test.ts:
+(pass) IND-01 e IND-10: sin datos devuelve ceros, null y warnings objetivos [78.00ms]
+(pass) IND-02 a IND-09: consolida fuentes canónicas, empty/failed y excluye engine_indicators
+(pass) IND-EXEC-01: calcula total, tasa de éxito redondeada a 2 decimales y coherencia con errors.total
+(pass) IND-11: la misma fuente produce respuesta determinística
+(pass) IND-13 e IND-14: endpoint público no filtra datos internos y valida request
+(pass) IND-12: la traza HU17 se crea después de responder sin autocontarse [16.00ms]
+(pass) IND-HOURLY: precios horarios se suman al B1 persistido sin duplicar su traza
+
+ 7 pass
+ 0 fail
+ 16 expect() calls
+Ran 7 tests across 1 file. [440.00ms]

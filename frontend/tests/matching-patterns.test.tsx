@@ -93,11 +93,11 @@ test('patterns results render distribution, trend and recurrence without invente
   expect(html).not.toMatch(/confidence|recomendación|zona/i)
 })
 
-test('patterns initial render has dataset selector, loading history and no demo records', () => {
+test('patterns initial render keeps normal analysis and hides administrative history', () => {
   const html = renderToStaticMarkup(<Patterns />)
   expect(html).toContain('Dataset preparado compatible')
   expect(html).toContain('Cargando datasets preparados…')
-  expect(html).toContain('Cargando análisis registrados…')
+  expect(html).not.toContain('Cargando análisis registrados…')
   expect(html).not.toContain('PAT-01')
   expect(html).not.toContain('No hay análisis registrados.')
 })

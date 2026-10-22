@@ -1,0 +1,166 @@
+{
+  "series": "demand",
+  "source": "XM DemaReal/Sistema",
+  "unit": "kWh",
+  "target": "demanda_real_kwh",
+  "origin": "2026-10-18",
+  "supportedHorizons": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "eligibleTargetDates": [
+    "2026-10-22",
+    "2026-10-23",
+    "2026-10-24",
+    "2026-10-25"
+  ],
+  "models": [
+    {
+      "modelId": "xm-demareal-ridge-direct-h1-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 1,
+      "artifactSha256": "7f65f14bfc8421c0d367a1aca9393fe44a3afabce29327375ea8a97d9e9d355c",
+      "metrics": {
+        "MAE": 215888.69106365796,
+        "RMSE": 313094.45232909673,
+        "WAPE_percent": 2.3072292725041477,
+        "bias": 27237.395623474815,
+        "n": 4344,
+        "range": {
+          "start": "2025-01-01",
+          "end": "2025-06-30"
+        },
+        "evaluationType": "validation_technical",
+        "horizonDays": 1
+      },
+      "promoted": false
+    },
+    {
+      "modelId": "xm-demareal-ridge-direct-h2-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 2,
+      "artifactSha256": "838aa8884508494a25326e4f366aeb55e95b3e7edbcaff3dc389d1221fba74ae",
+      "metrics": {
+        "MAE": 353544.5919655456,
+        "RMSE": 476355.85313224414,
+        "WAPE_percent": 3.7783749936114903,
+        "bias": -34653.149866946536,
+        "n": 4344,
+        "range": {
+          "start": "2025-01-01",
+          "end": "2025-06-30"
+        },
+        "evaluationType": "validation_technical",
+        "horizonDays": 2
+      },
+      "promoted": false
+    },
+    {
+      "modelId": "xm-demareal-ridge-direct-h3-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 3,
+      "artifactSha256": "0d9739077837b4cd4fb77c0130f2a37809ad3794257245ea342bf948fb37362a",
+      "metrics": {
+        "MAE": 391943.9997897933,
+        "RMSE": 515936.3796946705,
+        "WAPE_percent": 4.188754237389504,
+        "bias": -65020.18445158936,
+        "n": 4344,
+        "range": {
+          "start": "2025-01-01",
+          "end": "2025-06-30"
+        },
+        "evaluationType": "validation_technical",
+        "horizonDays": 3
+      },
+      "promoted": false
+    },
+    {
+      "modelId": "xm-demareal-ridge-direct-h4-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 4,
+      "artifactSha256": "69f792ca1608e09073a69a794307af34377449f18de23959d3ceb56b44bcaaca",
+      "metrics": {
+        "MAE": 396049.43625008326,
+        "RMSE": 522740.2745918988,
+        "WAPE_percent": 4.232629547073019,
+        "bias": -60707.28034686372,
+        "n": 4344,
+        "range": {
+          "start": "2025-01-01",
+          "end": "2025-06-30"
+        },
+        "evaluationType": "validation_technical",
+        "horizonDays": 4
+      },
+      "promoted": false
+    },
+    {
+      "modelId": "xm-demareal-ridge-direct-h5-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 5,
+      "artifactSha256": "bdf62f7277b6d35d933da5bb38205e955eaf540d00430ddb6be08e25e41b9898",
+      "metrics": {
+        "MAE": 392023.67439305637,
+        "RMSE": 515412.9623462826,
+        "WAPE_percent": 4.189605729776706,
+        "bias": -70805.13875105434,
+        "n": 4344,
+        "range": {
+          "start": "2025-01-01",
+          "end": "2025-06-30"
+        },
+        "evaluationType": "validation_technical",
+        "horizonDays": 5
+      },
+      "promoted": false
+    },
+    {
+      "modelId": "xm-demareal-ridge-direct-h6-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 6,
+      "artifactSha256": "149c7c29196108283ba9b247a4a53c69b77d69577ed05279c5b7fc9f4d62b75a",
+      "metrics": {
+        "MAE": 301050.1414685975,
+        "RMSE": 426277.7490383899,
+        "WAPE_percent": 3.2173602770283716,
+        "bias": -79965.76216341165,
+        "n": 4344,
+        "range": {
+          "start": "2025-01-01",
+          "end": "2025-06-30"
+        },
+        "evaluationType": "validation_technical",
+        "horizonDays": 6
+      },
+      "promoted": false
+    },
+    {
+      "modelId": "xm-demareal-ridge-direct-h7-v1",
+      "modelVersion": "1.0.0-experimental",
+      "horizonDays": 7,
+      "artifactSha256": "5d42b449046f0d592ae955a0673b3aca81b6efd3ee00b9f807877fd65ee229b9",
+      "metrics": {
+        "MAE": 304563.7090091506,
+        "RMSE": 432334.86134613457,
+        "WAPE_percent": 3.254910210007928,
+        "bias": -97024.52786094573,
+        "n": 4344,
+        "range": {
+          "start": "2025-01-01",
+          "end": "2025-06-30"
+        },
+        "evaluationType": "validation_technical",
+        "horizonDays": 7
+      },
+      "promoted": false
+    }
+  ],
+  "experimental": true,
+  "academicValidation": "pending"
+}

@@ -1,0 +1,39 @@
+{
+  "metrics": [
+    {
+      "metric": "Gene",
+      "status": "synchronized",
+      "outcome": "SYNCED",
+      "latestCompleteAvailableDate": "2026-10-17",
+      "requestedFrom": "2026-10-04",
+      "requestedTo": "2026-10-17",
+      "newDays": 14,
+      "ingestedRows": 336,
+      "previousPersistedUntil": "2026-10-03",
+      "availableUntil": "2026-10-17",
+      "synchronizedUntil": "2026-10-17",
+      "providerAvailableUntil": "2026-10-17",
+      "persistedUntil": "2026-10-17",
+      "latestIndividuallyUsableDate": "2026-10-17",
+      "semanticExcludedDates": [],
+      "windowsCreatedOrReused": [
+        {
+          "from": "2026-10-04",
+          "to": "2026-10-17",
+          "manifestId": 113,
+          "energyDatasetId": 218,
+          "contentHash": "9f5db8c5ed50309c8e471910249bbb7f9e3d2d2af8b0c66b70641667bc0b314a",
+          "reused": false
+        }
+      ],
+      "consolidatedDatasetId": 17,
+      "energyDatasetId": 219,
+      "preparedDatasetId": 79,
+      "validationStatus": "aprobado",
+      "preparationProfile": {
+        "id": "xm_gene_preparacion_base",
+        "version": "1.0.0"
+      }
+    }
+  ]
+}

@@ -40,7 +40,7 @@ export function AppShell({ activePage, onNavigate, children }: AppShellProps) {
 
         <button ref={menuButton} type="button" className="sidebar-menu-toggle" aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen(value=>!value)}><NavigationIcon page="menu" /><span>{menuOpen ? 'Cerrar menú' : 'Abrir menú'}</span></button>
         <nav id="primary-navigation" className={`sidebar-nav${menuOpen ? ' is-open' : ''}`} aria-label="Secciones de EnerTrade AI">
-          {navigationItems.map((item) => (
+          {navigationItems.filter(item => item.key !== 'admin' || user?.role === 'ADMIN').map((item) => (
             <button
               key={item.key}
               type="button"
