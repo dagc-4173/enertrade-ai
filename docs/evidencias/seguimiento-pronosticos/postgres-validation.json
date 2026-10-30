@@ -1,0 +1,13 @@
+{
+  "postgres": "passed",
+  "migration": "applied-on-isolated-local-database",
+  "forecastFamilies": 11,
+  "storedForecasts": 13,
+  "evaluations": 12,
+  "ownerIsolation": "passed",
+  "canonicalJsonbHash": "passed",
+  "concurrentFirstEvaluation": "passed",
+  "authenticatedControllerRecording": "passed",
+  "realXmCalls": 0,
+  "productionDatabaseUsed": false
+}

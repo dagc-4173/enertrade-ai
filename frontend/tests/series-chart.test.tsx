@@ -14,3 +14,9 @@ test('gráfica expresa loading, empty y error sin puntos falsos', () => {
   const error = renderToStaticMarkup(<SeriesChart title="Error" description="" unit="kWh" state={{ kind: 'error', message: 'Falló la API.' }} />)
   expect(error).toContain('role="alert"'); expect(error).toContain('Falló la API.')
 })
+test('gráfica conserva escala constante y no une periodos numéricos faltantes',()=>{
+ const html=renderToStaticMarkup(<SeriesChart title="Serie con huecos" description="Prueba" unit="kWh" state={{kind:'success',lines:[{id:'gap',label:'Sin imputar',color:'#00652e',points:[{key:'1',label:'P1',value:5,detail:'5 kWh'},{key:'3',label:'P3',value:5,detail:'5 kWh'}]}]}} />)
+ expect(html).not.toContain('NaN');expect(html).not.toContain('Infinity');
+ const path=html.match(/<path d="([^"]+)"/);expect(path?.[1]?.match(/M /g)).toHaveLength(2);
+ expect(html).toContain('usa Tab');
+});

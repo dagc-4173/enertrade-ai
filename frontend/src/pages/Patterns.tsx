@@ -1,3 +1,4 @@
+import { ForecastHistory } from '../components/forecasts/ForecastHistory'
 import { authStore } from '../auth/authStore'
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react'
 import { DataTable, type DataTableColumn } from '../components/tables/DataTable'
@@ -44,7 +45,7 @@ export function PatternResults({ analysis }: { analysis: PatternAnalysisResponse
  </section>
 }
 
-export function Patterns() {
+function EnergyPatterns() {
  const { user } = useSyncExternalStore(authStore.subscribe,authStore.getSnapshot,authStore.getSnapshot)
  const isAdmin = user?.role === 'ADMIN'
  const [preparedId,setPreparedId] = useState(''), [filters,setFilters] = useState<PatternFilters>({})
@@ -84,4 +85,9 @@ export function Patterns() {
  <div className="pattern-filters"><label>Desde<input type="date" value={filters.from ?? ''} onChange={event => changeFilters({...filters,from:event.target.value || undefined})} /></label><label>Hasta<input type="date" value={filters.to ?? ''} onChange={event => changeFilters({...filters,to:event.target.value || undefined})} /></label><label>Tipo de datos<select value={filters.dataType ?? ''} onChange={event => changeFilters({...filters,dataType:(event.target.value || undefined) as PatternDataType | undefined})}><option value="">Todos los tipos</option><option value="generacion">Generación</option><option value="demanda">Demanda</option><option value="precios">Precios</option></select></label><label>Variable<select value={filters.variable ?? ''} onChange={event => changeFilters({...filters,variable:(event.target.value || undefined) as PatternVariable | undefined})}><option value="">Todas las variables</option><option value="energia_kwh">Generación (kWh)</option><option value="demanda_kwh">Demanda (kWh)</option><option value="precio_cop_kwh">Precio (COP/kWh)</option></select></label><button type="button" className="secondary-button" onClick={() => { changeFilters({});setRefresh(value => value+1) }}>Limpiar filtros</button></div>
  {invalidRange ? <p role="alert" className="pattern-warning">Desde debe ser anterior o igual a Hasta.</p> : <>{historyState === 'loading' && <p role="status">Cargando análisis registrados…</p>}{historyState === 'error' && <div role="alert"><p>{historyError}</p><button type="button" className="secondary-button" onClick={() => { setHistoryState('loading');setRefresh(value => value+1) }}>Reintentar histórico</button></div>}{historyState === 'success' && (history.length === 0 ? <p>No hay análisis registrados para estos filtros.</p> : <DataTable columns={columns} rows={history} getRowKey={row => row.analysisId} />)}</>}
  </section>}</div>
+}
+
+export function Patterns() {
+ const [view,setView]=useState<'patterns'|'forecasts'>('patterns')
+ return <div><nav className="patterns-navigation" aria-label="Secciones de Patrones"><button type="button" aria-pressed={view==='patterns'} onClick={()=>setView('patterns')}>Patrones energéticos</button><button type="button" aria-pressed={view==='forecasts'} onClick={()=>setView('forecasts')}>Seguimiento de pronósticos</button></nav>{view==='patterns'?<EnergyPatterns/>:<ForecastHistory/>}</div>
 }

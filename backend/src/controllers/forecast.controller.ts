@@ -1,3 +1,4 @@
+import { withForecastHistory } from '@/services/forecast-history-recording';
 import {getDemandV5Metrics} from '@/services/demand-v5-metrics.service';
 import { forecastDemandV5 } from '@/services/demand-v5-forecast.service';
 import express, { Router, type ErrorRequestHandler, type Request, type Response, type NextFunction } from 'express';
@@ -35,10 +36,10 @@ export function createForecastRouter(service = forecastSupply, metrics = getFore
   });
   router.post('/supply', (req,res,next) => {
     if (!req.is('application/json')) { res.status(415).json({error:'UNSUPPORTED_MEDIA_TYPE',message:'Se requiere Content-Type application/json.'}); return; } next();
-  }, express.json({limit:'16kb'}), async (req,res,next) => { try { res.json(await service(req.body)); } catch (error) { next(error); } });
+  }, express.json({limit:'16kb'}), async (req,res,next) => { try { res.json(await withForecastHistory(req,await service(req.body))); } catch (error) { next(error); } });
   router.post('/demand', (req,res,next) => {
     if (!req.is('application/json')) { res.status(415).json({error:'UNSUPPORTED_MEDIA_TYPE',message:'Se requiere Content-Type application/json.'}); return; } next();
-  }, express.json({limit:'16kb'}), async (req,res,next) => { try { res.json(await demand(req.body)); } catch (error) { next(error); } });
+  }, express.json({limit:'16kb'}), async (req,res,next) => { try { res.json(await withForecastHistory(req,await demand(req.body))); } catch (error) { next(error); } });
   const priceError: ErrorRequestHandler = async (error,req,res,_next) => {
     let status = 500, code = 'FORECAST_FAILED', message: string = messages.FORECAST_FAILED;
     if (error instanceof ForecastError) { status = error.status; code = error.code; message = error.message; }
@@ -65,7 +66,7 @@ export function createForecastRouter(service = forecastSupply, metrics = getFore
       const state = res.locals.priceTrace as TraceState;
       const result = await price(req.body, state.context);
       const saved = await trace.completeExecution(state, req.body, result);
-      res.json({ ...result, trace: saved });
+      res.json(await withForecastHistory(req,{ ...result, trace: saved }));
     } catch (error) { next(error); }
   }, priceError);
   const errorHandler: ErrorRequestHandler = (error,req,res,_next) => {

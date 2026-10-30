@@ -1,0 +1,119 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\chronos-hourly.test.ts:
+(pass) CHR-01: both models produce 24 outputs with full lag and durable manifest [31.00ms]
+(pass) CHR-02: arbitrary fields/model/path and past dates rejected before acquisition
+(pass) CHR-03: stale data and unavailable configuration have controlled errors
+(pass) CHR-04: invalid quantiles cannot be reported as available [16.00ms]
+(pass) CHR-05: concurrent requests blocked; lock released after completion
+(pass) CHR-06: HTTP routing, authentication gate, JSON and input contracts [47.00ms]
+
+src\tests\forecast-history.test.ts:
+(pass) HIST-01: normaliza todas las familias sin confundir DemaReal y DemaSIN
+(pass) HIST-02: por usuario, registro por ejecución, no guarda consultas retrospectivas
+(pass) HIST-03: guarda y conserva evaluación del mismo día, P50, sesgo y cero real
+(pass) HIST-04: futuro pendiente sin consultar, XM vacío pendiente, fallo conserva predicción
+(pass) HIST-05: hash canónico tolera orden JSONB y detecta predicción alterada
+(pass) HIST-06: filtros y paginación acotados, propietario obligatorio [16.00ms]
+(pass) HIST-07: fallo del guardado conserva resultado y registro usa identidad del servidor
+(pass) HIST-08: rutas rechazan invitados, otro propietario, origen externo y datos inventados
+
+src\tests\forecast-observations.test.ts:
+(pass) OBS-01: rechaza parámetros inválidos y futuro no consulta XM
+(pass) OBS-02: devuelve únicamente fecha y métrica solicitadas, 24 periodos completos [16.00ms]
+(pass) OBS-03: sin observaciones no inventa ceros; parciales o duplicadas no se comparan
+(pass) OBS-04: precios negativos válidos; demanda negativa inválida; DemaSIN diario no se desagrega
+(pass) OBS-05: deduplica solicitudes pendientes y limita consultas distintas
+(pass) OBS-06: ruta exige autenticación y evita caché de las observaciones
+
+src\tests\forecast.test.ts:
+(pass) HU04 direct V2 metadata, 24 periods, deterministic and read only
+(pass) invalid request {}
+(pass) invalid request null [15.00ms]
+(pass) invalid request {"targetDate":"2024-04-08","extra":1}
+(pass) invalid request {"targetDate":"2024-02-30"}
+(pass) invalid request {"targetDate":"2024-4-08"}
+(pass) invalid request {"targetDate":"2024-04-08T00:00:00Z"}
+(pass) HU04-MULTI-12 body with preparedDatasetId is rejected under the new contract
+(pass) parser safe malformed JSON, type and limit
+(pass) HU04-MULTI-10 no compatible PreparedDataset yields a controlled 422, not a 404
+(pass) HU04-MULTI-11 training boundary 2024-03-30 keeps existing behaviour
+(pass) HU04-MULTI-11 training boundary 2024-03-29 keeps existing behaviour
+(pass) D+1 with complete history remains available when coverage ends on D-1
+(pass) D+1 with a missing D-7 remains FORECAST_DATA_INSUFFICIENT
+(pass) dates beyond D+7 are FORECAST_HORIZON_NOT_SUPPORTED: 2024-04-15
+(pass) dates beyond D+7 are FORECAST_HORIZON_NOT_SUPPORTED: 2026-09-30
+(pass) missing required date 2024-04-01
+(pass) missing required date 2024-04-07
+(pass) missing D1 period24
+(pass) duplicate rejected within the same artifact [16.00ms]
+(pass) corrupt value %s
+(pass) corrupt value %s
+(pass) corrupt value %s
+(pass) corrupt value 1
+(pass) incompatible variable
+(pass) target/future values and record indices cannot leak
+(pass) month rollover and leap calendar without timestamp
+(pass) month rollover inference
+(pass) HU04-MULTI-01 D-1 and D-7 split across two different PreparedDataset
+(pass) HU04-MULTI-02 D-1 and D-7 spread across more than two compatible PreparedDataset
+(pass) HU04-MULTI-03 missing a D-1 period even when spread across artifacts
+(pass) HU04-MULTI-04 missing a D-7 period even when spread across artifacts
+(pass) HU04-MULTI-05 identical duplicate fecha_xm+hora_xm across artifacts merges without ambiguity
+(pass) HU04-MULTI-06 conflicting fecha_xm+hora_xm across artifacts aborts deterministically
+(pass) HU04-MULTI-07 incompatible profileId is ignored and does not contaminate the history [16.00ms]
+(pass) HU04-MULTI-08 incompatible sourceRulesetId is ignored and does not contaminate the history
+(pass) HU04-MULTI-09 target date or later data living in a separate compatible artifact is never used
+{"timestamp":"2026-10-30T08:29:35.749Z","level":"error","method":"POST","path":"/supply","status":500,"errorCode":"FORECAST_FAILED","errorName":"Error"}
+(pass) safe model failure and internal failure
+(pass) loader immutable and reads once
+(pass) model invalid id
+(pass) model invalid alpha
+(pass) model invalid features
+(pass) model invalid means
+(pass) model invalid std
+(pass) model invalid coefficient
+(pass) model invalid intercept
+(pass) model invalid range
+(pass) model invalid profile
+(pass) model invalid unit
+(pass) model invalid horizon
+{"timestamp":"2026-10-30T08:29:35.752Z","level":"error","method":"POST","path":"/supply","status":500,"errorCode":"FORECAST_FAILED","errorName":"Error"}
+(pass) negative predictions not clamped; nonfinite fails
+(pass) array body invalid
+(pass) promoted parameters exactly match evaluated artifact
+(pass) inference dependency boundary excludes XM, preparation and training
+
+src\tests\hourly-ridge.test.ts:
+(pass) RHR-01: demand runtime equals frozen Python features/predictions for every direct horizon
+(pass) RHR-02: price features match original V1 experiment exactly, without target observations [16.00ms]
+(pass) RHR-03: model tampering, unsupported horizons and corrupt context fail closed
+(pass) RHR-demand-04: actual frozen inference, future limits, evidence and authentication [31.00ms]
+(pass) RHR-price-04: actual frozen inference, future limits, evidence and authentication [16.00ms]
+
+src\tests\price-forecast-trace.test.ts:
+(pass) HU09 pending -> one B1 inference -> atomic complete, exact input/output and partial scope [16.00ms]
+(pass) identical concurrent requests have independent UUIDs and contexts [16.00ms]
+(pass) safe persisted error: missing prepared [15.00ms]
+(pass) safe persisted error: invalid date [16.00ms]
+(pass) safe persisted error: incomplete D-1 [15.00ms]
+(pass) safe persisted error: profile [16.00ms]
+(pass) safe persisted error: rule [16.00ms]
+(pass) safe persisted error: extra secret field [15.00ms]
+(pass) safe persisted error: malformed [16.00ms]
+(pass) safe persisted error: content type [16.00ms]
+(pass) safe persisted error: oversized [15.00ms]
+{"timestamp":"2026-10-30T08:29:36.031Z","level":"error","method":"POST","path":"/price","status":500,"errorCode":"FORECAST_FAILED","errorName":"Error"}
+(pass) safe persisted error: unexpected [16.00ms]
+(pass) safe persisted error: query [15.00ms]
+(pass) persistence failure never hides success: {"startFails":true} [16.00ms]
+(pass) persistence failure never hides success: {"finishFails":true} [16.00ms]
+(pass) trace failure preserves original inference error: {"startFails":true} [15.00ms]
+(pass) trace failure preserves original inference error: {"finishFails":true} [16.00ms]
+(pass) allowlist rejects nested, oversized and sensitive invalid field values
+(pass) supply/demand parser errors and all metrics never start price tracing [31.00ms]
+
+ 98 pass
+ 0 fail
+ 4609 expect() calls
+Ran 98 tests across 6 files. [947.00ms]

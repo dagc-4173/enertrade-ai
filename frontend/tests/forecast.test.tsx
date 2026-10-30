@@ -332,3 +332,9 @@ test('parser rejects incorrect V5 metadata, wrong requested horizon, missing met
   for (const response of invalid) { respond(response); await expect(getDemandMetrics(4)).rejects.toMatchObject({ kind: 'response' }) }
   respond(v5MetricsResponse(5)); await expect(getDemandMetrics(4)).rejects.toMatchObject({ kind: 'response' })
 })
+
+test('los pronósticos registrados de oferta, demanda diaria y B1 envían la sesión',async()=>{
+ let request=respond(supply);await forecastSupply(supplyInput);expect(request.mock.calls.at(-1)?.[1]?.credentials).toBe('include')
+ request=respond(demand);await forecastDemand(demandInput);expect(request.mock.calls.at(-1)?.[1]?.credentials).toBe('include')
+ request=respond(price);await forecastPrice(input);expect(request.mock.calls.at(-1)?.[1]?.credentials).toBe('include')
+})

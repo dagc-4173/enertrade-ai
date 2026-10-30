@@ -1,9 +1,10 @@
+import type { HistorySaveState } from './forecastHistoryService'
 import { apiRequest, postJson, ApiError } from './apiClient'
 export type HourlySeries = 'demand' | 'supply' | 'price'
 export type HourlyModel = 'chronos2' | 'bolt'
-export type HistoricalMetrics = { range: { start: string; end: string }; MAE: number; RMSE: number; WAPE_percent: number; coverageQ10Q90: number }
+export type HistoricalMetrics = { range: { start: string; end: string }; MAE: number; RMSE: number; WAPE_percent: number; coverageQ10Q90: number; n?: number; bias?: number; evaluationType?: string }
 export type HourlyModelInfo = { key: HourlyModel; name: string; modelId: string; revision: string; configured: boolean; historicalMetrics: HistoricalMetrics | null }
-export type HourlyForecast = {
+export type HourlyForecast = { history?: HistorySaveState;
   series?: HourlySeries; unit?: string; model: HourlyModel; modelId: string; modelVersion: string; targetDate: string; latestObservedDate: string;
   horizonDays: number; generatedPeriods: number; bridgePeriods: number; generatedAt: string;
   predictions: { periodo: number; q10: number; q50: number; q90: number }[];
@@ -13,7 +14,7 @@ const object = (v: unknown): v is Record<string, unknown> => v !== null && typeo
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
 const date = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v
 const model = (v: unknown): v is HourlyModel => v === 'chronos2' || v === 'bolt'
-const historical = (v: unknown): v is HistoricalMetrics => object(v) && object(v.range) && date(v.range.start) && date(v.range.end) && finite(v.MAE) && finite(v.RMSE) && finite(v.WAPE_percent) && finite(v.coverageQ10Q90)
+const historical = (v: unknown): v is HistoricalMetrics => object(v) && object(v.range) && date(v.range.start) && date(v.range.end) && finite(v.MAE) && finite(v.RMSE) && finite(v.WAPE_percent) && finite(v.coverageQ10Q90) && v.coverageQ10Q90 >= 0 && v.coverageQ10Q90 <= 1 && v.MAE >= 0 && v.RMSE >= 0 && v.WAPE_percent >= 0 && (v.n === undefined || finite(v.n) && Number.isInteger(v.n) && v.n >= 0) && (v.bias === undefined || finite(v.bias)) && (v.evaluationType === undefined || typeof v.evaluationType === 'string')
 export function parseHourlyModels(value: unknown, series: HourlySeries = 'demand'): HourlyModelInfo[] {
   if (!object(value) || !Array.isArray(value.models) || value.models.length !== 2 || !value.models.every(v => object(v) && model(v.key) && typeof v.name === 'string' && typeof v.modelId === 'string' && typeof v.revision === 'string' && typeof v.configured === 'boolean' && (series === 'demand' ? historical(v.historicalMetrics) : v.series === series && v.unit === (series === 'price' ? 'COP/kWh' : 'kWh') && v.historicalMetrics === null)) || new Set(value.models.map(v => v.key)).size !== 2) throw new ApiError('response', 'No se pudo interpretar el catálogo de demanda horaria.')
   return value.models as HourlyModelInfo[]

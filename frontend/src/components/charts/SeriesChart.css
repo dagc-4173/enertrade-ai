@@ -24,3 +24,7 @@
 @keyframes series-pulse { from { opacity: .55; } to { opacity: 1; } }
 @media (max-width: 900px) { .energy-history__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 720px) { .series-chart__heading { flex-direction: column; gap: 6px; } .energy-history__filters { grid-template-columns: 1fr; } }
+.series-chart__hint { margin-top: 12px; color: var(--color-muted); font-size: 12px; }
+.series-chart__readout { border-left: 3px solid var(--color-forest); background: var(--color-surface-alt); padding: 10px 14px; margin-top: 12px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.series-chart__readout p { margin: 4px 0; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .series-state--loading span { animation: none; } }

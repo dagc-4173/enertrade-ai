@@ -1,0 +1,33 @@
+bun test v1.3.13 (bf2e2cec)
+
+src\tests\energy-history-live.test.ts:
+(pass) consulta XM en cada solicitud y distingue periodos sin publicar
+(pass) divide intervalos diarios en ventanas XM de máximo 30 días
+(pass) respuesta vacía de XM es ausencia de publicación, sin inventar registros
+(pass) fallo de XM usa respaldo local explícitamente desactualizado
+(pass) fallo sin respaldo y rangos inválidos producen errores seguros
+(pass) deduplica consultas simultáneas al mismo intervalo
+
+src\tests\energy-series.test.ts:
+(pass) GET /energy-series > devuelve Gene hourly ordenado, con períodos y trazabilidad canónica [31.00ms]
+(pass) GET /energy-series > agrega Gene diario por suma y mensual por suma [62.00ms]
+(pass) GET /energy-series > devuelve DemaSIN daily y monthly sin horas inventadas [47.00ms]
+(pass) GET /energy-series > devuelve Precio hourly y agrega diario/mensual por promedio numérico [94.00ms]
+(pass) GET /energy-series > rechaza autenticación, métrica, granularidad, rango y cobertura inválidos [109.00ms]
+(pass) GET /energy-series > protege el error inesperado del servicio [16.00ms]
+(pass) Cobertura parcial C18c > consulta hasta una fecha sin publicar sin descartar datos existentes
+(pass) Cobertura parcial C18c > combina fuentes y conserva huecos sin duplicar observaciones
+(pass) Cobertura parcial C18c > expone cobertura y distingue ausencia de datos [16.00ms]
+
+src\tests\forecast-observations.test.ts:
+(pass) OBS-01: rechaza parámetros inválidos y futuro no consulta XM [15.00ms]
+(pass) OBS-02: devuelve únicamente fecha y métrica solicitadas, 24 periodos completos
+(pass) OBS-03: sin observaciones no inventa ceros; parciales o duplicadas no se comparan
+(pass) OBS-04: precios negativos válidos; demanda negativa inválida; DemaSIN diario no se desagrega
+(pass) OBS-05: deduplica solicitudes pendientes y limita consultas distintas
+(pass) OBS-06: ruta exige autenticación y evita caché de las observaciones [16.00ms]
+
+ 21 pass
+ 0 fail
+ 72 expect() calls
+Ran 21 tests across 3 files. [656.00ms]

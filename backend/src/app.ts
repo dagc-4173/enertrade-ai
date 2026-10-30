@@ -1,3 +1,4 @@
+import { router as forecastHistoryRouter } from '@/controllers/forecast-history.controller';
 import { router as hourlyRidgeRouter } from '@/controllers/hourly-ridge.controller';
 import { chronosSupplyService, chronosPriceService } from '@/services/chronos-hourly.service';
 import { createChronosHourlyRouter } from '@/controllers/chronos-hourly.controller';
@@ -104,6 +105,9 @@ const datasetJsonError: ErrorRequestHandler = (error, _req, res, _next) => {
 app.use('/datasets', datasetJsonError)
 
 app.use('/external-data', externalDataRouter)
+app.use('/forecast-history', forecastHistoryRouter)
+app.post(['/forecasts/supply', '/forecasts/demand', '/forecasts/price'], requireAuth())
+app.post(['/forecasts/supply', '/forecasts/demand', '/forecasts/price', '/forecasts/hourly-demand', '/forecasts/hourly-supply', '/forecasts/hourly-price', '/forecasts/hourly-ridge/demand', '/forecasts/hourly-ridge/price'], adminOrigin)
 app.use('/forecasts/hourly-ridge', hourlyRidgeRouter)
 app.use('/forecasts/hourly-demand', chronosHourlyRouter)
 app.use('/forecasts/hourly-supply', createChronosHourlyRouter(chronosSupplyService))

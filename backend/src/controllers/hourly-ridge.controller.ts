@@ -1,3 +1,4 @@
+import { withForecastHistory } from '@/services/forecast-history-recording';
 import express, { Router, type ErrorRequestHandler, type RequestHandler } from 'express';
 import { requireAuth } from '@/middlewares/auth.middleware';
 import { createHourlyRidgeService, HourlyRidgeError } from '@/services/hourly-ridge.service';
@@ -12,7 +13,7 @@ export function createHourlyRidgeRouter(auth: RequestHandler = requireAuth(), se
       if (!req.is('application/json')) { res.status(415).json({ error: 'UNSUPPORTED_MEDIA_TYPE', message: 'Se requiere JSON.' }); return }
       if (Object.keys(req.query).length) { res.status(400).json({ error: 'INVALID_RIDGE_REQUEST', message: 'No se admiten parámetros.' }); return }
       next();
-    }, express.json({ limit: '1kb' }), async (req, res, next) => { try { res.json(await services[series].forecast(req.body)) } catch (e) { next(e) } });
+    }, express.json({ limit: '1kb' }), async (req, res, next) => { try { res.json(await withForecastHistory(req,await services[series].forecast(req.body))) } catch (e) { next(e) } });
   }
   const errors: ErrorRequestHandler = (e, _req, res, _next) => {
     if (e instanceof HourlyRidgeError || e instanceof ExternalDataError) { res.status(e.status).json({ error: e.code, message: e.message }); return }

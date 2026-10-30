@@ -74,13 +74,13 @@ function parsed<T>(response: { status: number; data: unknown }, check: (v: unkno
   return response.data
 }
 export async function forecastSupply(request: SupplyForecastRequest, signal?: AbortSignal) {
-  return parsed(await postJson<unknown>('/forecasts/supply', request, { signal }), (v): v is SupplyForecast => supply(v, request))
+  return parsed(await postJson<unknown>('/forecasts/supply', request, { credentials: 'include', signal }), (v): v is SupplyForecast => supply(v, request))
 }
 export async function forecastDemand(request: SupplyForecastRequest, signal?: AbortSignal) {
-  return parsed(await postJson<unknown>('/forecasts/demand', request, { signal }), (v): v is DemandForecast => demand(v, request))
+  return parsed(await postJson<unknown>('/forecasts/demand', request, { credentials: 'include', signal }), (v): v is DemandForecast => demand(v, request))
 }
 export async function forecastPrice(request: ForecastRequest, signal?: AbortSignal) {
-  return parsed(await postJson<unknown>('/forecasts/price', request, { signal }), (v): v is PriceForecast => price(v, request))
+  return parsed(await postJson<unknown>('/forecasts/price', request, { credentials: 'include', signal }), (v): v is PriceForecast => price(v, request))
 }
 export async function getSupplyMetrics(horizonDays: number, signal?: AbortSignal) {
   return parsed(await apiRequest<unknown>(`/forecasts/supply/metrics?horizonDays=${horizonDays}`, { signal }), supplyMetrics)

@@ -1,3 +1,4 @@
+import { createGraphMail, graphMailConfig } from './graph-mail';
 import nodemailer from 'nodemailer';
 export type RecoveryMailer = { ready(): boolean; send(to: string, link: string): Promise<void> };
 export function recoveryMailConfig(env: NodeJS.ProcessEnv = process.env) {
@@ -12,9 +13,21 @@ export function recoveryMailConfig(env: NodeJS.ProcessEnv = process.env) {
 export function recoveryLink(origin: string, token: string) {
  const url=new URL(origin);url.hash=`recuperar=${token}`;return url.href;
 }
+let graphInstance: ReturnType<typeof createGraphMail> | undefined;
+let graphKey = '';
+function configuredGraph() {
+ const config=graphMailConfig();if(!config)return null;
+ const key=JSON.stringify(config);if(key!==graphKey){graphInstance=createGraphMail(config);graphKey=key;}
+ return graphInstance!;
+}
 export const recoveryMailer: RecoveryMailer = {
- ready:()=>recoveryMailConfig()!==null,
+ ready:()=>process.env.MAIL_PROVIDER==='graph' ? (configuredGraph()?.ready() ?? false) : (!process.env.MAIL_PROVIDER || process.env.MAIL_PROVIDER==='smtp') && recoveryMailConfig()!==null,
  async send(to,link) {
+  if(process.env.MAIL_PROVIDER==='graph'){
+   const graph=configuredGraph();if(!graph)throw Error('MAIL_NOT_CONFIGURED');
+   await graph.send(to,`Recibimos una solicitud para restablecer tu contraseña de EnerTrade AI.\n\nAbre este enlace (vence en 30 minutos y solo puede usarse una vez):\n${link}\n\nSi no lo solicitaste, ignora este correo. Tu contraseña no cambia hasta completar el formulario. EnerTrade AI nunca te pedirá que envíes tu contraseña por correo.`);return;
+  }
+  if(process.env.MAIL_PROVIDER && process.env.MAIL_PROVIDER!=='smtp')throw Error('MAIL_NOT_CONFIGURED');
   const config=recoveryMailConfig();if(!config)throw Error('MAIL_NOT_CONFIGURED');
   const transport=nodemailer.createTransport({host:config.host,port:config.port,secure:config.port===465,requireTLS:true,auth:{user:config.user,pass:config.pass},tls:{minVersion:'TLSv1.2',rejectUnauthorized:true},connectionTimeout:5000,greetingTimeout:5000,socketTimeout:10000,logger:false,debug:false});
   const result=await transport.sendMail({from:config.from,to,subject:'Recupera tu contraseña de EnerTrade AI',text:`Recibimos una solicitud para restablecer tu contraseña de EnerTrade AI.\n\nAbre este enlace (vence en 30 minutos y solo puede usarse una vez):\n${link}\n\nSi no lo solicitaste, ignora este correo. Tu contraseña no cambia hasta completar el formulario. EnerTrade AI nunca te pedirá que envíes tu contraseña por correo.`,disableFileAccess:true,disableUrlAccess:true});

@@ -1,12 +1,17 @@
+import { forecastObservationsService } from '@/services/forecast-observations.service';
 import { energyHistoryLiveService } from '@/services/energy-history-live.service';
 import { Router, type ErrorRequestHandler } from 'express';
 import { requireAuth } from '@/middlewares/auth.middleware';
 import { EnergySeriesError, energySeriesService } from '@/services/energy-series.service';
 import { logUnexpectedError, safeLogger, type SafeLogger } from '@/lib/safe-logger';
 
-export function createEnergySeriesRouter(service = energySeriesService, authMiddleware = requireAuth(), logger: SafeLogger = safeLogger, live = energyHistoryLiveService) {
+export function createEnergySeriesRouter(service = energySeriesService, authMiddleware = requireAuth(), logger: SafeLogger = safeLogger, live = energyHistoryLiveService, observations = forecastObservationsService) {
   const router = Router();
   router.use(authMiddleware);
+  router.get('/forecast-observations', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try { res.json(await observations.read(req.query)); } catch (error) { next(error); }
+  });
   router.get('/live', async (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     try { res.json(await live.read(req.query)); } catch (error) { next(error); }

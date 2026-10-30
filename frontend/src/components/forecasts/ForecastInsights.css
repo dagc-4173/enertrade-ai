@@ -1,0 +1,22 @@
+.model-performance, .forecast-insights { border-top: 1px solid var(--color-border); padding-top: 20px; margin-top: 24px; min-width: 0; }
+.model-performance__heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.model-performance__heading h3, .forecast-insights h3 { margin: 0 0 8px; color: var(--color-forest-dark); font-size: 18px; }
+.model-performance__heading > span { color: var(--color-teal); font-size: 12px; border: 1px solid var(--color-border); padding: 5px 9px; border-radius: 6px; }
+.performance-measures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; margin: 18px 0; }
+.performance-measures > div { padding: 16px 0; border-bottom: 1px solid var(--color-border); }
+.performance-measures dt, .forecast-summary dt { color: var(--color-muted); font-size: 13px; }
+.performance-measures dd { margin: 6px 0; font-size: clamp(18px, 2vw, 23px); font-weight: 650; color: var(--color-forest-dark); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.performance-measures small { color: var(--color-muted); line-height: 1.5; display: block; }
+.forecast-summary { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; margin: 20px 0; }
+.forecast-summary dd { margin: 6px 0 0; font-size: 18px; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.forecast-insight-note { border-left: 3px solid var(--color-forest); padding: 10px 14px; background: var(--color-surface-alt); line-height: 1.6; }
+.model-performance p, .forecast-insights p { line-height: 1.6; }
+.model-performance__version { overflow-wrap: anywhere; font-size: 13px; }
+.forecast-insights__table { margin-top: 20px; }
+.forecast-insights .table-scroll { overflow-x: auto; margin-top: 12px; }
+.forecast-insights table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.forecast-insights caption { text-align: left; color: var(--color-muted); padding-bottom: 12px; line-height: 1.6; }
+.forecast-insights th, .forecast-insights td { border-bottom: 1px solid var(--color-border); padding: 12px; text-align: right; white-space: nowrap; }
+.forecast-insights th:first-child { text-align: left; }
+.forecast-insights thead { background: var(--color-surface-alt); }
+@media (max-width: 640px) { .performance-measures, .forecast-summary { grid-template-columns: 1fr; gap: 12px; } .model-performance__heading { flex-wrap: wrap; } }

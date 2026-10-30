@@ -1,0 +1,25 @@
+.forecast-history-workspace { display: grid; gap: 24px; min-width: 0; }
+.forecast-history-workspace .panel { min-width: 0; }
+.forecast-history-filters { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,180px),1fr)); gap: 14px; align-items: end; margin: 24px 0; }
+.forecast-history-filters label { display: grid; gap: 8px; color: var(--color-teal); font-size: 13px; font-weight: 650; }
+.forecast-history-filters input, .forecast-history-filters select { min-width: 0; width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px; background: white; color: var(--color-text); }
+.forecast-history-filters button { min-height: 46px; }
+.forecast-history-workspace .table-scroll { overflow: auto; margin: 20px 0; }
+.forecast-history-workspace table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.forecast-history-workspace caption { text-align: left; color: var(--color-muted); line-height: 1.6; padding-bottom: 12px; }
+.forecast-history-workspace th, .forecast-history-workspace td { padding: 12px; border-bottom: 1px solid var(--color-border); text-align: right; white-space: nowrap; }
+.forecast-history-workspace th:first-child, .forecast-history-workspace td:first-child { text-align: left; }
+.forecast-history-workspace thead { background: var(--color-surface-alt); }
+.forecast-history-pagination { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 12px; }
+.forecast-history-detail h3 { color: var(--color-forest-dark); font-size: 20px; }
+.forecast-history-detail p { line-height: 1.6; }
+.forecast-history-detail details p { overflow-wrap: anywhere; font-size: 13px; }
+.forecast-history-evaluate { border-left: 3px solid var(--color-forest); padding: 8px 16px; margin: 20px 0; background: var(--color-surface-alt); }
+.forecast-history-workspace :focus-visible, .patterns-navigation :focus-visible { outline: 2px solid var(--color-forest); outline-offset: 3px; }
+.patterns-navigation { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+.patterns-navigation button { padding: 12px 18px; border: 1px solid var(--color-border); border-radius: 8px; background: white; color: var(--color-text); }
+.patterns-navigation button[aria-pressed="true"] { background: var(--color-forest); color: white; }
+@media(max-width:600px){ .patterns-navigation button { flex: 1 1 100%; } .forecast-history-filters { grid-template-columns: 1fr; } }
+
+.forecast-history-detail .table-scroll { max-height: 520px; }
+.forecast-history-detail thead { position: sticky; top: 0; z-index: 1; }

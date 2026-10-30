@@ -1,3 +1,7 @@
+import { ForecastSavedNotice } from './ForecastSavedNotice'
+import { ModelPerformance } from './ModelPerformance'
+import { ForecastInsights } from './ForecastInsights'
+import { xmPeriodLabel } from '../../utils/forecastInsights'
 import { HourlyRidgeResult } from './HourlyRidgeResult'
 import { getRidgeAvailability, forecastHourlyRidge, type RidgeAvailability, type RidgeHourlyResult } from '../../services/hourlyRidgeService'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
@@ -6,12 +10,13 @@ import { forecastHourlyDemand, getHourlyModels, type HourlySeries, type HourlyFo
 import { SectionHeader } from '../ui/SectionHeader'
 import { StatusBadge } from '../ui/StatusBadge'
 import { SeriesChart } from '../charts/SeriesChart'
-import { formatDateCO, formatEnergyKWh, formatPriceCOPPerKWh, formatPercentCO } from '../../utils/numberFormat'
+import { formatDateCO, formatEnergyKWh, formatPriceCOPPerKWh } from '../../utils/numberFormat'
 
-export function HourlyDemandResult({ result, series = 'demand' }: { result: HourlyForecast; series?: HourlySeries }) {
+export function HourlyDemandResult({ result, series = 'demand', elapsedMs }: { result: HourlyForecast; series?: HourlySeries; elapsedMs?: number }) {
   const label = labels[series], format = series === 'price' ? formatPriceCOPPerKWh : formatEnergyKWh
   const m = result.historicalMetrics
   return <div className="forecast-result">
+    <ForecastSavedNotice history={result.history} />
     <p role="status">{label.title} para {formatDateCO(result.targetDate)}.</p>
     <details><summary>Modelo, origen y trazabilidad</summary><dl className="forecast-metadata">
       <div><dt>Modelo</dt><dd>{result.model === 'chronos2' ? 'Chronos-2' : 'Chronos-Bolt Small'}</dd></div>
@@ -22,12 +27,10 @@ export function HourlyDemandResult({ result, series = 'demand' }: { result: Hour
     </dl>
     {result.warnings.map(warning => <p key={warning} className="section-description">{warning}</p>)}
     </details>
-    <SeriesChart title={label.title} description="Mediana y cuantiles 10–90 %. No representan una garantía de cobertura futura." unit={series === 'price' ? 'COP/kWh' : 'kWh'} state={{ kind: 'success', lines: ([['q50', 'Mediana', '#1e5945', undefined], ['q10', 'Cuantil 10 %', '#8a6c3e', '5 4'], ['q90', 'Cuantil 90 %', '#8a6c3e', '5 4']] as const).map(([key, label, color, dash]) => ({ id: key, label, color, dash, points: result.predictions.map(q => ({ key: String(q.periodo), label: `P${q.periodo}`, value: q[key], detail: `Periodo ${q.periodo}: ${format(q[key])}` })) })) }} />
-    <details><summary>Evaluación histórica de referencia</summary>{m ? <>
-    <p className="section-description">{formatDateCO(m.range.start)} — {formatDateCO(m.range.end)}. Horizonte histórico de un día; no garantiza el resultado con datos atrasados.</p>
-    <dl className="forecast-metadata"><div><dt>MAE</dt><dd>{format(m.MAE)}</dd></div><div><dt>RMSE</dt><dd>{format(m.RMSE)}</dd></div><div><dt>WAPE</dt><dd>{formatPercentCO(m.WAPE_percent)}</dd></div><div><dt>Cobertura histórica del intervalo nominal 80 %</dt><dd>{formatPercentCO(m.coverageQ10Q90 * 100)}</dd></div></dl>
-    </> : <p role="status">Evaluación histórica específica pendiente para esta variable. No se muestran métricas de demanda.</p>}</details>
-    <details><summary>Ver los 24 periodos</summary><div className="table-scroll"><table><thead><tr><th>Periodo XM</th><th>Cuantil 10 %</th><th>Mediana</th><th>Cuantil 90 %</th></tr></thead><tbody>{result.predictions.map(q => <tr key={q.periodo}><td>{q.periodo}</td><td>{format(q.q10)}</td><td>{format(q.q50)}</td><td>{format(q.q90)}</td></tr>)}</tbody></table></div></details>
+    <ModelPerformance name={result.model === 'chronos2' ? 'Chronos-2' : 'Chronos-Bolt Small'} version={result.modelVersion} source={label.source + '/Sistema'} unit={series === 'price' ? 'COP/kWh' : 'kWh'} metrics={m} evaluatedHorizon={m ? 1 : undefined} selectedHorizon={result.horizonDays} elapsedMs={elapsedMs} />
+    <ForecastInsights key={result.trace.executionId} series={series} targetDate={result.targetDate} originDate={result.latestObservedDate} rows={result.predictions.map(q=>({period:q.periodo,value:q.q50,low:q.q10,high:q.q90}))} />
+    <SeriesChart title={label.title} description="Mediana y cuantiles 10–90 %. No representan una garantía de cobertura futura." unit={series === 'price' ? 'COP/kWh' : 'kWh'} state={{ kind: 'success', lines: ([['q50', 'Mediana', '#1e5945', undefined], ['q10', 'Cuantil 10 %', '#8a6c3e', '5 4'], ['q90', 'Cuantil 90 %', '#8a6c3e', '5 4']] as const).map(([key, label, color, dash]) => ({ id: key, label, color, dash, points: result.predictions.map(q => ({ key: String(q.periodo), label: `P${q.periodo}`, value: q[key], detail: `${formatDateCO(result.targetDate)} · P${q.periodo} · ${xmPeriodLabel(q.periodo)}: ${format(q[key])}` })) })) }} />
+
   </div>
 }
 
@@ -43,6 +46,7 @@ export function HourlyDemandPanel({ series = 'demand', initialModel = 'chronos2'
   const [targetDate, setTargetDate] = useState(''), [result, setResult] = useState<HourlyForecast | null>(null)
   const [ridgeAvailability, setRidgeAvailability] = useState<RidgeAvailability | null>(null), [ridgeResult, setRidgeResult] = useState<RidgeHourlyResult | null>(null)
   const [ridgeError, setRidgeError] = useState('')
+  const [elapsedMs, setElapsedMs] = useState<number | undefined>(undefined)
   const [error, setError] = useState(''), [loading, setLoading] = useState(false)
   const [catalogLoading,setCatalogLoading] = useState(initialModel !== 'ridge'), [catalogRevision,setCatalogRevision] = useState(0)
   const request = useRef<AbortController | null>(null)
@@ -60,11 +64,11 @@ export function HourlyDemandPanel({ series = 'demand', initialModel = 'chronos2'
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (loading || request.current) return
-    const controller = new AbortController(); request.current = controller
+    const controller = new AbortController(), started = performance.now(); request.current = controller; setElapsedMs(undefined)
     setLoading(true); setError(''); setResult(null); setRidgeResult(null)
     try {
-      if (model === 'ridge' && series !== 'supply') { const value = await forecastHourlyRidge(series, targetDate, controller.signal); if (!controller.signal.aborted) setRidgeResult(value) }
-      else if (model !== 'ridge') { const value = await forecastHourlyDemand({ model, targetDate }, controller.signal, series); if (!controller.signal.aborted) setResult(value) }
+      if (model === 'ridge' && series !== 'supply') { const value = await forecastHourlyRidge(series, targetDate, controller.signal); if (!controller.signal.aborted) { setElapsedMs(performance.now() - started); setRidgeResult(value) } }
+      else if (model !== 'ridge') { const value = await forecastHourlyDemand({ model, targetDate }, controller.signal, series); if (!controller.signal.aborted) { setElapsedMs(performance.now() - started); setResult(value) } }
     }
     catch (reason) { if (!controller.signal.aborted) setError(message(reason)) }
     finally { if (request.current === controller) request.current = null; if (!controller.signal.aborted) setLoading(false) }
@@ -83,8 +87,9 @@ export function HourlyDemandPanel({ series = 'demand', initialModel = 'chronos2'
     {model === 'ridge' && <p role="status">{ridgeError || (ridgeAvailability ? `Ridge admite h${ridgeAvailability.supportedHorizons.join(', h')} desde el último día completo publicado.${!ridgeAvailability.eligibleTargetDates.length ? ' No hay fechas futuras elegibles con el origen actual.' : ''}` : 'Verificando datos y horizontes Ridge…')}</p>}
     {loading && <p role="status">La consulta puede tardar varios minutos si XM requiere reintentos. Se verifica el contexto publicado antes de generar el resultado.</p>}
     {error && <p role="alert">{error}</p>}
+    {!result && !ridgeResult && model !== 'ridge' && models.find(v=>v.key===model) && <ModelPerformance name={models.find(v=>v.key===model)!.name} version={models.find(v=>v.key===model)!.revision} source={label.source + '/Sistema'} unit={series==='price' ? 'COP/kWh' : 'kWh'} metrics={models.find(v=>v.key===model)!.historicalMetrics} evaluatedHorizon={series==='demand' ? 1 : undefined} />}
     {!loading && !error && !ridgeResult && !result && <p className="forecast-state">Elige una fecha y genera el pronóstico. Aquí aparecerán la gráfica y sus resultados.</p>}
-    {ridgeResult && <HourlyRidgeResult result={ridgeResult} />}
-    {result && <HourlyDemandResult result={result} series={series} />}
+    {ridgeResult && <HourlyRidgeResult result={ridgeResult} elapsedMs={elapsedMs} />}
+    {result && <HourlyDemandResult result={result} series={series} elapsedMs={elapsedMs} />}
   </section>
 }

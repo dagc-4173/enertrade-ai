@@ -1,12 +1,15 @@
+import type { HistorySaveState } from '../services/forecastHistoryService'
 export interface ForecastRequest { preparedDatasetId: number; targetDate: string }
 export interface SupplyForecastRequest { targetDate: string }
 
 interface ForecastBase extends ForecastRequest {
+  history?: HistorySaveState
   status: 'available'
   sourceDatasetId: number
 }
 
 export interface SupplyForecast extends SupplyForecastRequest {
+  history?: HistorySaveState
   status: 'available'
   sourceArtifacts: { preparedDatasetId: number; sourceDatasetId: number }[]
   forecastOriginDate: string
@@ -23,6 +26,7 @@ export interface SupplyForecast extends SupplyForecastRequest {
 }
 
 export interface DemandForecast extends SupplyForecastRequest {
+  history?: HistorySaveState
   status: 'available'
   sourceArtifacts: { preparedDatasetId: number; sourceDatasetId: number }[]
   forecastOriginDate: string

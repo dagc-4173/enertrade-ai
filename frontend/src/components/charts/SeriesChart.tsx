@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import './SeriesChart.css'
 
 const axisNumber = new Intl.NumberFormat('es-CO', { notation: 'compact', maximumFractionDigits: 1 })
@@ -17,10 +17,10 @@ const padding = { top: 24, right: 22, bottom: 44, left: 76 }
 function coordinates(lines: ChartLine[], width: number) {
   const points = lines.flatMap(line => line.points)
   const values = points.map(point => point.value)
-  const minimum = Math.min(...values)
-  const maximum = Math.max(...values)
-  const range = maximum - minimum || Math.max(Math.abs(maximum) * 0.1, 1)
-  const keys = [...new Set(points.map(point => point.key))]
+  const rawMin = Math.min(...values), rawMax = Math.max(...values)
+  const margin = Math.max((rawMax - rawMin) * .06, Math.abs(rawMax) * .01, .01)
+  const minimum = rawMin - margin, maximum = rawMax + margin, range = maximum - minimum
+  const keys = [...new Set(points.map(point => point.key))].sort((a,b) => /^\d+$/.test(a) && /^\d+$/.test(b) ? Number(a)-Number(b) : a.localeCompare(b))
   const x = (key: string) => padding.left + Math.max(0, keys.indexOf(key)) * (width - padding.left - padding.right) / Math.max(keys.length - 1, 1)
   const y = (value: number) => padding.top + (maximum - value) * (height - padding.top - padding.bottom) / range
   return { keys, minimum, maximum, x, y }
@@ -33,6 +33,8 @@ function StateMessage({ state }: { state: Exclude<ChartState, { kind: 'success' 
 
 export function SeriesChart({ title, description, unit, state, footer }: { title: string; description: string; unit: string; state: ChartState; footer?: ReactNode }) {
   const chart = useRef<HTMLElement>(null)
+  const uniqueId = useId()
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [width, setWidth] = useState(720)
   useEffect(() => {
     if (!chart.current || typeof ResizeObserver === 'undefined') return
@@ -43,10 +45,10 @@ export function SeriesChart({ title, description, unit, state, footer }: { title
     observer.observe(chart.current)
     return () => observer.disconnect()
   }, [])
-  const headingId = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-title`
+  const headingId = `${uniqueId}-title`
   const descriptionId = `${headingId}-description`
   if (state.kind !== 'success') return <section ref={chart} className="series-chart" aria-labelledby={headingId}><div className="series-chart__heading"><div><h3 id={headingId}>{title}</h3><p id={descriptionId}>{description}</p></div><strong>{unit}</strong></div><StateMessage state={state} /></section>
-  const populated = state.lines.filter(line => line.points.length > 0)
+  const populated = state.lines.map(line => ({...line, points: line.points.filter(point => Number.isFinite(point.value))})).filter(line => line.points.length > 0)
   if (populated.length === 0) return <section ref={chart} className="series-chart" aria-labelledby={headingId}><div className="series-chart__heading"><div><h3 id={headingId}>{title}</h3><p id={descriptionId}>{description}</p></div><strong>{unit}</strong></div><StateMessage state={{ kind: 'empty', message: 'No hay observaciones para graficar.' }} /></section>
   const { keys, minimum, maximum, x, y } = coordinates(populated, width)
   const labelIndexes = keys.length <= 6 ? keys.map((_, index) => index) : Array.from({ length: 6 }, (_, index) => Math.round(index * (keys.length - 1) / 5))
@@ -60,11 +62,17 @@ export function SeriesChart({ title, description, unit, state, footer }: { title
       <text x={padding.left - 10} y={height - padding.bottom + 4} textAnchor="end" className="series-chart__axis">{axisNumber.format(minimum)}</text>
       {labels.map(key => <text key={key} x={x(key)} y={height - 16} textAnchor="middle" className="series-chart__axis">{populated[0]?.points.find(point => point.key === key)?.label ?? key}</text>)}
       {populated.map(line => {
-        const path = line.points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${x(point.key)} ${y(point.value)}`).join(' ')
-        return <g key={line.id}><path d={path} fill="none" stroke={line.color} strokeWidth="2.5" strokeDasharray={line.dash} aria-hidden="true" />{line.points.map(point => <circle key={point.key} cx={x(point.key)} cy={y(point.value)} r="4" fill={line.color} tabIndex={0} aria-label={`${line.label}. ${point.detail}`}><title>{`${line.label}: ${point.detail}`}</title></circle>)}</g>
+        const ordered = [...line.points].sort((a,b) => keys.indexOf(a.key)-keys.indexOf(b.key))
+        const path = ordered.map((point, index) => `${index === 0 || keys.indexOf(point.key)-keys.indexOf(ordered[index-1]!.key) > 1 || (/^\d+$/.test(point.key) && Number(point.key)-Number(ordered[index-1]!.key)>1) ? 'M' : 'L'} ${x(point.key)} ${y(point.value)}`).join(' ')
+        return <g key={line.id}><path d={path} fill="none" stroke={line.color} strokeWidth="2.5" strokeDasharray={line.dash} aria-hidden="true" />{line.points.map(point => <circle key={point.key} cx={x(point.key)} cy={y(point.value)} r="4" fill={line.color} tabIndex={0} onMouseEnter={() => setSelectedKey(point.key)} onFocus={() => setSelectedKey(point.key)} aria-describedby={selectedKey === point.key ? `${uniqueId}-readout` : undefined} aria-label={`${line.label}. ${point.detail}`}><title>{`${line.label}: ${point.detail}`}</title></circle>)}</g>
       })}
     </svg>
     <ul className="series-chart__legend" aria-label="Leyenda">{populated.map(line => <li key={line.id}><span style={{ borderTopColor: line.color, borderTopStyle: line.dash ? 'dashed' : 'solid' }} />{line.label}</li>)}</ul>
+    <p className="series-chart__hint">Pasa el cursor o usa Tab sobre los puntos para consultar sus valores. Las líneas discontinuas se distinguen también en la leyenda.</p>
+    {selectedKey && keys.includes(selectedKey) && <div className="series-chart__readout" id={`${uniqueId}-readout`} role="status" aria-live="polite">{populated.map(line => {
+      const point = line.points.find(p => p.key === selectedKey)
+      return <p key={line.id}><strong>{line.label}:</strong> {point ? point.detail : 'Sin observación para este periodo'}</p>
+    })}</div>}
     {footer}
   </section>
 }

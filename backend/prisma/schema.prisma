@@ -279,6 +279,7 @@ model AdminAudit {
   @@index([targetId])
 }
 model User {
+  forecastHistory ForecastHistory[]
   role UserRole @default(USER)
   status UserStatus @default(ACTIVE)
   adminActions AdminAudit[] @relation("AdminAuditActor")
@@ -501,4 +502,30 @@ model SimulatedPaymentAttempt {
   payer User @relation(fields: [payerUserId], references: [id], onDelete: Restrict)
   @@unique([transactionId, requestKey])
   @@index([transactionId, createdAt])
+}
+
+model ForecastHistory {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  requestId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  targetDate DateTime @db.Date
+  originDate DateTime @db.Date
+  series String
+  method String
+  modelId String
+  modelVersion String
+  source String
+  unit String
+  horizonDays Int
+  forecastSha256 String @db.Char(64)
+  forecastSnapshot Json
+  evaluationSnapshot Json?
+  evaluatedAt DateTime? @db.Timestamptz(3)
+  lastCheckedAt DateTime? @db.Timestamptz(3)
+  lastCheckStatus String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  @@unique([userId, requestId])
+  @@index([userId, createdAt, id])
+  @@index([userId, targetDate])
 }
