@@ -8,5 +8,5 @@ test('PAY-ROW-01: solo acuerdos confirmados sin pago aprobado se resaltan',()=>{
 test('PAY-ROW-02: texto distingue falta de pago, resolución pendiente y aprobación',()=>{
  expect(transactionPaymentLabel({status:'CONFIRMED',paymentStatus:'UNPAID'} as EnergyTransaction)).toBe('Por pagar')
  expect(transactionPaymentLabel({status:'CONFIRMED',paymentStatus:'PENDING'} as EnergyTransaction)).toBe('Pago pendiente de resolución')
- expect(transactionPaymentLabel({status:'CONFIRMED',paymentStatus:'PAID'} as EnergyTransaction)).toBe('Pagada en simulación')
+ expect(transactionPaymentLabel({status:'CONFIRMED',paymentStatus:'PAID'} as EnergyTransaction)).toBe('Pago aprobado en simulación')
 })

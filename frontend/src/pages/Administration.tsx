@@ -1,3 +1,4 @@
+import {SettlementDisputes} from '../components/SettlementPanel'
 import { useEffect, useState, useSyncExternalStore, type FormEvent } from 'react'
 import { authStore } from '../auth/authStore'
 import { apiRequest } from '../services/apiClient'
@@ -61,5 +62,6 @@ export function Administration() {
  {tab==='audit' && audit && <><h2>Cambios registrados ({audit.total})</h2>{!audit.entries.length && <p>Aún no hay cambios registrados.</p>}<ol className="admin-audit">{audit.entries.map(entry=><li key={entry.id}><strong>{entry.target.name} · {entry.target.email}</strong><p>{entry.action==='FIRST_ADMIN_BOOTSTRAP'?'Alta del primer administrador':'Cambio de acceso'} · {new Date(entry.createdAt).toLocaleString('es-CO')}</p><p>{roleLabel(entry.before.role)} / {statusLabel(entry.before.status)} → {roleLabel(entry.after.role)} / {statusLabel(entry.after.status)}</p><p>Responsable: {entry.actor.email}</p><p>Motivo: {entry.reason}</p></li>)}</ol></>}
  {result && <div className="admin-pagination"><button type="button" className="secondary-button" disabled={page<=1} onClick={()=>{setPage(page-1);reload()}}>Anterior</button><span>Página {page} de {Math.max(1,Math.ceil(result.total/result.pageSize))}</span><button type="button" className="secondary-button" disabled={page*result.pageSize>=result.total} onClick={()=>{setPage(page+1);reload()}}>Siguiente</button></div>}</>}</section>}
  {tab==='datasets' && <DatasetManagement />}
+ <SettlementDisputes />
  </div>
 }

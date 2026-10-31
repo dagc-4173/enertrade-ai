@@ -27,7 +27,7 @@ export function createSimulatedReceiptPdf(attempt: PaymentAttempt): jsPDF {
   pdf.line(20, y, 190, y)
   y += 12
   text(`Referencia: ${attempt.receiptReference}`)
-  text('Estado: Aprobado en simulación')
+  text(attempt.providerVersion === '2.0.0' ? 'Estado: Importe aprobado con retención simulada. Este comprobante no acredita liquidación al proveedor.' : 'Estado: Aprobado en simulación')
   text(`Fecha de aprobación: ${new Date(attempt.resolvedAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' })} (America/Bogota)`)
   text(`Importe exacto (COP): ${attempt.amountCop}`, 14, true)
   text('El importe conserva todos los decimales del acuerdo; el punto indica decimales.', 9)

@@ -1,0 +1,12 @@
+{
+  "postgres": "passed",
+  "migrations": "24 applied on isolated database",
+  "agreements": 4,
+  "newPaymentRetention": "passed",
+  "completePartialZeroDelivery": "passed",
+  "concurrentDuplicateAcceptance": "passed",
+  "concurrentAdminResolution": "one winner",
+  "realCookieAuthentication": "passed",
+  "productionDatabaseUsed": false,
+  "realFundsMoved": false
+}

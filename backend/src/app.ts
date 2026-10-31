@@ -1,3 +1,5 @@
+import { createSettlementRouter } from '@/controllers/simulated-settlement.controller';
+import { createSettlementService } from '@/services/simulated-settlement.service';
 import { router as forecastHistoryRouter } from '@/controllers/forecast-history.controller';
 import { router as hourlyRidgeRouter } from '@/controllers/hourly-ridge.controller';
 import { chronosSupplyService, chronosPriceService } from '@/services/chronos-hourly.service';
@@ -114,7 +116,7 @@ app.use('/forecasts/hourly-supply', createChronosHourlyRouter(chronosSupplyServi
 app.use('/forecasts/hourly-price', createChronosHourlyRouter(chronosPriceService))
 app.use('/forecasts', forecastRouter)
 if (options.expirationScope) {
-    app.use(['/publication-verifications', '/publications', '/offers', '/demands',  '/simulated-payments', '/transactions', '/market', '/matches'], requireAuth(), (req, res, next) => {
+    app.use(['/publication-verifications', '/publications', '/offers', '/demands',  '/simulated-payments', '/simulated-settlements', '/transactions', '/market', '/matches'], requireAuth(), (req, res, next) => {
         if (!options.expirationScope!.userIds.includes(req.authUser!.id)) { res.status(403).json({ error: 'FIXTURE_USER_REQUIRED', message: 'La cuenta no pertenece al fixture.' }); return; }
         next();
     })
@@ -124,6 +126,7 @@ app.use('/publications', hourlyPublicationRouter)
 app.post(['/offers', '/demands'], requireAuth(), (_req, res) => { res.status(410).json({ error: 'HOURLY_PUBLICATION_REQUIRED', message: 'Las nuevas publicaciones deben incluir horas y fechas de los próximos siete días mediante /publications.' }); });
 app.use('/offers', offerRouter)
 app.use('/demands', demandRouter)
+app.use('/simulated-settlements', createSettlementRouter(createSettlementService(prisma, undefined, options.expirationScope)))
 app.use('/simulated-payments', simulatedPaymentRouter)
 app.use('/transactions', energyTransactionRouter)
 app.use('/market', marketRouter)

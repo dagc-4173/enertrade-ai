@@ -1,3 +1,4 @@
+import {SettlementPanel} from './SettlementPanel'
 import {useEffect,useRef,useState} from 'react'
 import type {EnergyTransaction} from '../types/transactions'
 import {createSimulatedPayment,getSimulatedPayments,resolveSimulatedPayment,type PaymentAttempt,type PaymentHistory,type PaymentOutcome} from '../services/simulatedPaymentService'
@@ -10,7 +11,7 @@ export function SimulatedReceipt({attempt}:{attempt:PaymentAttempt}){
  const [downloading,setDownloading]=useState(false)
  async function download(){setDownloading(true);setDownloadError('');try{const {downloadSimulatedReceiptPdf}=await import('../utils/simulatedReceiptPdf');downloadSimulatedReceiptPdf(attempt)}catch{setDownloadError('No se pudo generar el PDF. Intenta nuevamente.')}finally{setDownloading(false)}}
  if(attempt.status!=='APPROVED'||!attempt.receiptReference)return null
- return <section className="simulated-receipt" aria-label="Comprobante de pago simulado"><h4>Comprobante de pago simulado</h4><p>Referencia: {attempt.receiptReference}</p><p>Importe: {formatCurrencyCOP(Number(attempt.amountCop))}</p><p>{attempt.resolvedAt&&new Date(attempt.resolvedAt).toLocaleString('es-CO',{timeZone:'America/Bogota'})}</p><p>No acredita un pago real ni una entrega de energía.</p><button type="button" className="secondary-button" disabled={downloading} onClick={()=>{void download()}}>{downloading?'Generando PDF…':'Descargar comprobante PDF'}</button>{downloadError&&<p role="alert">{downloadError}</p>}</section>
+ return <section className="simulated-receipt" aria-label="Comprobante de pago simulado"><h4>Comprobante de pago simulado</h4><p>Referencia: {attempt.receiptReference}</p><p>Importe: {formatCurrencyCOP(Number(attempt.amountCop))}</p><p>{attempt.resolvedAt&&new Date(attempt.resolvedAt).toLocaleString('es-CO',{timeZone:'America/Bogota'})}</p><p>No acredita un pago real ni una entrega de energía.</p>{attempt.providerVersion==='2.0.0'&&<p>Importe aprobado con retención simulada. No acredita liquidación al proveedor.</p>}<button type="button" className="secondary-button" disabled={downloading} onClick={()=>{void download()}}>{downloading?'Generando PDF…':'Descargar comprobante PDF'}</button>{downloadError&&<p role="alert">{downloadError}</p>}</section>
 }
 function PaymentDetails({transaction}:{transaction:EnergyTransaction}){
  const [history,setHistory]=useState<PaymentHistory|null>(null)
@@ -26,11 +27,12 @@ function PaymentDetails({transaction}:{transaction:EnergyTransaction}){
  async function resolve(id:string,outcome:'APPROVED'|'REJECTED'){if(busy)return;setBusy(true);setError('');try{const attempt=await resolveSimulatedPayment(id,outcome);window.dispatchEvent(new Event('enertrade:payments-changed'));setNotice(labels[attempt.status]);await refresh()}catch(reason){setError(errorMessage(reason))}finally{setBusy(false)}}
  const pending=history?.attempts.find(attempt=>attempt.status==='PENDING')
  const approved=history?.attempts.find(attempt=>attempt.status==='APPROVED')
- return <section className="simulated-payment" aria-label="Pago simulado"><h4>Pago simulado</h4><p>Importe del acuerdo: {formatCurrencyCOP(Number(history?.amountCop??transaction.totalAmountCop))}</p><p>Estado: {history?history.status==='PAID'?'Pagado en simulación':history.status==='PENDING'?'Intento pendiente':'Sin pago aprobado':'Consultando…'}</p>
+ return <section className="simulated-payment" aria-label="Pago simulado"><h4>Pago simulado</h4><p>Importe del acuerdo: {formatCurrencyCOP(Number(history?.amountCop??transaction.totalAmountCop))}</p><p>Estado: {history?history.status==='PAID'?(approved?.providerVersion==='2.0.0'?'Aprobado con retención simulada; consulta la entrega':'Pagado en simulación (histórico)'):history.status==='PENDING'?'Intento pendiente':'Sin pago aprobado':'Consultando…'}</p>
  {transaction.role==='BUYER'&&history&&history.status==='UNPAID'&&<><label>Resultado de prueba<select value={scenario} disabled={busy} onChange={event=>setScenario(event.target.value as PaymentOutcome)}><option value="APPROVED">Aprobado</option><option value="REJECTED">Rechazado</option><option value="PENDING">Pendiente</option></select></label><button type="button" className="primary-button" disabled={busy} onClick={()=>{void pay()}}>{busy?'Procesando…':'Registrar pago simulado'}</button></>}
  {transaction.role==='BUYER'&&pending&&<div className="marketplace-actions"><button type="button" className="secondary-button" disabled={busy} onClick={()=>{void resolve(pending.id,'APPROVED')}}>Simular aprobación del pendiente</button><button type="button" className="secondary-button" disabled={busy} onClick={()=>{void resolve(pending.id,'REJECTED')}}>Simular rechazo del pendiente</button></div>}
  {transaction.role==='SELLER'&&<p>El comprador registra el pago. Puedes consultar sus intentos y comprobante.</p>}
  {approved&&<SimulatedReceipt attempt={approved}/>}
+ {approved?.providerVersion==='2.0.0'&&<SettlementPanel id={transaction.id} role={transaction.role}/>}
  {history&&<ol aria-label="Intentos de pago simulado">{history.attempts.map(attempt=><li key={attempt.id}>{labels[attempt.status]} · {formatCurrencyCOP(Number(attempt.amountCop))} · {new Date(attempt.createdAt).toLocaleString('es-CO',{timeZone:'America/Bogota'})}</li>)}</ol>}
  {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}
  <p>Simulador interno: no solicita tarjetas ni mueve dinero real.</p></section>

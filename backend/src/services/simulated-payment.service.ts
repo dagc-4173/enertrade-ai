@@ -55,7 +55,7 @@ export function createSimulatedPaymentService(database = prisma, now: () => Date
     }
     if (await tx.simulatedPaymentAttempt.findFirst({ where: { transactionId: input.transactionId, status: 'APPROVED' } })) throw new SimulatedPaymentError(409,'SIMULATED_PAYMENT_ALREADY_APPROVED','La transacción ya tiene un pago simulado aprobado.');
     if (await tx.simulatedPaymentAttempt.findFirst({ where: { transactionId: input.transactionId, status: 'PENDING' } })) throw new SimulatedPaymentError(409,'SIMULATED_PAYMENT_PENDING','Resuelve el intento pendiente antes de iniciar otro.');
-    const attempt = await tx.simulatedPaymentAttempt.create({ data: { transactionId: transaction.id, payerUserId: userId, requestKey: input.requestKey, scenario: input.scenario, status: input.scenario, amountCop: transaction.totalAmountCop, currency: 'COP', providerId: 'internal-simulator', providerVersion: '1.0.0', contractSnapshot: snapshot(transaction), resolvedAt: input.scenario === 'PENDING' ? null : now(), receiptReference: input.scenario === 'APPROVED' ? `SIM-${randomUUID().toUpperCase()}` : null } });
+    const attempt = await tx.simulatedPaymentAttempt.create({ data: { transactionId: transaction.id, payerUserId: userId, requestKey: input.requestKey, scenario: input.scenario, status: input.scenario, amountCop: transaction.totalAmountCop, currency: 'COP', providerId: 'internal-simulator', providerVersion: '2.0.0', contractSnapshot: snapshot(transaction), resolvedAt: input.scenario === 'PENDING' ? null : now(), receiptReference: input.scenario === 'APPROVED' ? `SIM-${randomUUID().toUpperCase()}` : null } });
     return { attempt: dto(attempt), replayed: false };
    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30000 });
   },

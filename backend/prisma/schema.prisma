@@ -377,6 +377,7 @@ model EnergyDemand {
 }
 
 model EnergyTransaction {
+  settlement SimulatedSettlement?
   paymentAttempts SimulatedPaymentAttempt[]
   batchId String? @db.Uuid
   hour Int?
@@ -528,4 +529,22 @@ model ForecastHistory {
   @@unique([userId, requestId])
   @@index([userId, createdAt, id])
   @@index([userId, targetDate])
+}
+
+
+// Funds and delivery are simulated. No physical measurement or real custody.
+model SimulatedSettlement {
+  transactionId String @id @db.Uuid
+  status String
+  declaredKwh Decimal? @db.Decimal(20, 2)
+  acceptedKwh Decimal? @db.Decimal(20, 2)
+  sellerAmountCop Decimal? @db.Decimal(38, 7)
+  refundAmountCop Decimal? @db.Decimal(38, 7)
+  evidenceReference String?
+  disputeReason String?
+  resolutionReason String?
+  events Json
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  transaction EnergyTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  @@index([status, updatedAt])
 }
