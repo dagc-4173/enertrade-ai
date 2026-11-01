@@ -3,3 +3,7 @@
 deployment/*.sh text eol=lf
 Dockerfile text eol=lf
 compose.yaml text eol=lf
+
+# Frozen Ridge artifacts: SHA-256 covers the original bytes, including CRLF.
+# Preserve those bytes in Git blobs, checkouts and source archives.
+backend/src/models/xm-demareal-ridge-direct-v1/1.0.0/h[1-7].json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

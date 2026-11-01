@@ -79,3 +79,14 @@ La instalación local no publica el sistema en Internet. Antes de contratar o pu
 No copiar .env.deploy ni credenciales a Git. Los checkpoints no se transfieren con el repositorio; deben llevarse al servidor por un canal controlado y verificar sus hashes. No sustituirlos por rutas de Windows en un servidor Linux. Preparar backup de PostgreSQL y del volumen antes de migraciones o cambios públicos.
 
 Para una sola instancia detrás de un proxy local configurado por el proyecto: definir NODE_ENV=production, PUBLIC_ORIGIN con la URL HTTPS real y TRUST_PROXY_HOPS según la topología comprobada; usar 1 únicamente si hay exactamente un proxy confiable. Mantener el puerto de aplicación limitado a loopback como en compose.yaml. El alojamiento, dominio o URL suministrada por proveedor, TLS, respaldo, consumo bajo inferencia y pruebas públicas deben verificarse antes de declarar desplegado el sistema.
+
+
+## Integridad de los artefactos Ridge de demanda
+
+Los siete JSON congelados de `backend/src/models/xm-demareal-ridge-direct-v1/1.0.0/h1.json` a `h7.json` se verifican por SHA-256 sobre sus bytes originales, que incluyen CRLF. `.gitattributes` usa `-text` para estos archivos: evita convertir saltos de línea tanto al guardarlos en Git como al descargarlos o exportarlos a ZIP. La regla de whitespace reconoce CRLF sin permitir espacios finales comunes. No reformatear estos JSON ni recalcular sus locks para ocultar una incompatibilidad.
+
+La corrección incorpora una sola vez los bytes originales en Git. No cambia coeficientes, normalización, métricas, versión ni predicciones; los locks existentes permanecen iguales. No ejecutar una normalización global del repositorio.
+
+Para incorporar esta corrección en una VM que conserva los ajustes manuales de esos mismos siete archivos: guardar primero únicamente sus cambios con `git stash push -m "Respaldo de bytes Ridge antes de actualizar" -- backend/src/models/xm-demareal-ridge-direct-v1/1.0.0/`; actualizar con `git pull --ff-only`. Tras recibir el commit de la corrección, no restaurar el stash automáticamente: el repositorio debe proporcionar ya los mismos hashes. Conservar el respaldo hasta verificar los modelos. Los demás cambios locales requieren revisión independiente; no usar reset --hard ni eliminar archivos privados.
+
+Evidencia de descargas limpias, carga real del cargador y exportaciones TAR/ZIP: `docs/evidencias/modelos-demanda-bytes/`.
